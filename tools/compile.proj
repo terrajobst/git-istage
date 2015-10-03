@@ -1,0 +1,37 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <ProjectProperties>
+      Configuration=$(Configuration);
+      Platform=$(Platform);
+      OutDir=$(OutDir);
+    </ProjectProperties>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SolutionFiles Include="$(MSBuildThisFileDirectory)..\src\*.sln" />
+  </ItemGroup>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(SolutionFiles)"
+             BuildInParallel="True"
+             Targets="Clean"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(SolutionFiles)"
+             BuildInParallel="True"
+             Targets="Build"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="Rebuild">
+    <MSBuild Projects="@(SolutionFiles)"
+             BuildInParallel="True"
+             Targets="Rebuild"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+</Project>

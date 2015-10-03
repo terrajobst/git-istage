@@ -1,0 +1,44 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+
+  <PropertyGroup>
+    <OutDir Condition="'$(OutDir)' == ''">$(MSBuildThisFileDirectory)..\bin\</OutDir>
+    <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
+    <Platform Condition="'$(Platform)' == ''">Any CPU</Platform>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <ProjectProperties>
+      Configuration=$(Configuration);
+      Platform=$(Platform);
+      OutDir=$(OutDir);
+    </ProjectProperties>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <BuildStep Include="$(MSBuildThisFileDirectory)restore.proj" />
+    <BuildStep Include="$(MSBuildThisFileDirectory)compile.proj" />
+  </ItemGroup>
+
+  <Target Name="Clean">
+    <MSBuild Projects="@(BuildStep)"
+             BuildInParallel="True"
+             Targets="Clean"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="Build">
+    <MSBuild Projects="@(BuildStep)"
+             BuildInParallel="False"
+             Targets="Build"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+  <Target Name="Rebuild">
+    <MSBuild Projects="@(BuildStep)"
+             BuildInParallel="False"
+             Targets="Rebuild"
+             Properties="$(ProjectProperties)" />
+  </Target>
+
+</Project>
