@@ -150,19 +150,19 @@ namespace GitIStage
             using (var process = new Process())
             {
                 var output = new List<string>();
+
+                DataReceivedEventHandler handler = (s, e) =>
+                {
+                    lock (output)
+                    {
+                        if (e.Data != null)
+                            output.Add(e.Data);
+                    }
+                };
+
                 process.StartInfo = startInfo;
-                process.OutputDataReceived += (s, e) =>
-                {
-                    lock (output)
-                        if (e.Data != null)
-                            output.Add(e.Data);
-                };
-                process.ErrorDataReceived += (s, e) =>
-                {
-                    lock (output)
-                        if (e.Data != null)
-                            output.Add(e.Data);
-                };
+                process.OutputDataReceived += handler;
+                process.ErrorDataReceived += handler;
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
