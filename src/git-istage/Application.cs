@@ -245,6 +245,9 @@ namespace GitIStage
 
         private void StageUnstage()
         {
+            if (_view.SelectedLine < 0)
+                return;
+
             var line = _document.Lines[_view.SelectedLine];
             if (line.Kind != PatchLineKind.Addition &&
                 line.Kind != PatchLineKind.Removal)
