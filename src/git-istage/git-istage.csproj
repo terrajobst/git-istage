@@ -54,6 +54,7 @@
     <Compile Include="Application.cs" />
     <Compile Include="ConsoleCommand.cs" />
     <Compile Include="Document.cs" />
+    <Compile Include="PatchDirection.cs" />
     <Compile Include="PatchDocument.cs" />
     <Compile Include="PatchEntry.cs" />
     <Compile Include="Label.cs" />

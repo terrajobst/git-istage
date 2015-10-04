@@ -11,5 +11,4 @@ the line level, a breeze.
     * <kbd>PageDown</kbd> Select down page wise
     * <kbd>Ctrl</kbd> <kbd>PageUp</kbd> Scroll up page wise
     * <kbd>Ctrl</kbd> <kbd>PageDown</kbd> Scroll down page wise
-* Support reseting individual lines
 * Add help page with shortcut overview

@@ -11,8 +11,11 @@ namespace GitIStage
 {
     internal static class Patching
     {
-        public static string Stage(PatchDocument document, IEnumerable<int> lineIndexes, bool isUnstaging)
+        public static string Stage(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
         {
+            var isUndo = direction == PatchDirection.Reset ||
+                         direction == PatchDirection.Unstage;
+
             var newPatch = new StringBuilder();
 
             var entryLines = lineIndexes.Select(i => new {i, e = document.FindEntry(i)}).GroupBy(t => t.e, t => t.i);
@@ -42,8 +45,8 @@ namespace GitIStage
                         var kind = line.Kind;
 
                         var wasPresent = kind == PatchLineKind.Context ||
-                                         kind == PatchLineKind.Removal && (!isUnstaging || lineSet.Contains(i)) ||
-                                         kind == PatchLineKind.Addition && (isUnstaging && !lineSet.Contains(i));
+                                         kind == PatchLineKind.Removal && (!isUndo || lineSet.Contains(i)) ||
+                                         kind == PatchLineKind.Addition && (isUndo && !lineSet.Contains(i));
 
                         if (wasPresent)
                             oldLength++;
@@ -110,8 +113,8 @@ namespace GitIStage
                             newPatch.Append("\n");
                             previousIncluded = true;
                         }
-                        else if (!isUnstaging && kind == PatchLineKind.Removal ||
-                                 isUnstaging && kind == PatchLineKind.Addition)
+                        else if (!isUndo && kind == PatchLineKind.Removal ||
+                                 isUndo && kind == PatchLineKind.Addition)
                         {
                             newPatch.Append(" ");
                             newPatch.Append(line.Text, 1, line.Text.Length - 1);
@@ -129,11 +132,14 @@ namespace GitIStage
             return newPatch.ToString();
         }
 
-        public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, bool isUnstaging)
+        public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, PatchDirection direction)
         {
+            var isUndo = direction == PatchDirection.Reset ||
+                         direction == PatchDirection.Unstage;
             var patchFilePath = Path.GetTempFileName();
-            var reverse = isUnstaging ? "--reverse" : string.Empty;
-            var arguments = $@"apply --cached {reverse} --whitespace=nowarn ""{patchFilePath}""";
+            var reverse = isUndo ? "--reverse" : string.Empty;
+            var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
+            var arguments = $@"apply {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
 
             File.WriteAllText(patchFilePath, patch);
             var startInfo = new ProcessStartInfo

@@ -43,6 +43,8 @@ namespace GitIStage
                 new ConsoleCommand(GoNextFile, ConsoleKey.RightArrow),
                 new ConsoleCommand(GoPreviousHunk, ConsoleKey.Oem4),
                 new ConsoleCommand(GoNextHunk, ConsoleKey.Oem6),
+                new ConsoleCommand(Reset, ConsoleKey.R),
+                new ConsoleCommand(ResetHunk, ConsoleKey.R, ConsoleModifiers.Shift),
                 new ConsoleCommand(Stage, ConsoleKey.S),
                 new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift),
                 new ConsoleCommand(Unstage, ConsoleKey.U),
@@ -299,12 +301,28 @@ namespace GitIStage
             return hunk.Offset;
         }
 
+        private void Reset()
+        {
+            if (_viewStage)
+                return;
+
+            ApplyPatch(PatchDirection.Reset, false);
+        }
+
+        private void ResetHunk()
+        {
+            if (_viewStage)
+                return;
+
+            ApplyPatch(PatchDirection.Reset, true);
+        }
+
         private void Stage()
         {
             if (_viewStage)
                 return;
 
-            StageUnstage(false);
+            ApplyPatch(PatchDirection.Stage, false);
         }
 
         private void StageHunk()
@@ -312,7 +330,7 @@ namespace GitIStage
             if (_viewStage)
                 return;
 
-            StageUnstage(true);
+            ApplyPatch(PatchDirection.Stage, true);
         }
 
         private void Unstage()
@@ -320,7 +338,7 @@ namespace GitIStage
             if (!_viewStage)
                 return;
 
-            StageUnstage(false);
+            ApplyPatch(PatchDirection.Unstage, false);
         }
 
         private void UnstageHunk()
@@ -328,10 +346,10 @@ namespace GitIStage
             if (!_viewStage)
                 return;
 
-            StageUnstage(true);
+            ApplyPatch(PatchDirection.Unstage, true);
         }
 
-        private void StageUnstage(bool entireHunk)
+        private void ApplyPatch(PatchDirection direction, bool entireHunk)
         {
             if (_view.SelectedLine < 0)
                 return;
@@ -354,9 +372,9 @@ namespace GitIStage
                                   .Where(i => _document.Lines[i].Kind == PatchLineKind.Addition ||
                                               _document.Lines[i].Kind == PatchLineKind.Removal);
             }
-            var patch = Patching.Stage(_document, lines, _viewStage);
+            var patch = Patching.Stage(_document, lines, direction);
 
-            Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, _viewStage);
+            Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
             UpdateRepository();
         }
     }
