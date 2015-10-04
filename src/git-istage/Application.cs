@@ -17,8 +17,14 @@ namespace GitIStage
         private Label _footer;
         private PatchDocument _document;
 
-        public void Run()
+        public void Run(string repositoryPath)
         {
+            if (!Repository.IsValid(repositoryPath))
+            {
+                Console.WriteLine("Not a git repository");
+                return;
+            }
+
             var commands = new[]
             {
                 new ConsoleCommand(Exit, ConsoleKey.Escape),

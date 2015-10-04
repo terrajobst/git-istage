@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 
 namespace GitIStage
 {
@@ -6,8 +7,10 @@ namespace GitIStage
     {
         private static void Main()
         {
+            var repositoryPath = Directory.GetCurrentDirectory();
+
             var application = new Application();
-            application.Run();
+            application.Run(repositoryPath);
         }
     }
 }
