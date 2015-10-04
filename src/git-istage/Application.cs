@@ -161,6 +161,8 @@ namespace GitIStage
                 return;
 
             _view.SelectedLine--;
+            if (_view.TopLine > _view.SelectedLine)
+                _view.TopLine = _view.SelectedLine;
         }
 
         private void SelectDown()
@@ -169,6 +171,8 @@ namespace GitIStage
                 return;
 
             _view.SelectedLine++;
+            if (_view.TopLine < _view.SelectedLine - _view.Height + 1)
+                _view.TopLine = _view.SelectedLine - _view.Height + 1;
         }
 
         private void ScrollUp()
@@ -215,6 +219,7 @@ namespace GitIStage
                 : currentIndex - 1;
             var firstLine = _document.Entries[nextIndex].Offset;
             _view.SelectedLine = firstLine;
+            _view.BringIntoView(_view.SelectedLine);
         }
 
         private void GoNextFile()
@@ -229,6 +234,7 @@ namespace GitIStage
                 : currentIndex + 1;
             var firstLine = _document.Entries[nextIndex].Offset;
             _view.SelectedLine = firstLine;
+            _view.BringIntoView(_view.SelectedLine);
         }
 
         private void GoPreviousHunk()
@@ -252,11 +258,12 @@ namespace GitIStage
 
                 entryIndex--;
                 entry = _document.Entries[entryIndex];
-                hunkIndex = 0;
+                hunkIndex = entry.Hunks.Count - 1;
             }
 
             var firstLine = FindFirstModification(entry.Hunks[hunkIndex]);
             _view.SelectedLine = firstLine;
+            _view.BringIntoView(_view.SelectedLine);
         }
 
         private void GoNextHunk()
@@ -285,6 +292,7 @@ namespace GitIStage
 
             var firstLine = FindFirstModification(entry.Hunks[hunkIndex]);
             _view.SelectedLine = firstLine;
+            _view.BringIntoView(_view.SelectedLine);
         }
 
         private int FindFirstModification(PatchHunk hunk)

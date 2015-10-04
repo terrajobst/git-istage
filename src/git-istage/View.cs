@@ -140,15 +140,6 @@ namespace GitIStage
             if (value < 0 || value >= DocumentHeight)
                 throw new ArgumentOutOfRangeException(nameof(value));
 
-            if (value < _topLine)
-            {
-                UpdateTopLine(value);
-            }
-            else if (value > _topLine + Height - 1)
-            {
-                UpdateTopLine(value - Height + 1);
-            }
-
             var unselectedLine = _selectedLine;
             _selectedLine = value;
 
@@ -218,6 +209,26 @@ namespace GitIStage
             _leftChar = value;
             Render();
             LeftCharChanged?.Invoke(this, EventArgs.Empty);
+        }
+
+        public void BringIntoView(int lineIndex)
+        {
+            if (lineIndex < 0 || lineIndex >= DocumentHeight)
+                throw new ArgumentOutOfRangeException(nameof(lineIndex));
+
+            var offScreen = lineIndex < _topLine ||
+                            lineIndex > _topLine + Height - 1;
+            if (!offScreen)
+                return;
+
+            var topLine = _selectedLine - Height/2;
+            if (topLine < 0)
+                topLine = 0;
+
+            if (topLine > DocumentHeight - Height - 1)
+                topLine = DocumentHeight - Height - 1;
+
+            UpdateTopLine(topLine);
         }
 
         public event EventHandler SelectedLineChanged;
