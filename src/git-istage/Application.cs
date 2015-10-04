@@ -372,7 +372,7 @@ namespace GitIStage
                                   .Where(i => _document.Lines[i].Kind == PatchLineKind.Addition ||
                                               _document.Lines[i].Kind == PatchLineKind.Removal);
             }
-            var patch = Patching.Stage(_document, lines, direction);
+            var patch = Patching.ComputePatch(_document, lines, direction);
 
             Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
             UpdateRepository();

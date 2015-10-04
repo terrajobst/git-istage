@@ -11,7 +11,7 @@ namespace GitIStage
 {
     internal static class Patching
     {
-        public static string Stage(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
+        public static string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
         {
             var isUndo = direction == PatchDirection.Reset ||
                          direction == PatchDirection.Unstage;
