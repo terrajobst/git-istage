@@ -55,9 +55,10 @@
     <Compile Include="ConsoleCommand.cs" />
     <Compile Include="Document.cs" />
     <Compile Include="PatchDocument.cs" />
-    <Compile Include="PatchFile.cs" />
-    <Compile Include="PatchLine.cs" />
+    <Compile Include="PatchEntry.cs" />
     <Compile Include="Label.cs" />
+    <Compile Include="PatchHunk.cs" />
+    <Compile Include="PatchLine.cs" />
     <Compile Include="ViewLineRenderer.cs" />
     <Compile Include="Patching.cs" />
     <Compile Include="PatchLineKind.cs" />

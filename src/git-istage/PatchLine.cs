@@ -1,24 +1,23 @@
 using System;
-using System.Collections.Generic;
 
 namespace GitIStage
 {
     internal sealed class PatchLine
     {
-        public PatchLine(PatchFile patchFile, IReadOnlyList<string> patchLines, int index)
+        public PatchLine(PatchLineKind kind, string text)
         {
-            PatchFile = patchFile;
-            Kind = Patching.GetPatchLineKind(patchLines, index);
-            Text = patchLines[index];
-            Index = index;
+            Kind = kind;
+            Text = text;
         }
-
-        public PatchFile PatchFile { get; }
 
         public PatchLineKind Kind { get; }
 
         public string Text { get; }
 
-        public int Index { get; }
+        public override string ToString()
+        {
+            var kindStr = Kind.ToString();
+            return $"[{kindStr,-12}] {Text}";
+        }
     }
 }

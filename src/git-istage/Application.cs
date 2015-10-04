@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -40,7 +41,9 @@ namespace GitIStage
                 new ConsoleCommand(ShowPreviousFile, ConsoleKey.LeftArrow), 
                 new ConsoleCommand(ShowNextFile, ConsoleKey.RightArrow),
                 new ConsoleCommand(Stage, ConsoleKey.S),
+                new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift),
                 new ConsoleCommand(Unstage, ConsoleKey.U),
+                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift),
                 new ConsoleCommand(Toggle, ConsoleKey.T)
             };
 
@@ -91,15 +94,14 @@ namespace GitIStage
             var changes = _viewStage
                 ? _repository.Diff.Compare<TreeChanges>(_repository.Head.Tip.Tree, DiffTargets.Index)
                 : _repository.Diff.Compare<TreeChanges>(null, true);
-
-            var paths = changes.Select(c => c.Path);
-            var patches = from p in paths
-                          let singlePath = new[] {p}
-                          let patch = _viewStage
-                              ? _repository.Diff.Compare<Patch>(_repository.Head.Tip.Tree, DiffTargets.Index, singlePath)
-                              : _repository.Diff.Compare<Patch>(singlePath, true)
-                          select new PatchFile(patch, p);
-            _document = new PatchDocument(patches);
+            var paths = changes.Select(c => c.Path).ToArray();
+            var patch = paths.Any()
+                ? _viewStage
+                    ? _repository.Diff.Compare<Patch>(_repository.Head.Tip.Tree, DiffTargets.Index, paths)
+                    : _repository.Diff.Compare<Patch>(paths, true)
+                : null;
+           
+            _document = PatchDocument.Parse(patch);
             _view.Document = _document;
 
             UpdateHeader();
@@ -108,9 +110,9 @@ namespace GitIStage
 
         private void UpdateHeader()
         {
-            var line = _document.Lines.Any() ? _document.Lines[_view.SelectedLine] : null;
+            var entry = _document.Lines.Any() ? _document.FindEntry(_view.SelectedLine) : null;
             var emptyMarker = _viewStage ? "*nothing to commit*" : "*clean*";
-            var path = line == null ? emptyMarker : line.PatchFile.Path;
+            var path = entry == null ? emptyMarker : entry.Changes.Path;
             var mode = _viewStage ? "S" : "W";
 
             _header.Text = $" {mode} | {path}";
@@ -202,12 +204,11 @@ namespace GitIStage
             if (i < 0)
                 return;
 
-            var file = _document.Lines[i].PatchFile;
-            var fileIndex = _document.Files.IndexOf(file);
-            var previousFile = fileIndex == 0
-                ? file
-                : _document.Files[fileIndex - 1];
-            var firstLine = _document.Lines.IndexOf(previousFile.Lines.First());
+            var entryIndex = _document.FindEntryIndex(i);
+            var previousEntry = entryIndex == 0
+                ? entryIndex
+                : entryIndex - 1;
+            var firstLine = _document.Entries[previousEntry].Offset;
             _view.TopLine = _view.SelectedLine = firstLine;
         }
 
@@ -217,12 +218,11 @@ namespace GitIStage
             if (i < 0)
                 return;
 
-            var file = _document.Lines[i].PatchFile;
-            var fileIndex = _document.Files.IndexOf(file);
-            var nextFile = fileIndex == _document.Files.Count - 1
-                ? file
-                : _document.Files[fileIndex + 1];
-            var firstLine = _document.Lines.IndexOf(nextFile.Lines.First());
+            var entryIndex = _document.FindEntryIndex(i);
+            var nextEntry = entryIndex == _document.Entries.Count - 1
+                ? entryIndex
+                : entryIndex + 1;
+            var firstLine = _document.Entries[nextEntry].Offset;
             _view.SelectedLine = firstLine;
             _view.TopLine = Math.Max(0, Math.Min(firstLine, _view.DocumentHeight - _view.Height));
         }
@@ -232,7 +232,15 @@ namespace GitIStage
             if (_viewStage)
                 return;
 
-            StageUnstage();
+            StageUnstage(false);
+        }
+
+        private void StageHunk()
+        {
+            if (_viewStage)
+                return;
+
+            StageUnstage(true);
         }
 
         private void Unstage()
@@ -240,10 +248,18 @@ namespace GitIStage
             if (!_viewStage)
                 return;
 
-            StageUnstage();
+            StageUnstage(false);
         }
 
-        private void StageUnstage()
+        private void UnstageHunk()
+        {
+            if (!_viewStage)
+                return;
+
+            StageUnstage(true);
+        }
+
+        private void StageUnstage(bool entireHunk)
         {
             if (_view.SelectedLine < 0)
                 return;
@@ -253,9 +269,20 @@ namespace GitIStage
                 line.Kind != PatchLineKind.Removal)
                 return;
 
-            var patchFile = line.PatchFile;
-            var index = line.Index;
-            var patch = Patching.Stage(patchFile, index, _viewStage);
+            IEnumerable<int> lines;
+            if (!entireHunk)
+            {
+                lines = new[] {_view.SelectedLine};
+            }
+            else
+            {
+                var entry = _document.FindEntry(_view.SelectedLine);
+                var hunk = entry.FindHunk(_view.SelectedLine);
+                lines = Enumerable.Range(hunk.Offset, hunk.Length)
+                                  .Where(i => _document.Lines[i].Kind == PatchLineKind.Addition ||
+                                              _document.Lines[i].Kind == PatchLineKind.Removal);
+            }
+            var patch = Patching.Stage(_document, lines, _viewStage);
 
             Patching.ApplyPatch(_repository.Info.WorkingDirectory, patch, _viewStage);
             UpdateRepository();

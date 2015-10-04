@@ -13,10 +13,5 @@ the line level, a breeze.
     * <kbd>Ctrl</kbd> <kbd>PageDown</kbd> Scroll down page wise
     * Go to next hunk
     * Go to previews hunk
-* Support more staging shortcuts:
-    * Stage current hunk
-    * Unstage current hunk
-    * Stage entire file
-    * Unstage entire file
 * Support reseting individual lines
 * Add help page with shortcut overview
