@@ -9,8 +9,10 @@ namespace GitIStage
 {
     internal sealed class Application
     {
-        private bool _done;
+        private readonly string _repositoryPath;
+        private readonly string _pathToGit;
 
+        private bool _done;
         private Repository _repository;
         private bool _viewStage;
         private Label _header;
@@ -18,14 +20,14 @@ namespace GitIStage
         private Label _footer;
         private PatchDocument _document;
 
-        public void Run(string repositoryPath)
+        public Application(string repositoryPath, string pathToGit)
         {
-            if (!Repository.IsValid(repositoryPath))
-            {
-                Console.WriteLine("Not a git repository");
-                return;
-            }
+            _repositoryPath = repositoryPath;
+            _pathToGit = pathToGit;
+        }
 
+        public void Run()
+        {
             var commands = new[]
             {
                 new ConsoleCommand(Exit, ConsoleKey.Escape),
@@ -91,7 +93,7 @@ namespace GitIStage
         private void UpdateRepository()
         {
             _repository?.Dispose();
-            _repository = new Repository(Directory.GetCurrentDirectory());
+            _repository = new Repository(_repositoryPath);
 
             var changes = _viewStage
                 ? _repository.Diff.Compare<TreeChanges>(_repository.Head.Tip.Tree, DiffTargets.Index)
@@ -355,7 +357,7 @@ namespace GitIStage
             }
             var patch = Patching.Stage(_document, lines, _viewStage);
 
-            Patching.ApplyPatch(_repository.Info.WorkingDirectory, patch, _viewStage);
+            Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, _viewStage);
             UpdateRepository();
         }
     }

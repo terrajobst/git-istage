@@ -128,7 +128,7 @@ namespace GitIStage
             return newPatch.ToString();
         }
 
-        public static void ApplyPatch(string workingDirectory, string patch, bool isUnstaging)
+        public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, bool isUnstaging)
         {
             var patchFilePath = Path.GetTempFileName();
             var reverse = isUnstaging ? "--reverse" : string.Empty;
@@ -137,7 +137,7 @@ namespace GitIStage
             File.WriteAllText(patchFilePath, patch);
             var startInfo = new ProcessStartInfo
             {
-                FileName = @"C:\Program Files\Git\bin\git.exe",
+                FileName = pathToGit,
                 WorkingDirectory = workingDirectory,
                 Arguments = arguments,
                 CreateNoWindow = true,
