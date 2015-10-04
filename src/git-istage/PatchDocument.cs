@@ -65,7 +65,7 @@ namespace GitIStage
                 while (hunkOffset < changeLines.Count)
                 {
                     var hunkEnd = GetNextHunk(changeLines, hunkOffset) - 1;
-                    var hunkLength = hunkEnd - hunkOffset;
+                    var hunkLength = hunkEnd - hunkOffset + 1;
                     var hunkLine = changeLines[hunkOffset].Text;
 
                     int oldStart;
@@ -74,7 +74,7 @@ namespace GitIStage
                     int newLength;
                     if (TryGetHunkInformation(hunkLine, out oldStart, out oldLength, out newStart, out newLength))
                     {
-                        var hunk = new PatchHunk(hunkOffset + entryOffset, hunkLength, oldStart, oldLength, newStart, newLength);
+                        var hunk = new PatchHunk(entryOffset + hunkOffset, hunkLength, oldStart, oldLength, newStart, newLength);
                         hunks.Add(hunk);
                     }
 

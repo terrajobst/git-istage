@@ -36,7 +36,7 @@ namespace GitIStage
 
                     var oldLength = 0;
 
-                    for (var i = hunk.Offset; i <= hunk.Offset + hunk.Length; i++)
+                    for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
                     {
                         var line = document.Lines[i];
                         var kind = line.Kind;
@@ -98,7 +98,7 @@ namespace GitIStage
 
                     var previousIncluded = false;
 
-                    for (var i = hunk.Offset; i <= hunk.Offset + hunk.Length; i++)
+                    for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
                     {
                         var line = document.Lines[i];
                         var kind = line.Kind;
