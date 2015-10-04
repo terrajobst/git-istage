@@ -42,7 +42,8 @@ namespace GitIStage
                         var kind = line.Kind;
 
                         var wasPresent = kind == PatchLineKind.Context ||
-                                         kind == PatchLineKind.Removal;
+                                         kind == PatchLineKind.Removal && (!isUnstaging || lineSet.Contains(i)) ||
+                                         kind == PatchLineKind.Addition && (isUnstaging && !lineSet.Contains(i));
 
                         if (wasPresent)
                             oldLength++;
