@@ -38,8 +38,10 @@ namespace GitIStage
                 new ConsoleCommand(ScrollDown, ConsoleKey.DownArrow, ConsoleModifiers.Control),
                 new ConsoleCommand(ScrollLeft, ConsoleKey.LeftArrow, ConsoleModifiers.Control),
                 new ConsoleCommand(ScrollRight, ConsoleKey.RightArrow, ConsoleModifiers.Control),
-                new ConsoleCommand(ShowPreviousFile, ConsoleKey.LeftArrow), 
-                new ConsoleCommand(ShowNextFile, ConsoleKey.RightArrow),
+                new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow), 
+                new ConsoleCommand(GoNextFile, ConsoleKey.RightArrow),
+                new ConsoleCommand(GoPreviousHunk, ConsoleKey.Oem4),
+                new ConsoleCommand(GoNextHunk, ConsoleKey.Oem6),
                 new ConsoleCommand(Stage, ConsoleKey.S),
                 new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift),
                 new ConsoleCommand(Unstage, ConsoleKey.U),
@@ -78,7 +80,7 @@ namespace GitIStage
                 Console.CursorVisible = isCursorVisible;
             }
         }
-
+       
         private void Toggle()
         {
             _viewStage = !_viewStage;
@@ -198,33 +200,102 @@ namespace GitIStage
             _view.LeftChar++;
         }
 
-        private void ShowPreviousFile()
+        private void GoPreviousFile()
         {
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
 
-            var entryIndex = _document.FindEntryIndex(i);
-            var previousEntry = entryIndex == 0
-                ? entryIndex
-                : entryIndex - 1;
-            var firstLine = _document.Entries[previousEntry].Offset;
-            _view.TopLine = _view.SelectedLine = firstLine;
+            var currentIndex = _document.FindEntryIndex(i);
+            var nextIndex = currentIndex == 0
+                ? currentIndex
+                : currentIndex - 1;
+            var firstLine = _document.Entries[nextIndex].Offset;
+            _view.SelectedLine = firstLine;
         }
 
-        private void ShowNextFile()
+        private void GoNextFile()
+        {
+            var i = _view.SelectedLine;
+            if (i < 0)
+                return;
+
+            var currentIndex = _document.FindEntryIndex(i);
+            var nextIndex = currentIndex == _document.Entries.Count - 1
+                ? currentIndex
+                : currentIndex + 1;
+            var firstLine = _document.Entries[nextIndex].Offset;
+            _view.SelectedLine = firstLine;
+        }
+
+        private void GoPreviousHunk()
         {
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
 
             var entryIndex = _document.FindEntryIndex(i);
-            var nextEntry = entryIndex == _document.Entries.Count - 1
-                ? entryIndex
-                : entryIndex + 1;
-            var firstLine = _document.Entries[nextEntry].Offset;
+            var entry = _document.Entries[entryIndex];
+            var hunkIndex = entry.FindHunkIndex(i);
+
+            if (hunkIndex > 0)
+            {
+                hunkIndex--;
+            }
+            else
+            {
+                if (entryIndex == 0)
+                    return;
+
+                entryIndex--;
+                entry = _document.Entries[entryIndex];
+                hunkIndex = 0;
+            }
+
+            var firstLine = FindFirstModification(entry.Hunks[hunkIndex]);
             _view.SelectedLine = firstLine;
-            _view.TopLine = Math.Max(0, Math.Min(firstLine, _view.DocumentHeight - _view.Height));
+        }
+
+        private void GoNextHunk()
+        {
+            var i = _view.SelectedLine;
+            if (i < 0)
+                return;
+
+            var entryIndex = _document.FindEntryIndex(i);
+            var entry = _document.Entries[entryIndex];
+            var hunkIndex = entry.FindHunkIndex(i);
+
+            if (hunkIndex != entry.Hunks.Count - 1)
+            {
+                hunkIndex++;
+            }
+            else
+            {
+                if (entryIndex == _document.Entries.Count - 1)
+                    return;
+
+                entryIndex++;
+                entry = _document.Entries[entryIndex];
+                hunkIndex = 0;
+            }
+
+            var firstLine = FindFirstModification(entry.Hunks[hunkIndex]);
+            _view.SelectedLine = firstLine;
+        }
+
+        private int FindFirstModification(PatchHunk hunk)
+        {
+            for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
+            {
+                if (_document.Lines[i].Kind == PatchLineKind.Addition ||
+                    _document.Lines[i].Kind == PatchLineKind.Removal)
+                {
+                    return i;
+                }
+            }
+
+            return hunk.Offset;
         }
 
         private void Stage()

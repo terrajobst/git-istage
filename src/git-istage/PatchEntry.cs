@@ -29,9 +29,22 @@ namespace GitIStage
 
         public PatchHunk FindHunk(int lineIndex)
         {
+            var hunkIndex = FindHunkIndex(lineIndex);
+            return hunkIndex < 0 ? null : Hunks[hunkIndex];
+        }
+
+        public int FindHunkIndex(int lineIndex)
+        {
             // TODO: Binary search would be more appropriate
 
-            return Hunks.Single(h => h.Offset <= lineIndex && lineIndex < h.Offset + h.Length);
+            for (var i = 0; i < Hunks.Count; i++)
+            {
+                var h = Hunks[i];
+                if (h.Offset <= lineIndex && lineIndex < h.Offset + h.Length)
+                    return i;
+            }
+
+            return -1;
         }
     }
 }
