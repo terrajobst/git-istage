@@ -37,6 +37,9 @@ namespace GitIStage
                 new ConsoleCommand(SelectDown, ConsoleKey.DownArrow),
                 new ConsoleCommand(ScrollUp, ConsoleKey.UpArrow, ConsoleModifiers.Control),
                 new ConsoleCommand(ScrollDown, ConsoleKey.DownArrow, ConsoleModifiers.Control),
+                new ConsoleCommand(ScrollPageUp, ConsoleKey.PageUp),
+                new ConsoleCommand(ScrollPageDown, ConsoleKey.PageDown),
+                new ConsoleCommand(ScrollPageDown, ConsoleKey.Spacebar),
                 new ConsoleCommand(ScrollLeft, ConsoleKey.LeftArrow, ConsoleModifiers.Control),
                 new ConsoleCommand(ScrollRight, ConsoleKey.RightArrow, ConsoleModifiers.Control),
                 new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow), 
@@ -189,6 +192,18 @@ namespace GitIStage
                 return;
 
             _view.TopLine++;
+        }
+
+        private void ScrollPageUp()
+        {
+            _view.TopLine = Math.Max(0, _view.TopLine - _view.Height);
+            _view.SelectedLine = _view.TopLine;
+        }
+
+        private void ScrollPageDown()
+        {
+            _view.TopLine = Math.Min(_view.DocumentHeight - _view.Height, _view.TopLine + _view.Height);
+            _view.SelectedLine = _view.TopLine;
         }
 
         private void ScrollLeft()

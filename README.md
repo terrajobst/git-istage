@@ -6,9 +6,4 @@ the line level, a breeze.
 
 ## Missing features
 
-* Support more navigation shortcuts:
-    * <kbd>PageUp</kbd> Select up page wise
-    * <kbd>PageDown</kbd> Select down page wise
-    * <kbd>Ctrl</kbd> <kbd>PageUp</kbd> Scroll up page wise
-    * <kbd>Ctrl</kbd> <kbd>PageDown</kbd> Scroll down page wise
 * Add help page with shortcut overview
