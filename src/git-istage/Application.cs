@@ -228,12 +228,8 @@ namespace GitIStage
             if (i < 0)
                 return;
 
-            var currentIndex = _document.FindEntryIndex(i);
-            var nextIndex = currentIndex == 0
-                ? currentIndex
-                : currentIndex - 1;
-            var firstLine = _document.Entries[nextIndex].Offset;
-            _view.SelectedLine = firstLine;
+            var nextIndex = _document.FindPreviousEntryIndex(i);
+            _view.SelectedLine = _document.Entries[nextIndex].Offset;
             _view.BringIntoView(_view.SelectedLine);
         }
 
@@ -243,12 +239,8 @@ namespace GitIStage
             if (i < 0)
                 return;
 
-            var currentIndex = _document.FindEntryIndex(i);
-            var nextIndex = currentIndex == _document.Entries.Count - 1
-                ? currentIndex
-                : currentIndex + 1;
-            var firstLine = _document.Entries[nextIndex].Offset;
-            _view.SelectedLine = firstLine;
+            var nextIndex = _document.FindNextEntryIndex(i);
+            _view.SelectedLine = _document.Entries[nextIndex].Offset;
             _view.BringIntoView(_view.SelectedLine);
         }
 
@@ -258,26 +250,7 @@ namespace GitIStage
             if (i < 0)
                 return;
 
-            var entryIndex = _document.FindEntryIndex(i);
-            var entry = _document.Entries[entryIndex];
-            var hunkIndex = entry.FindHunkIndex(i);
-
-            if (hunkIndex > 0)
-            {
-                hunkIndex--;
-            }
-            else
-            {
-                if (entryIndex == 0)
-                    return;
-
-                entryIndex--;
-                entry = _document.Entries[entryIndex];
-                hunkIndex = entry.Hunks.Count - 1;
-            }
-
-            var firstLine = FindFirstModification(entry.Hunks[hunkIndex]);
-            _view.SelectedLine = firstLine;
+            _view.SelectedLine = _document.FindPreviousChangeBlock(i);
             _view.BringIntoView(_view.SelectedLine);
         }
 
@@ -287,41 +260,8 @@ namespace GitIStage
             if (i < 0)
                 return;
 
-            var entryIndex = _document.FindEntryIndex(i);
-            var entry = _document.Entries[entryIndex];
-            var hunkIndex = entry.FindHunkIndex(i);
-
-            if (hunkIndex != entry.Hunks.Count - 1)
-            {
-                hunkIndex++;
-            }
-            else
-            {
-                if (entryIndex == _document.Entries.Count - 1)
-                    return;
-
-                entryIndex++;
-                entry = _document.Entries[entryIndex];
-                hunkIndex = 0;
-            }
-
-            var firstLine = FindFirstModification(entry.Hunks[hunkIndex]);
-            _view.SelectedLine = firstLine;
+            _view.SelectedLine = _document.FindNextChangeBlock(i);
             _view.BringIntoView(_view.SelectedLine);
-        }
-
-        private int FindFirstModification(PatchHunk hunk)
-        {
-            for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
-            {
-                if (_document.Lines[i].Kind == PatchLineKind.Addition ||
-                    _document.Lines[i].Kind == PatchLineKind.Removal)
-                {
-                    return i;
-                }
-            }
-
-            return hunk.Offset;
         }
 
         private void Reset()
@@ -378,8 +318,7 @@ namespace GitIStage
                 return;
 
             var line = _document.Lines[_view.SelectedLine];
-            if (line.Kind != PatchLineKind.Addition &&
-                line.Kind != PatchLineKind.Removal)
+            if (!line.Kind.IsAdditionOrRemoval())
                 return;
 
             IEnumerable<int> lines;
@@ -389,11 +328,10 @@ namespace GitIStage
             }
             else
             {
-                var entry = _document.FindEntry(_view.SelectedLine);
-                var hunk = entry.FindHunk(_view.SelectedLine);
-                lines = Enumerable.Range(hunk.Offset, hunk.Length)
-                                  .Where(i => _document.Lines[i].Kind == PatchLineKind.Addition ||
-                                              _document.Lines[i].Kind == PatchLineKind.Removal);
+                var start = _document.FindStartOfChangeBlock(_view.SelectedLine);
+                var end = _document.FindEndOfChangeBlock(_view.SelectedLine);
+                var length = end - start + 1;
+                lines = Enumerable.Range(start, length);
             }
             var patch = Patching.ComputePatch(_document, lines, direction);
 

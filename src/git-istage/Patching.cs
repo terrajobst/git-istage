@@ -54,7 +54,7 @@ namespace GitIStage
 
                     var delta = lineSet.Select(i => document.Lines[i])
                                        .Select(l => l.Kind)
-                                       .Where(k => k == PatchLineKind.Addition || k == PatchLineKind.Removal)
+                                       .Where(k => k.IsAdditionOrRemoval())
                                        .Select(k => k == PatchLineKind.Addition ? 1 : -1)
                                        .Sum();
 

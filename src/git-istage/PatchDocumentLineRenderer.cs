@@ -44,9 +44,7 @@ namespace GitIStage
             var isSelected = view.SelectedLine == lineIndex;
             if (isSelected)
             {
-                var canStage = kind == PatchLineKind.Addition ||
-                               kind == PatchLineKind.Removal;
-                return canStage
+                return kind.IsAdditionOrRemoval()
                     ? ConsoleColor.Gray
                     : ConsoleColor.DarkGray;
             }

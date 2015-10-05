@@ -58,6 +58,7 @@
     <Compile Include="PatchDocument.cs" />
     <Compile Include="PatchEntry.cs" />
     <Compile Include="Label.cs" />
+    <Compile Include="PatchExtension.cs" />
     <Compile Include="PatchHunk.cs" />
     <Compile Include="PatchLine.cs" />
     <Compile Include="ViewLineRenderer.cs" />
