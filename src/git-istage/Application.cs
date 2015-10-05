@@ -33,6 +33,7 @@ namespace GitIStage
             {
                 new ConsoleCommand(Exit, ConsoleKey.Escape),
                 new ConsoleCommand(Exit, ConsoleKey.Q),
+                new ConsoleCommand(ToggleBetweenWorkingDirectoryAndStaging, ConsoleKey.T),
                 new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus),
                 new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus),
                 new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7),
@@ -56,8 +57,7 @@ namespace GitIStage
                 new ConsoleCommand(Stage, ConsoleKey.S),
                 new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift),
                 new ConsoleCommand(Unstage, ConsoleKey.U),
-                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift),
-                new ConsoleCommand(Toggle, ConsoleKey.T)
+                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift)
             };
 
             var isCursorVisible = Console.CursorVisible;
@@ -90,13 +90,6 @@ namespace GitIStage
                 Console.Clear();
                 Console.CursorVisible = isCursorVisible;
             }
-        }
-       
-        private void Toggle()
-        {
-            _viewStage = !_viewStage;
-
-            UpdateRepository();
         }
 
         private void UpdateRepository()
@@ -152,6 +145,13 @@ namespace GitIStage
         private void Exit()
         {
             _done = true;
+        }
+
+        private void ToggleBetweenWorkingDirectoryAndStaging()
+        {
+            _viewStage = !_viewStage;
+
+            UpdateRepository();
         }
 
         private void IncreaseContext()
