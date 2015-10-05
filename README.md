@@ -6,4 +6,7 @@ the line level, a breeze.
 
 ## Missing features
 
+* Support inline search using slash
+* Add ability to stash all unstaged work
+* Add ability to edit the patch inline
 * Add help page with shortcut overview
