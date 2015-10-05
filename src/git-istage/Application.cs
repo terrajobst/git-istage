@@ -12,6 +12,8 @@ namespace GitIStage
         private readonly string _pathToGit;
 
         private bool _done;
+        private bool _fullFileDiff;
+        private int _contextLines = 3;
         private Repository _repository;
         private bool _viewStage;
         private Label _header;
@@ -31,6 +33,9 @@ namespace GitIStage
             {
                 new ConsoleCommand(Exit, ConsoleKey.Escape),
                 new ConsoleCommand(Exit, ConsoleKey.Q),
+                new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus),
+                new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus),
+                new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7),
                 new ConsoleCommand(GoHome, ConsoleKey.Home),
                 new ConsoleCommand(GoEnd, ConsoleKey.End),
                 new ConsoleCommand(SelectUp, ConsoleKey.UpArrow),
@@ -99,14 +104,17 @@ namespace GitIStage
             _repository?.Dispose();
             _repository = new Repository(_repositoryPath);
 
+            var compareOptions = new CompareOptions();
+            compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;
+
             var changes = _viewStage
                 ? _repository.Diff.Compare<TreeChanges>(_repository.Head.Tip.Tree, DiffTargets.Index)
                 : _repository.Diff.Compare<TreeChanges>(null, true);
             var paths = changes.Select(c => c.Path).ToArray();
             var patch = paths.Any()
                 ? _viewStage
-                    ? _repository.Diff.Compare<Patch>(_repository.Head.Tip.Tree, DiffTargets.Index, paths)
-                    : _repository.Diff.Compare<Patch>(paths, true)
+                    ? _repository.Diff.Compare<Patch>(_repository.Head.Tip.Tree, DiffTargets.Index, paths, null, compareOptions)
+                    : _repository.Diff.Compare<Patch>(paths, true, null, compareOptions)
                 : null;
            
             _document = PatchDocument.Parse(patch);
@@ -144,6 +152,27 @@ namespace GitIStage
         private void Exit()
         {
             _done = true;
+        }
+
+        private void IncreaseContext()
+        {
+            _contextLines++;
+            UpdateRepository();
+        }
+
+        private void DecreaseContext()
+        {
+            if (_contextLines == 0)
+                return;
+
+            _contextLines--;
+            UpdateRepository();
+        }
+
+        private void ToogleFullDiff()
+        {
+            _fullFileDiff = !_fullFileDiff;
+            UpdateRepository();
         }
 
         private void GoHome()
