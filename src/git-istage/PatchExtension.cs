@@ -13,13 +13,13 @@ namespace GitIStage
         public static int FindPreviousEntryIndex(this PatchDocument document, int lineIndex)
         {
             var entryIndex = document.FindEntryIndex(lineIndex);
-            return entryIndex > 0 ? entryIndex - 1 : -1;
+            return Math.Max(entryIndex - 1, 0);
         }
 
         public static int FindNextEntryIndex(this PatchDocument document, int lineIndex)
         {
             var entryIndex = document.FindEntryIndex(lineIndex);
-            return entryIndex < document.Entries.Count - 1 ? entryIndex + 1 : -1;
+            return Math.Min(entryIndex + 1, document.Entries.Count - 1);
         }
 
         public static int FindPreviousChangeBlock(this PatchDocument document, int lineIndex)
