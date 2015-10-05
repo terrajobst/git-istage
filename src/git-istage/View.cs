@@ -11,6 +11,7 @@ namespace GitIStage
         private int _topLine;
         private int _leftChar;
         private int _selectedLine;
+        private bool _visibleWhitespace;
 
         public View(ViewLineRenderer renderer, int top, int left, int bottom, int right)
         {
@@ -68,6 +69,19 @@ namespace GitIStage
         public int DocumentWidth { get; private set; }
 
         public int DocumentHeight => Document.Height;
+
+        public bool VisibleWhitespace
+        {
+            get { return _visibleWhitespace; }
+            set
+            {
+                if (_visibleWhitespace != value)
+                {
+                    _visibleWhitespace = value;
+                    Render();
+                }
+            }
+        }
 
         private void Initialize()
         {

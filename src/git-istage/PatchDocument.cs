@@ -13,7 +13,7 @@ namespace GitIStage
         {
             Entries = entries;
             Lines = lines;
-            Width = lines.Select(l => l.Text).DefaultIfEmpty(string.Empty).Max(t => t.Length);
+            Width = lines.Select(l => l.Text).DefaultIfEmpty(string.Empty).Max(t => t.LengthVisual());
         }
 
         public IReadOnlyList<PatchEntry> Entries { get; }

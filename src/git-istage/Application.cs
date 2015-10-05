@@ -37,6 +37,7 @@ namespace GitIStage
                 new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus),
                 new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus),
                 new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7),
+                new ConsoleCommand(ToggleWhitespace, ConsoleKey.W),
                 new ConsoleCommand(GoHome, ConsoleKey.Home),
                 new ConsoleCommand(GoEnd, ConsoleKey.End),
                 new ConsoleCommand(SelectUp, ConsoleKey.UpArrow),
@@ -173,6 +174,11 @@ namespace GitIStage
         {
             _fullFileDiff = !_fullFileDiff;
             UpdateRepository();
+        }
+
+        private void ToggleWhitespace()
+        {
+            _view.VisibleWhitespace = !_view.VisibleWhitespace;
         }
 
         private void GoHome()

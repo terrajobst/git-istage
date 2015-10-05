@@ -12,7 +12,7 @@ namespace GitIStage
         {
             var textStart = Math.Min(view.LeftChar, line.Length);
             var textLength = Math.Max(Math.Min(view.Width, line.Length - view.LeftChar), 0);
-            var text = textLength < 0 ? string.Empty : line.Substring(textStart, textLength);
+            var text = textLength < 0 ? string.Empty : line.ToVisual(view.VisibleWhitespace).Substring(textStart, textLength);
 
             var oldForeground = Console.ForegroundColor;
             var oldBackgorund = Console.BackgroundColor;
