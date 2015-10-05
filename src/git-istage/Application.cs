@@ -65,6 +65,32 @@ namespace GitIStage
             Console.CursorVisible = false;
             Console.Clear();
 
+            InitializeScreen();
+
+            using (_repository)
+            {
+                while (!_done)
+                {
+                    var width = Console.WindowWidth;
+                    var height = Console.WindowHeight;
+
+                    var key = Console.ReadKey(true);
+                    var command = commands.FirstOrDefault(c => c.MatchesKey(key));
+                    command?.Execute();
+
+                    if (width != Console.WindowWidth || height != Console.WindowHeight)
+                        InitializeScreen();
+                }
+
+                Console.Clear();
+                Console.CursorVisible = isCursorVisible;
+            }
+        }
+
+        private void InitializeScreen()
+        {
+            var oldView = _view;
+
             _header = new Label(0, 0, Console.WindowWidth);
             _header.Foreground = ConsoleColor.Yellow;
             _header.Background = ConsoleColor.DarkGray;
@@ -79,17 +105,11 @@ namespace GitIStage
 
             UpdateRepository();
 
-            using (_repository)
+            if (oldView != null)
             {
-                while (!_done)
-                {
-                    var key = Console.ReadKey(true);
-                    var command = commands.FirstOrDefault(c => c.MatchesKey(key));
-                    command?.Execute();
-                }
-
-                Console.Clear();
-                Console.CursorVisible = isCursorVisible;
+                _view.VisibleWhitespace = oldView.VisibleWhitespace;
+                _view.SelectedLine = oldView.SelectedLine;
+                _view.BringIntoView(_view.SelectedLine);
             }
         }
 
