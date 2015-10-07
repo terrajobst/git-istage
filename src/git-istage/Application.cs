@@ -207,12 +207,14 @@ namespace GitIStage
         {
             _view.LeftChar = 0;
             _view.SelectedLine = 0;
+            _view.BringIntoView(_view.SelectedLine);
         }
 
         private void GoEnd()
         {
             _view.LeftChar = 0;
             _view.SelectedLine = _view.DocumentHeight - 1;
+            _view.BringIntoView(_view.SelectedLine);
         }
 
         private void SelectUp()
