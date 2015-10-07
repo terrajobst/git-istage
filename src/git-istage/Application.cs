@@ -121,13 +121,14 @@ namespace GitIStage
             var compareOptions = new CompareOptions();
             compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;
 
+            var tipTree = _repository.Head.Tip?.Tree;
             var changes = _viewStage
-                ? _repository.Diff.Compare<TreeChanges>(_repository.Head.Tip.Tree, DiffTargets.Index)
+                ? _repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
                 : _repository.Diff.Compare<TreeChanges>(null, true);
             var paths = changes.Select(c => c.Path).ToArray();
             var patch = paths.Any()
                 ? _viewStage
-                    ? _repository.Diff.Compare<Patch>(_repository.Head.Tip.Tree, DiffTargets.Index, paths, null, compareOptions)
+                    ? _repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
                     : _repository.Diff.Compare<Patch>(paths, true, null, compareOptions)
                 : null;
            
@@ -150,7 +151,8 @@ namespace GitIStage
 
         private void UpdateFooter()
         {
-            var stageChanges = _repository.Diff.Compare<TreeChanges>(_repository.Head.Tip.Tree, DiffTargets.Index);
+            var tipTree = _repository.Head.Tip?.Tree;
+            var stageChanges = _repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index);
             var stageAdded = stageChanges.Added.Count();
             var stageModified = stageChanges.Modified.Count();
             var stageDeleted = stageChanges.Deleted.Count();
