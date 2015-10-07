@@ -239,8 +239,8 @@ namespace GitIStage
             if (topLine < 0)
                 topLine = 0;
 
-            if (topLine > DocumentHeight - Height - 1)
-                topLine = DocumentHeight - Height - 1;
+            if (topLine > DocumentHeight - Height)
+                topLine = DocumentHeight - Height;
 
             UpdateTopLine(topLine);
         }
