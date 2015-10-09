@@ -10,6 +10,12 @@ the line level, a breeze.
 
 ## Installation
 
+### Via Chocolatey
+
+    $ choco install git-istage -pre
+
+### From source
+
 First, clone the repo somewhere on your hardrive, for example:
 
 ```
