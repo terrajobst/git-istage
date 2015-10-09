@@ -12,6 +12,8 @@
       Configuration=$(Configuration);
       Platform=$(Platform);
       OutDir=$(OutDir);
+      NuProjPath=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.10.4-beta-gf7fc34e7d8\tools\;
+      CustomAfterMicrosoftCommonTargets=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.10.4-beta-gf7fc34e7d8\tools\Microsoft.Common.NuProj.targets;
     </ProjectProperties>
   </PropertyGroup>
 
