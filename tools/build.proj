@@ -5,6 +5,7 @@
     <OutDir Condition="'$(OutDir)' == ''">$(MSBuildThisFileDirectory)..\bin\</OutDir>
     <Configuration Condition="'$(Configuration)' == ''">Release</Configuration>
     <Platform Condition="'$(Platform)' == ''">Any CPU</Platform>
+    <PublicRelease Condition="'$(PublicRelease)' == ''">True</PublicRelease>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -12,6 +13,7 @@
       Configuration=$(Configuration);
       Platform=$(Platform);
       OutDir=$(OutDir);
+      PublicRelease=$(PublicRelease);
       NuProjPath=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.10.4-beta-gf7fc34e7d8\tools\;
       CustomAfterMicrosoftCommonTargets=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.10.4-beta-gf7fc34e7d8\tools\Microsoft.Common.NuProj.targets;
     </ProjectProperties>
