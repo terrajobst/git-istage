@@ -27,14 +27,12 @@
     <Title>git istage</Title>
     <Authors>Immo Landwerth</Authors>
     <Owners>Immo Landwerth</Owners>
-    <Summary>git-istage.nupkg</Summary>
-    <Description>git-istage.nupkg</Description>
+    <Summary>This Git command line extension makes staging whole files, as well as parts of a file, up to the line level, a breeze.</Summary>
+    <Description>For more details, see $(ProjectUrl).</Description>
     <ReleaseNotes>
     </ReleaseNotes>
-    <ProjectUrl>
-    </ProjectUrl>
-    <LicenseUrl>
-    </LicenseUrl>
+    <ProjectUrl>https://github.com/terrajobst/git-istage</ProjectUrl>
+    <LicenseUrl>https://raw.githubusercontent.com/terrajobst/git-istage/master/LICENSE</LicenseUrl>
     <Copyright>Copyright © Immo Landwerth</Copyright>
     <Tags>
     </Tags>
