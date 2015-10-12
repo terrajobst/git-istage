@@ -28,8 +28,6 @@
     <Authors>Immo Landwerth</Authors>
     <Owners>Immo Landwerth</Owners>
     <Summary>This Git command line extension makes staging whole files, as well as parts of a file, up to the line level, a breeze.</Summary>
-    <ReleaseNotes>
-    </ReleaseNotes>
     <ProjectUrl>https://github.com/terrajobst/git-istage</ProjectUrl>
     <LicenseUrl>https://raw.githubusercontent.com/terrajobst/git-istage/master/LICENSE</LicenseUrl>
     <Copyright>Copyright © Immo Landwerth</Copyright>
