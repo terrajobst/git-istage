@@ -40,7 +40,16 @@ namespace GitIStage
                 return null;
 
             var paths = path.Split(Path.PathSeparator);
-            var searchPaths = paths.Select(p => Path.Combine(p, "git.exe"));
+
+            // In order to have this work across all operating systems, we
+            // need to include other extensions.
+            //
+            // NOTE: On .NET Core, we should use RuntimeInformation in order
+            //       to limit the extensions based on operating system.
+
+            var fileNames = new[] { "git.exe", "git" };
+            var searchPaths = paths.SelectMany(p => fileNames.Select(f => Path.Combine(p, f)));
+
             return searchPaths.FirstOrDefault(File.Exists);
         }
     }
