@@ -42,15 +42,15 @@
   </PropertyGroup>
   <!-- Support for LibGit2 native dependencies which NuProj doesn't pick up -->
   <PropertyGroup>
-    <LibGit2PackageDir>$(MSBuildThisFileDirectory)..\packages\LibGit2Sharp.NativeBinaries.1.0.86\</LibGit2PackageDir>
+    <LibGit2PackageDir>$(MSBuildThisFileDirectory)..\packages\LibGit2Sharp.NativeBinaries.1.0.137\</LibGit2PackageDir>
   </PropertyGroup>
   <ItemGroup>
-    <Content Include="$(LibGit2PackageDir)libgit2\windows\amd64\git2-a99f33e.dll">
-      <Link>tools\NativeBinaries\amd64\git2-a99f33e.dll</Link>
+    <Content Include="$(LibGit2PackageDir)libgit2\win32\x64\git2-381caf5.dll">
+      <Link>tools\NativeBinaries\amd64\git2-381caf5.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
-    <Content Include="$(LibGit2PackageDir)libgit2\windows\x86\git2-a99f33e.dll">
-      <Link>tools\NativeBinaries\x86\git2-a99f33e.dll</Link>
+    <Content Include="$(LibGit2PackageDir)libgit2\win32\x86\git2-381caf5.dll">
+      <Link>tools\NativeBinaries\x86\git2-381caf5.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
     <Content Include="$(LibGit2PackageDir)libgit2\LibGit2Sharp.dll.config">
