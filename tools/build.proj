@@ -14,8 +14,7 @@
       Platform=$(Platform);
       OutDir=$(OutDir);
       PublicRelease=$(PublicRelease);
-      NuProjPath=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.10.4-beta-gf7fc34e7d8\tools\;
-      CustomAfterMicrosoftCommonTargets=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.10.4-beta-gf7fc34e7d8\tools\Microsoft.Common.NuProj.targets;
+      NuProjPath=$(MSBuildThisFileDirectory)..\src\packages\NuProj.0.11.14-beta\tools;
     </ProjectProperties>
   </PropertyGroup>
 
