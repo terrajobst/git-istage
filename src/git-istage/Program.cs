@@ -11,7 +11,7 @@ namespace GitIStage
         private static void Main()
         {
             var repositoryPath = ResolveRepositoryPath();
-            if (!Repository.IsValid(repositoryPath))
+            if (string.IsNullOrEmpty(repositoryPath))
             {
                 Console.WriteLine("fatal: Not a git repository");
                 return;
@@ -30,7 +30,16 @@ namespace GitIStage
 
         private static string ResolveRepositoryPath()
         {
-            return Directory.GetCurrentDirectory();
+            var currentDirectory = Directory.GetCurrentDirectory();
+            var repositoryPath = Repository.Discover(currentDirectory);
+
+            if (string.IsNullOrEmpty(repositoryPath))
+                return null;
+
+            if (!Repository.IsValid(repositoryPath))
+                return null;
+
+            return repositoryPath;
         }
 
         private static string ResolveGitPath()
