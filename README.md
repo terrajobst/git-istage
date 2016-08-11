@@ -78,6 +78,7 @@ Shortcut | Description
 ---------|------------
 <kbd>Esc</kbd> | Return to command line.
 <kbd>Q</kbd> | Return to command line.
+<kbd>C</kbd> | Author commit
 <kbd>T</kbd> | Toggle between working copy changes and staged changes.
 <kbd>R</kbd> | When viewing the working copy, removes the selected line from the working copy.
 <kbd>S</kbd> | When viewing the working copy, stages the selected line.

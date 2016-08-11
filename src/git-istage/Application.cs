@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 
 using LibGit2Sharp;
@@ -33,6 +34,7 @@ namespace GitIStage
             {
                 new ConsoleCommand(Exit, ConsoleKey.Escape),
                 new ConsoleCommand(Exit, ConsoleKey.Q),
+                new ConsoleCommand(Commit, ConsoleKey.C),
                 new ConsoleCommand(ToggleBetweenWorkingDirectoryAndStaging, ConsoleKey.T),
                 new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus),
                 new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus),
@@ -168,6 +170,22 @@ namespace GitIStage
         private void Exit()
         {
             _done = true;
+        }
+
+        private void Commit()
+        {
+            var startupInfo = new ProcessStartInfo
+            {
+                FileName = _pathToGit,
+                Arguments = "commit -v",
+                CreateNoWindow = true,
+                UseShellExecute = false
+            };
+
+            var process = Process.Start(startupInfo);
+            process.WaitForExit();
+
+            UpdateRepository();
         }
 
         private void ToggleBetweenWorkingDirectoryAndStaging()
