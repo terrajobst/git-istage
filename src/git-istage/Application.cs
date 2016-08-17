@@ -35,6 +35,8 @@ namespace GitIStage
                 new ConsoleCommand(Exit, ConsoleKey.Escape),
                 new ConsoleCommand(Exit, ConsoleKey.Q),
                 new ConsoleCommand(Commit, ConsoleKey.C),
+                new ConsoleCommand(CommitAmend, ConsoleKey.C, ConsoleModifiers.Alt),
+                new ConsoleCommand(Stash, ConsoleKey.S, ConsoleModifiers.Alt),
                 new ConsoleCommand(ToggleBetweenWorkingDirectoryAndStaging, ConsoleKey.T),
                 new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus),
                 new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus),
@@ -51,7 +53,7 @@ namespace GitIStage
                 new ConsoleCommand(ScrollPageDown, ConsoleKey.Spacebar),
                 new ConsoleCommand(ScrollLeft, ConsoleKey.LeftArrow, ConsoleModifiers.Control),
                 new ConsoleCommand(ScrollRight, ConsoleKey.RightArrow, ConsoleModifiers.Control),
-                new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow), 
+                new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow),
                 new ConsoleCommand(GoNextFile, ConsoleKey.RightArrow),
                 new ConsoleCommand(GoPreviousHunk, ConsoleKey.Oem4),
                 new ConsoleCommand(GoNextHunk, ConsoleKey.Oem6),
@@ -172,12 +174,12 @@ namespace GitIStage
             _done = true;
         }
 
-        private void Commit()
+        private void RunGit(string command)
         {
             var startupInfo = new ProcessStartInfo
             {
                 FileName = _pathToGit,
-                Arguments = "commit -v",
+                Arguments = command,
                 CreateNoWindow = true,
                 UseShellExecute = false
             };
@@ -186,6 +188,21 @@ namespace GitIStage
             process.WaitForExit();
 
             UpdateRepository();
+        }
+
+        private void Commit()
+        {
+            RunGit("commit -v");
+        }
+
+        private void CommitAmend()
+        {
+            RunGit("commit -v --amend");
+        }
+
+        private void Stash()
+        {
+            RunGit("stash -u -k");
         }
 
         private void ToggleBetweenWorkingDirectoryAndStaging()

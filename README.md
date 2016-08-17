@@ -79,6 +79,8 @@ Shortcut | Description
 <kbd>Esc</kbd> | Return to command line.
 <kbd>Q</kbd> | Return to command line.
 <kbd>C</kbd> | Author commit
+<kbd>Alt</kbd> <kbd>C</kbd> | Authors commit with `--amend` option
+<kbd>Alt</kbd> <kbd>S</kbd> | Stashes changes from the working copy, but leaves the stage as-is.
 <kbd>T</kbd> | Toggle between working copy changes and staged changes.
 <kbd>R</kbd> | When viewing the working copy, removes the selected line from the working copy.
 <kbd>S</kbd> | When viewing the working copy, stages the selected line.
