@@ -68,7 +68,9 @@ entire files or changes only.
 When you are done, simply return to the command line by hitting <kbd>Esc</kbd>
 or <kbd>Q</kbd>. Once there, I recommend you run `git stash -u -k`, which will
 stash all changes you didn't stage so you can test the code you're about to
-commit. Once satisfied, run `git commit` and unstash via `git stash pop`.
+commit. Or, you can stash right from inside of git istage by hitting
+<kbd>Alt</kbd> <kbd>S</kbd>. Once satisfied, run `git commit` and unstash via
+`git stash pop`.
 
 More keyboard shortcuts listed below.
 
@@ -113,6 +115,5 @@ Shortcut | Description
 ## Missing features
 
 * Support inline search using slash
-* Add ability to stash all unstaged work
 * Add ability to edit the patch inline
 * Add help page with shortcut overview
