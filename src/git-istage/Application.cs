@@ -100,10 +100,10 @@ namespace GitIStage
             _header.Background = ConsoleColor.DarkGray;
 
             var renderer = new PatchDocumentLineRenderer();
-            _view = new View(renderer, 1, 0, Console.WindowHeight - 2, Console.WindowWidth);
+            _view = new View(renderer, 1, 0, Console.WindowHeight - 1, Console.WindowWidth);
             _view.SelectedLineChanged += delegate { UpdateHeader(); };
 
-            _footer = new Label(Console.WindowHeight - 2, 0, Console.WindowWidth);
+            _footer = new Label(Console.WindowHeight - 1, 0, Console.WindowWidth);
             _footer.Foreground = ConsoleColor.Yellow;
             _footer.Background = ConsoleColor.DarkGray;
 
