@@ -2,45 +2,32 @@
 <Project ToolsVersion="4.0" DefaultTargets="Build" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
 
   <PropertyGroup>
-    <PackagesDir>$(MSBuildThisFileDirectory)..\src\packages\</PackagesDir>
-    <NuGetToolPath>$(MSBuildThisFileDirectory)NuGet.exe</NuGetToolPath>
+    <ProjectProperties />
   </PropertyGroup>
 
   <ItemGroup>
-    <Package Include="$(MSBuildThisFileDirectory)..\src\*\packages.config" />
+    <SolutionFiles Include="$(MSBuildThisFileDirectory)..\src\*.sln" />
   </ItemGroup>
 
-  <UsingTask TaskName="DownloadFile" TaskFactory="CodeTaskFactory" AssemblyFile="$(MSBuildToolsPath)\Microsoft.Build.Tasks.v4.0.dll">
-    <ParameterGroup>
-      <Address ParameterType="System.String" Required="true"/>
-      <FileName ParameterType="System.String" Required="true" />
-    </ParameterGroup>
-    <Task>
-      <Reference Include="System" />
-      <Code Type="Fragment" Language="cs">
-        <![CDATA[
-            new System.Net.WebClient().DownloadFile(Address, FileName);
-        ]]>
-      </Code>
-    </Task>
-  </UsingTask>
-
   <Target Name="Clean">
-    <ItemGroup>
-      <_PackageFiles Include="$(PackagesDir)**\*.*"
-                     Exclude="$(PackagesDir)repositories.config" />
-    </ItemGroup>
-    <Delete Files="@(_PackageFiles)" />
+    <MSBuild Projects="@(SolutionFiles)"
+             BuildInParallel="True"
+             Targets="Clean"
+             Properties="$(ProjectProperties)" />
   </Target>
 
   <Target Name="Build">
-    <DownloadFile Condition="!Exists($(NuGetToolPath))"
-                  Address="http://nuget.org/nuget.exe"
-                  FileName="$(NuGetToolPath)" />
-    <Exec Command="$(NuGetToolPath) install &quot;%(Package.FullPath)&quot; -o &quot;$(PackagesDir)\&quot;" />
+    <MSBuild Projects="@(SolutionFiles)"
+             BuildInParallel="True"
+             Targets="Restore"
+             Properties="$(ProjectProperties)" />
   </Target>
 
-  <Target Name="Rebuild"
-          DependsOnTargets="Clean;Build" />
+  <Target Name="Rebuild">
+    <MSBuild Projects="@(SolutionFiles)"
+             BuildInParallel="True"
+             Targets="Clean;Restore"
+             Properties="$(ProjectProperties)" />
+  </Target>
 
 </Project>
