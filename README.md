@@ -10,26 +10,11 @@ the line level, a breeze.
 
 ## Installation
 
-### Via Chocolatey
+    $ dotnet tool install git-istage -g
 
-    $ choco install git-istage -pre
+### CI Builds
 
-### From source
-
-First, clone the repo somewhere on your hardrive, for example:
-
-```
-git clone https://github.com/terrajobst/git-istage D:\temp\git-istage
-```
-
-Next, you simply build the repo:
-
-```
-D:\temp\git-istage
-.\build.cmd
-```
-
-Now all you need is add `D:\temp\git-istage\bin` to your path.
+    $ dotnet tool install git-istage -g --add-source https://www.myget.org/F/git-istage-ci/api/v3/index.json
 
 ## What is staging and why would I care?
 
