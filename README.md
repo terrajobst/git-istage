@@ -1,6 +1,6 @@
 # git istage
 
-[![Build status](https://ci.appveyor.com/api/projects/status/s2cgm9r24g0h4ips?svg=true)](https://ci.appveyor.com/project/terrajobst/git-istage)
+[![Build Status](https://terrajobst.visualstudio.com/git-istage/_apis/build/status/terrajobst.git-istage?branchName=master)](https://terrajobst.visualstudio.com/git-istage/_build/latest?definitionId=14)
 
 This git extension is designed to be a better alternative to `git add -p`.
 The goal is to make staging whole files, as well as parts of a file, up to
