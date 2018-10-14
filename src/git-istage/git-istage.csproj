@@ -71,13 +71,13 @@
   </ItemGroup>
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp">
-      <Version>0.23.0-pre20150419160303</Version>
+      <Version>0.25.3</Version>
     </PackageReference>
     <PackageReference Include="LibGit2Sharp.NativeBinaries">
-      <Version>1.0.137</Version>
+      <Version>1.0.235</Version>
     </PackageReference>
     <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>1.5.46</Version>
+      <Version>2.2.13</Version>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
