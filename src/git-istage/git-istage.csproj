@@ -82,8 +82,6 @@
     </PropertyGroup>
     <Error Condition="!Exists('..\packages\LibGit2Sharp.NativeBinaries.1.0.137\build\LibGit2Sharp.NativeBinaries.props')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\LibGit2Sharp.NativeBinaries.1.0.137\build\LibGit2Sharp.NativeBinaries.props'))" />
     <Error Condition="!Exists('..\packages\Nerdbank.GitVersioning.1.5.46\build\dotnet\Nerdbank.GitVersioning.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\Nerdbank.GitVersioning.1.5.46\build\dotnet\Nerdbank.GitVersioning.targets'))" />
-    <Error Condition="!Exists('..\packages\NuProj.Common.0.11.14-beta\build\dotnet\NuProj.Common.targets')" Text="$([System.String]::Format('$(ErrorText)', '..\packages\NuProj.Common.0.11.14-beta\build\dotnet\NuProj.Common.targets'))" />
   </Target>
   <Import Project="..\packages\Nerdbank.GitVersioning.1.5.46\build\dotnet\Nerdbank.GitVersioning.targets" Condition="Exists('..\packages\Nerdbank.GitVersioning.1.5.46\build\dotnet\Nerdbank.GitVersioning.targets')" />
-  <Import Project="..\packages\NuProj.Common.0.11.14-beta\build\dotnet\NuProj.Common.targets" Condition="Exists('..\packages\NuProj.Common.0.11.14-beta\build\dotnet\NuProj.Common.targets')" />
 </Project>
