@@ -495,14 +495,16 @@ namespace GitIStage
             //if (!_viewStage)
             //    return;
 
-            var table = new ConsoleTable("Shortcut", "Description");
+            var options = new ConsoleTableOptions {EnableCount = false, Columns = new List<string> {"Shortcut", "Description"}};
+            var table = new ConsoleTable(options);
+
             foreach (var line in new Shortcuts().Get())
             {
                 string[] split = line.Text.Split("|");
                 table.AddRow(split[0].Trim(), split[1].Trim());
             }
 
-            string[] lines = table.ToString().Split(
+            string[] lines = table.ToStringAlternative().Split(
                 new[] { "\r\n", "\r", "\n" },
                 StringSplitOptions.None
             );
