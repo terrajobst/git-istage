@@ -80,6 +80,7 @@ namespace GitIStage
                 new ConsoleCommand(AppendLineDigit7, ConsoleKey.D7),
                 new ConsoleCommand(AppendLineDigit8, ConsoleKey.D8),
                 new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9),
+                new ConsoleCommand(ShowHelpPage, ConsoleKey.F1)
             };
 
             Console.CursorVisible = false;
@@ -487,6 +488,14 @@ namespace GitIStage
         {
             _inputLineDigits.Append(digit);
             UpdateFooter();
+        }
+
+        private void ShowHelpPage()
+        {
+            //if (!_viewStage)
+            //    return;
+
+            _view.Document = new PatchDocument(null, new Shortcuts().Get());
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
