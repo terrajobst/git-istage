@@ -86,13 +86,13 @@ namespace GitIStage
 
             // create the divider
             var divider = " " + string.Join("", Enumerable.Repeat("-", longestLine - 1)) + " ";
-
+       
             builder.AppendLine(divider);
             builder.AppendLine(columnHeaders);
 
             foreach (var row in results)
             {
-                builder.AppendLine(divider);
+                if (Options.HideRowLines == false) builder.AppendLine(divider);
                 builder.AppendLine(row);
             }
 
@@ -232,6 +232,7 @@ namespace GitIStage
     {
         public IEnumerable<string> Columns { get; set; } = new List<string>();
         public bool EnableCount { get; set; } = true;
+        public bool HideRowLines { get; set; } = false;
     }
 
     public enum Format
