@@ -8,6 +8,12 @@ only allows you to do that but also which parts of a file you want to select.
 Unfortunately, the built-in command line tooling for that (provided via
 `git add -p`) is pretty hard to use and takes way too long.
 
+## Demo
+
+Full a quick demo, check out my video on YouTube:
+
+[![](thumbnail.png)](https://www.youtube.com/watch?v=2nNJly4uim0)
+
 ## What git istage does
 
 When you run `git istage` inside your repo, it shows you the set of current

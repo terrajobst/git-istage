@@ -6,7 +6,7 @@ This git extension is designed to be a better alternative to `git add -p`.
 The goal is to make staging whole files, as well as parts of a file, up to
 the line level, a breeze. See [documentation](docs/about.md) for details.
 
-![](docs/screen.png)
+[![](docs/thumbnail.png)](https://www.youtube.com/watch?v=2nNJly4uim0)
 
 ## Installation
 
