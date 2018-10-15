@@ -495,7 +495,26 @@ namespace GitIStage
             //if (!_viewStage)
             //    return;
 
-            _view.Document = new PatchDocument(null, new Shortcuts().Get());
+            var table = new ConsoleTable("Shortcut", "Description");
+            foreach (var line in new Shortcuts().Get())
+            {
+                string[] split = line.Text.Split("|");
+                table.AddRow(split[0].Trim(), split[1].Trim());
+            }
+
+            string[] lines = table.ToString().Split(
+                new[] { "\r\n", "\r", "\n" },
+                StringSplitOptions.None
+            );
+
+            var patchLines = new List<PatchLine>(lines.Length);
+            foreach (var line in lines)
+            {
+                patchLines.Add(new PatchLine(PatchLineKind.Context, line));
+            }
+
+            //_view.Document = new PatchDocument(null, new Shortcuts().Get());
+            _view.Document = new PatchDocument(null, patchLines);
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
