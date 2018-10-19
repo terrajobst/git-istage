@@ -79,7 +79,9 @@ Shortcut | Description
 <kbd>PgDown</kbd> | Selects the line one screen below.
 <kbd>Space</kbd> | Selects the line one screen below.
 <kbd>Home</kbd>| Selects the first line.
+<kbd>G</kbd>| Selects the first line.
 <kbd>End</kbd> | Selects the last line.
+<kbd>Shift</kbd> <kbd>G</kbd> | Selects the last line.
 <kbd>Ctrl</kbd> <kbd>PgUp</kbd> | Scrolls up by one screen.
 <kbd>Ctrl</kbd> <kbd>PgDown</kbd> | Scrolls down by one screen.
 <kbd>Ctrl</kbd> <kbd>←</kbd> | Scrolls left by one character,
