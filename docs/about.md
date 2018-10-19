@@ -68,9 +68,9 @@ Shortcut | Description
 <kbd>\\</kbd> | Toggles between viewing entire files and changes only.
 <kbd>W</kbd> | Toggles between showing and hiding whitespace.
 <kbd>↑</kbd> | Selects the previous line.
-<kbd>k</kbd> | Selects the previous line.
+<kbd>K</kbd> | Selects the previous line.
 <kbd>↓</kbd> | Selects the next line.
-<kbd>j</kbd> | Selects the next line.
+<kbd>J</kbd> | Selects the next line.
 <kbd>←</kbd> | Go to the previous file.
 <kbd>→</kbd> | Go to the next file.
 <kbd>[</kbd> | Go to previous change block.
