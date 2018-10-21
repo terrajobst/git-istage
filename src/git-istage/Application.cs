@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Text;
 
 using LibGit2Sharp;
 
@@ -21,6 +22,7 @@ namespace GitIStage
         private View _view;
         private Label _footer;
         private PatchDocument _document;
+        private StringBuilder _inputLineDigits = new StringBuilder();
 
         public Application(string repositoryPath, string pathToGit)
         {
@@ -43,7 +45,9 @@ namespace GitIStage
                 new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7),
                 new ConsoleCommand(ToggleWhitespace, ConsoleKey.W),
                 new ConsoleCommand(GoHome, ConsoleKey.Home),
+                new ConsoleCommand(GoHomeOrInputLine, ConsoleKey.G),
                 new ConsoleCommand(GoEnd, ConsoleKey.End),
+                new ConsoleCommand(GoEndOrInputLine, ConsoleKey.G, ConsoleModifiers.Shift),
                 new ConsoleCommand(SelectUp, ConsoleKey.UpArrow),
                 new ConsoleCommand(SelectUp, ConsoleKey.K),
                 new ConsoleCommand(SelectDown, ConsoleKey.DownArrow),
@@ -64,7 +68,18 @@ namespace GitIStage
                 new ConsoleCommand(Stage, ConsoleKey.S),
                 new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift),
                 new ConsoleCommand(Unstage, ConsoleKey.U),
-                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift)
+                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift),
+                new ConsoleCommand(RemoveLastLineDigit, ConsoleKey.Backspace),
+                new ConsoleCommand(AppendLineDigit0, ConsoleKey.D0),
+                new ConsoleCommand(AppendLineDigit1, ConsoleKey.D1),
+                new ConsoleCommand(AppendLineDigit2, ConsoleKey.D2),
+                new ConsoleCommand(AppendLineDigit3, ConsoleKey.D3),
+                new ConsoleCommand(AppendLineDigit4, ConsoleKey.D4),
+                new ConsoleCommand(AppendLineDigit5, ConsoleKey.D5),
+                new ConsoleCommand(AppendLineDigit6, ConsoleKey.D6),
+                new ConsoleCommand(AppendLineDigit7, ConsoleKey.D7),
+                new ConsoleCommand(AppendLineDigit8, ConsoleKey.D8),
+                new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9),
             };
 
             var isCursorVisible = Console.CursorVisible;
@@ -168,7 +183,9 @@ namespace GitIStage
             var workingModified = workingChanges.Modified.Count();
             var workingDeleted = workingChanges.Deleted.Count();
 
-            _footer.Text = $" [{_repository.Head.FriendlyName} +{stageAdded} ~{stageModified} -{stageDeleted} | +{workingAdded} ~{workingModified} -{workingDeleted}]";
+            var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits.ToString()}" : "";
+            
+            _footer.Text = $" [{_repository.Head.FriendlyName} +{stageAdded} ~{stageModified} -{stageDeleted} | +{workingAdded} ~{workingModified} -{workingDeleted}]    {lineNumberText} ";
         }
 
         private void Exit()
@@ -247,10 +264,49 @@ namespace GitIStage
             _view.BringIntoView(_view.SelectedLine);
         }
 
+        private void GoHomeOrInputLine()
+        {
+            if (_inputLineDigits.Length == 0)
+                GoHome();
+            else
+                GoInputLine();
+        }
+
         private void GoEnd()
         {
             _view.LeftChar = 0;
             _view.SelectedLine = _view.DocumentHeight - 1;
+            _view.BringIntoView(_view.SelectedLine);
+        }
+
+        private void GoEndOrInputLine()
+        {
+            if (_inputLineDigits.Length == 0)
+                GoEnd();
+            else
+                GoInputLine();
+        }
+
+        private void GoInputLine()
+        {
+            if (Int32.TryParse(_inputLineDigits.ToString(), out int line))
+            {
+                GoLine(line);
+                _inputLineDigits.Clear();
+                UpdateFooter();
+            }
+        }
+
+        private void GoLine(int line)
+        {
+            line = line - 1;
+            if (line < 0)
+                line = 0;
+            else if (line >= _document.Height)
+                line = _document.Height - 1;
+
+            _view.LeftChar = 0;
+            _view.SelectedLine = line;
             _view.BringIntoView(_view.SelectedLine);
         }
 
@@ -406,6 +462,32 @@ namespace GitIStage
                 return;
 
             ApplyPatch(PatchDirection.Unstage, true);
+        }
+
+        private void RemoveLastLineDigit()
+        {
+            if (_inputLineDigits.Length == 0)
+                return;
+
+            _inputLineDigits.Remove(_inputLineDigits.Length - 1, 1);
+            UpdateFooter();
+        }
+
+        private void AppendLineDigit0() => AppendLineDigit('0');
+        private void AppendLineDigit1() => AppendLineDigit('1');
+        private void AppendLineDigit2() => AppendLineDigit('2');
+        private void AppendLineDigit3() => AppendLineDigit('3');
+        private void AppendLineDigit4() => AppendLineDigit('4');
+        private void AppendLineDigit5() => AppendLineDigit('5');
+        private void AppendLineDigit6() => AppendLineDigit('6');
+        private void AppendLineDigit7() => AppendLineDigit('7');
+        private void AppendLineDigit8() => AppendLineDigit('8');
+        private void AppendLineDigit9() => AppendLineDigit('9');
+
+        private void AppendLineDigit(char digit)
+        {
+            _inputLineDigits.Append(digit);
+            UpdateFooter();
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)

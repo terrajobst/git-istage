@@ -46,6 +46,8 @@ commit. Or, you can stash right from inside of git istage by hitting
 `git stash pop`.
 
 More keyboard shortcuts listed below.
+A shortcut may be preceded by a number, N. 
+Notes in parentheses indicate the behavior if N is given.
 
 ## Keyboard shortcuts
 
@@ -68,9 +70,9 @@ Shortcut | Description
 <kbd>\\</kbd> | Toggles between viewing entire files and changes only.
 <kbd>W</kbd> | Toggles between showing and hiding whitespace.
 <kbd>↑</kbd> | Selects the previous line.
-<kbd>k</kbd> | Selects the previous line.
+<kbd>K</kbd> | Selects the previous line.
 <kbd>↓</kbd> | Selects the next line.
-<kbd>j</kbd> | Selects the next line.
+<kbd>J</kbd> | Selects the next line.
 <kbd>←</kbd> | Go to the previous file.
 <kbd>→</kbd> | Go to the next file.
 <kbd>[</kbd> | Go to previous change block.
@@ -79,7 +81,9 @@ Shortcut | Description
 <kbd>PgDown</kbd> | Selects the line one screen below.
 <kbd>Space</kbd> | Selects the line one screen below.
 <kbd>Home</kbd>| Selects the first line.
+<kbd>G</kbd>| Selects the first line (or Line N).
 <kbd>End</kbd> | Selects the last line.
+<kbd>Shift</kbd> <kbd>G</kbd> | Selects the last line (or Line N).
 <kbd>Ctrl</kbd> <kbd>PgUp</kbd> | Scrolls up by one screen.
 <kbd>Ctrl</kbd> <kbd>PgDown</kbd> | Scrolls down by one screen.
 <kbd>Ctrl</kbd> <kbd>←</kbd> | Scrolls left by one character,
