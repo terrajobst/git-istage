@@ -9,3 +9,5 @@ variables:
 steps:
 - script: dotnet build $(sln) -c $(buildConfiguration) -o $(outDir) /nologo
   displayName: 'dotnet build $(buildConfiguration)'
+- task: PublishBuildArtifacts@1
+  condition: and(succeeded(), eq(variables['system.pullrequest.isfork'], false))
