@@ -7,5 +7,5 @@ variables:
   outDir: $(Build.ArtifactStagingDirectory)
 
 steps:
-- script: dotnet build $(sln) --configuration $(buildConfiguration) --output $(outDir) /nologo
+- script: dotnet build $(sln) -c $(buildConfiguration) -o $(outDir) /nologo
   displayName: 'dotnet build $(buildConfiguration)'
