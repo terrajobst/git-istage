@@ -1,3 +1,3 @@
 @echo off
 
-dotnet build %~dp0\src\git-istage.sln /nologo
+dotnet build %~dp0src\git-istage.sln /p:OutDir=%~dp0bin /nologo
