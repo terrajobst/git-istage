@@ -3,8 +3,9 @@ pool:
 
 variables:
   buildConfiguration: 'Release'
+  sln: ./src/git-istage.sln
   outDir: $(Build.ArtifactStagingDirectory)
 
 steps:
-- script: dotnet build ./src/git-istage.sln --configuration $(buildConfiguration) --output $(outDir) /nologo
+- script: dotnet build $(sln) --configuration $(buildConfiguration) --output $(outDir) /nologo
   displayName: 'dotnet build $(buildConfiguration)'
