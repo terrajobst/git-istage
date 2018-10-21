@@ -6,6 +6,5 @@ variables:
   outDir: $(Build.ArtifactStagingDirectory)
 
 steps:
-- script: dotnet build --configuration $(buildConfiguration) --output $(outDir) /bl:$(outDir)/msbuild.binlog
+- script: dotnet build ./src/git-istage.sln --configuration $(buildConfiguration) --output $(outDir) /nologo
   displayName: 'dotnet build $(buildConfiguration)'
-- task: PublishBuildArtifacts@1
