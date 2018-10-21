@@ -82,7 +82,6 @@ namespace GitIStage
                 new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9),
             };
 
-            var isCursorVisible = Console.CursorVisible;
             Console.CursorVisible = false;
             Console.Clear();
 
@@ -104,7 +103,7 @@ namespace GitIStage
                 }
 
                 Console.Clear();
-                Console.CursorVisible = isCursorVisible;
+                Console.CursorVisible = true;
             }
         }
 
