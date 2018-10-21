@@ -1,3 +1,7 @@
 @echo off
+setlocal
 
-dotnet build %~dp0src\git-istage.sln /p:OutDir=%~dp0bin /nologo
+set SLN=%~dp0src\git-istage.sln
+set BIN=%~dp0bin\
+
+dotnet build %SLN% -o=%BIN% /nologo
