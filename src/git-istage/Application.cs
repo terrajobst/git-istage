@@ -23,6 +23,7 @@ namespace GitIStage
         private Label _footer;
         private PatchDocument _document;
         private StringBuilder _inputLineDigits = new StringBuilder();
+        private bool _helpShowed;
 
         public Application(string repositoryPath, string pathToGit)
         {
@@ -130,7 +131,7 @@ namespace GitIStage
             {
                 _view.VisibleWhitespace = oldView.VisibleWhitespace;
                 _view.SelectedLine = oldView.SelectedLine;
-                _view.BringIntoView(_view.SelectedLine);
+                _view.BringIntoView(_view.SelectedLine);   
             }
         }
 
@@ -492,8 +493,12 @@ namespace GitIStage
 
         private void ShowHelpPage()
         {
-            //if (!_viewStage)
-            //    return;
+            if (_helpShowed)
+            {
+                UpdateRepository();
+                _helpShowed = false;
+                return;
+            }
 
             var options = new ConsoleTableOptions { EnableCount = false, Columns = new List<string> { "Shortcut", "Description" }, HideRowLines = true };
             var table = new ConsoleTable(options);
@@ -515,8 +520,8 @@ namespace GitIStage
                 patchLines.Add(new PatchLine(PatchLineKind.Context, line));
             }
 
-            //_view.Document = new PatchDocument(null, new Shortcuts().Get());
             _view.Document = new PatchDocument(null, patchLines);
+            _helpShowed = true;
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
