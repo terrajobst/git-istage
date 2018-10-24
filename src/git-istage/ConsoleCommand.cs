@@ -6,13 +6,24 @@ namespace GitIStage
     {
         private readonly Action _handler;
         private readonly ConsoleKey _key;
+        public readonly string Description;
         private readonly ConsoleModifiers _modifiers;
 
-        public ConsoleCommand(Action handler, ConsoleKey key, ConsoleModifiers modifiers = 0)
+        public ConsoleCommand(Action handler, ConsoleKey key, string description)
+        {
+            _handler = handler;
+            _key = key;
+            Description = description;
+            _modifiers = 0;
+        }
+
+        public ConsoleCommand(Action handler, ConsoleKey key, ConsoleModifiers modifiers, string description)
         {
             _handler = handler;
             _key = key;
             _modifiers = modifiers;
+
+            Description = description;
         }
 
         public void Execute()
