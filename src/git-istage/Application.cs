@@ -24,6 +24,7 @@ namespace GitIStage
         private PatchDocument _document;
         private StringBuilder _inputLineDigits = new StringBuilder();
         private bool _helpShowed;
+        ConsoleCommand[] _commands;
 
         public Application(string repositoryPath, string pathToGit)
         {
@@ -33,55 +34,55 @@ namespace GitIStage
 
         public void Run()
         {
-            var commands = new[]
+            _commands = new[]
             {
-                new ConsoleCommand(Exit, ConsoleKey.Escape),
-                new ConsoleCommand(Exit, ConsoleKey.Q),
-                new ConsoleCommand(Commit, ConsoleKey.C),
-                new ConsoleCommand(CommitAmend, ConsoleKey.C, ConsoleModifiers.Alt),
-                new ConsoleCommand(Stash, ConsoleKey.S, ConsoleModifiers.Alt),
-                new ConsoleCommand(ToggleBetweenWorkingDirectoryAndStaging, ConsoleKey.T),
-                new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus),
-                new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus),
-                new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7),
-                new ConsoleCommand(ToggleWhitespace, ConsoleKey.W),
-                new ConsoleCommand(GoHome, ConsoleKey.Home),
-                new ConsoleCommand(GoHomeOrInputLine, ConsoleKey.G),
-                new ConsoleCommand(GoEnd, ConsoleKey.End),
-                new ConsoleCommand(GoEndOrInputLine, ConsoleKey.G, ConsoleModifiers.Shift),
-                new ConsoleCommand(SelectUp, ConsoleKey.UpArrow),
-                new ConsoleCommand(SelectUp, ConsoleKey.K),
-                new ConsoleCommand(SelectDown, ConsoleKey.DownArrow),
-                new ConsoleCommand(SelectDown, ConsoleKey.J),
-                new ConsoleCommand(ScrollUp, ConsoleKey.UpArrow, ConsoleModifiers.Control),
-                new ConsoleCommand(ScrollDown, ConsoleKey.DownArrow, ConsoleModifiers.Control),
-                new ConsoleCommand(ScrollPageUp, ConsoleKey.PageUp),
-                new ConsoleCommand(ScrollPageDown, ConsoleKey.PageDown),
-                new ConsoleCommand(ScrollPageDown, ConsoleKey.Spacebar),
-                new ConsoleCommand(ScrollLeft, ConsoleKey.LeftArrow, ConsoleModifiers.Control),
-                new ConsoleCommand(ScrollRight, ConsoleKey.RightArrow, ConsoleModifiers.Control),
-                new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow),
-                new ConsoleCommand(GoNextFile, ConsoleKey.RightArrow),
-                new ConsoleCommand(GoPreviousHunk, ConsoleKey.Oem4),
-                new ConsoleCommand(GoNextHunk, ConsoleKey.Oem6),
-                new ConsoleCommand(Reset, ConsoleKey.R),
-                new ConsoleCommand(ResetHunk, ConsoleKey.R, ConsoleModifiers.Shift),
-                new ConsoleCommand(Stage, ConsoleKey.S),
-                new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift),
-                new ConsoleCommand(Unstage, ConsoleKey.U),
-                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift),
-                new ConsoleCommand(RemoveLastLineDigit, ConsoleKey.Backspace),
-                new ConsoleCommand(AppendLineDigit0, ConsoleKey.D0),
-                new ConsoleCommand(AppendLineDigit1, ConsoleKey.D1),
-                new ConsoleCommand(AppendLineDigit2, ConsoleKey.D2),
-                new ConsoleCommand(AppendLineDigit3, ConsoleKey.D3),
-                new ConsoleCommand(AppendLineDigit4, ConsoleKey.D4),
-                new ConsoleCommand(AppendLineDigit5, ConsoleKey.D5),
-                new ConsoleCommand(AppendLineDigit6, ConsoleKey.D6),
-                new ConsoleCommand(AppendLineDigit7, ConsoleKey.D7),
-                new ConsoleCommand(AppendLineDigit8, ConsoleKey.D8),
-                new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9),
-                new ConsoleCommand(ShowHelpPage, ConsoleKey.F1)
+                new ConsoleCommand(Exit, ConsoleKey.Escape, "Return to command line."),
+                new ConsoleCommand(Exit, ConsoleKey.Q, "Return to command line."),
+                new ConsoleCommand(Commit, ConsoleKey.C, "Author commit"),
+                new ConsoleCommand(CommitAmend, ConsoleKey.C, ConsoleModifiers.Alt, "Authors commit with --amend option"),
+                new ConsoleCommand(Stash, ConsoleKey.S, ConsoleModifiers.Alt, "Stashes changes from the working copy, but leaves the stage as-is."),
+                new ConsoleCommand(ToggleBetweenWorkingDirectoryAndStaging, ConsoleKey.T, "Toggle between working copy changes and staged changes."),
+                new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus, "Increases the number of contextual lines."),
+                new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus, "Decreases the number of contextual lines."),
+                new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7, ""),
+                new ConsoleCommand(ToggleWhitespace, ConsoleKey.W, "Toggles between showing and hiding whitespace."),
+                new ConsoleCommand(GoHome, ConsoleKey.Home, "Selects the first line."),
+                new ConsoleCommand(GoHomeOrInputLine, ConsoleKey.G, "Selects the first line (or Line N)."),
+                new ConsoleCommand(GoEnd, ConsoleKey.End, "Selects the last line."),
+                new ConsoleCommand(GoEndOrInputLine, ConsoleKey.G, ConsoleModifiers.Shift, "Selects the last line (or Line N)."),
+                new ConsoleCommand(SelectUp, ConsoleKey.UpArrow, "Selects the previous line."),
+                new ConsoleCommand(SelectUp, ConsoleKey.K, "Selects the previous line."),
+                new ConsoleCommand(SelectDown, ConsoleKey.DownArrow, "Selects the next line."),
+                new ConsoleCommand(SelectDown, ConsoleKey.J, "Selects the next line."),
+                new ConsoleCommand(ScrollUp, ConsoleKey.UpArrow, ConsoleModifiers.Control, "Scrolls up by one line."),
+                new ConsoleCommand(ScrollDown, ConsoleKey.DownArrow, ConsoleModifiers.Control, "Scrolls down by one line."),
+                new ConsoleCommand(ScrollPageUp, ConsoleKey.PageUp, "Selects the line one screen above."),
+                new ConsoleCommand(ScrollPageDown, ConsoleKey.PageDown, "Selects the line one screen below."),
+                new ConsoleCommand(ScrollPageDown, ConsoleKey.Spacebar, "Selects the line one screen below."),
+                new ConsoleCommand(ScrollLeft, ConsoleKey.LeftArrow, ConsoleModifiers.Control, "Scrolls left by one character."),
+                new ConsoleCommand(ScrollRight, ConsoleKey.RightArrow, ConsoleModifiers.Control, "Scrolls right by one character."),
+                new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow, "Go to the previous file."),
+                new ConsoleCommand(GoNextFile, ConsoleKey.RightArrow, "Go to the next file."),
+                new ConsoleCommand(GoPreviousHunk, ConsoleKey.Oem4, "Go to previous change block."),
+                new ConsoleCommand(GoNextHunk, ConsoleKey.Oem6, "Go to next change block."),
+                new ConsoleCommand(Reset, ConsoleKey.R, "When viewing the working copy, removes the selected line from the working copy."),
+                new ConsoleCommand(ResetHunk, ConsoleKey.R, ConsoleModifiers.Shift, "When viewing the working copy, removes the selected block from the working copy."),
+                new ConsoleCommand(Stage, ConsoleKey.S, "When viewing the working copy, stages the selected line."),
+                new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift, "When viewing the working copy, stages the selected block."),
+                new ConsoleCommand(Unstage, ConsoleKey.U, "When viewing the stage, unstages the selected line."),
+                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift, "When viewing the stage, unstages the selected block."),
+                new ConsoleCommand(RemoveLastLineDigit, ConsoleKey.Backspace, ""),
+                new ConsoleCommand(AppendLineDigit0, ConsoleKey.D0, ""),
+                new ConsoleCommand(AppendLineDigit1, ConsoleKey.D1, ""),
+                new ConsoleCommand(AppendLineDigit2, ConsoleKey.D2, ""),
+                new ConsoleCommand(AppendLineDigit3, ConsoleKey.D3, ""),
+                new ConsoleCommand(AppendLineDigit4, ConsoleKey.D4, ""),
+                new ConsoleCommand(AppendLineDigit5, ConsoleKey.D5, ""),
+                new ConsoleCommand(AppendLineDigit6, ConsoleKey.D6, ""),
+                new ConsoleCommand(AppendLineDigit7, ConsoleKey.D7, ""),
+                new ConsoleCommand(AppendLineDigit8, ConsoleKey.D8, ""),
+                new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9, ""),
+                new ConsoleCommand(ShowHelpPage, ConsoleKey.F1, "Show / hide help page")
             };
 
             Console.CursorVisible = false;
@@ -97,7 +98,7 @@ namespace GitIStage
                     var height = Console.WindowHeight;
 
                     var key = Console.ReadKey(true);
-                    var command = commands.FirstOrDefault(c => c.MatchesKey(key));
+                    var command = _commands.FirstOrDefault(c => c.MatchesKey(key));
                     command?.Execute();
 
                     if (width != Console.WindowWidth || height != Console.WindowHeight)
@@ -503,11 +504,16 @@ namespace GitIStage
             var options = new ConsoleTableOptions { EnableCount = false, Columns = new List<string> { "Shortcut", "Description" }, HideRowLines = true };
             var table = new ConsoleTable(options);
 
-            foreach (var line in new Shortcuts().Get())
+            foreach (var command in _commands)
             {
-                string[] split = line.Text.Split("|");
-                table.AddRow(split[0].Trim(), split[1].Trim());
+                table.AddRow(command.GetCommandShortcut(), command.Description);
             }
+
+            //foreach (var line in new Shortcuts().Get())
+            //{
+            //    string[] split = line.Text.Split("|");
+            //    table.AddRow(split[0].Trim(), split[1].Trim());
+            //}
 
             string[] lines = table.ToString().Split(
                 new[] { "\r\n", "\r", "\n" },
