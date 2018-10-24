@@ -24,5 +24,13 @@ namespace GitIStage
         {
             return _key == keyInfo.Key && _modifiers == keyInfo.Modifiers;
         }
+
+        public string GetCommandShortcut()
+        {
+            if (_modifiers != 0)
+                return $"{_modifiers.ToString()} + {_key.ToString()}";
+            else
+                return _key.ToString();
+        }
     }
 }
