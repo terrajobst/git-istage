@@ -6,6 +6,7 @@ using System.Text.RegularExpressions;
 
 namespace GitIStage
 {
+    // https://github.com/khalidabuhakmeh/ConsoleTables
     public class ConsoleTable
     {
         public IList<object> Columns { get; set; }
