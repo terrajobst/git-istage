@@ -71,7 +71,7 @@ namespace GitIStage
                 new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift, "When viewing the working copy, stages the selected block."),
                 new ConsoleCommand(Unstage, ConsoleKey.U, "When viewing the stage, unstages the selected line."),
                 new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift, "When viewing the stage, unstages the selected block."),
-                new ConsoleCommand(RemoveLastLineDigit, ConsoleKey.Backspace, ""),
+                new ConsoleCommand(RemoveLastLineDigit, ConsoleKey.Backspace, "Remove last line digit"),
                 new ConsoleCommand(AppendLineDigit0, ConsoleKey.D0, ""),
                 new ConsoleCommand(AppendLineDigit1, ConsoleKey.D1, ""),
                 new ConsoleCommand(AppendLineDigit2, ConsoleKey.D2, ""),
@@ -164,6 +164,12 @@ namespace GitIStage
 
         private void UpdateHeader()
         {
+            if (_helpShowed)
+            {
+                _header.Text = "Keyboard shortcuts";
+                return;
+            }
+
             var entry = _document.Lines.Any() ? _document.FindEntry(_view.SelectedLine) : null;
             var emptyMarker = _viewStage ? "*nothing to commit*" : "*clean*";
             var path = entry == null ? emptyMarker : entry.Changes.Path;
@@ -174,6 +180,12 @@ namespace GitIStage
 
         private void UpdateFooter()
         {
+            if (_helpShowed)
+            {
+                _footer.Text = string.Empty;
+                return;
+            }
+
             var tipTree = _repository.Head.Tip?.Tree;
             var stageChanges = _repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index);
             var stageAdded = stageChanges.Added.Count();
@@ -496,8 +508,8 @@ namespace GitIStage
         {
             if (_helpShowed)
             {
-                UpdateRepository();
                 _helpShowed = false;
+                UpdateRepository();
                 return;
             }
 
@@ -528,6 +540,9 @@ namespace GitIStage
 
             _view.Document = new PatchDocument(null, patchLines);
             _helpShowed = true;
+
+            UpdateHeader();
+            UpdateFooter();
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
