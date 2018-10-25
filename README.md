@@ -24,4 +24,3 @@ See [documentation](docs/about.md) for details.
 
 * Support inline search using slash
 * Add ability to edit the patch inline
-* Add help page with shortcut overview
