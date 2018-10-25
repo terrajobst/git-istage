@@ -88,7 +88,8 @@ namespace GitIStage
             var divider = " " + string.Join("", Enumerable.Repeat("-", longestLine - 1)) + " ";
        
             builder.AppendLine(divider);
-            builder.AppendLine(columnHeaders);
+            builder.AppendLine(columnHeaders.ToUpper());
+            builder.AppendLine(divider);
 
             foreach (var row in results)
             {
