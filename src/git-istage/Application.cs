@@ -513,32 +513,7 @@ namespace GitIStage
                 return;
             }
 
-            var options = new ConsoleTableOptions { EnableCount = false, Columns = new List<string> { "Shortcut", "Description" }, HideRowLines = true };
-            var table = new ConsoleTable(options);
-
-            foreach (var command in _commands)
-            {
-                table.AddRow(command.GetCommandShortcut(), command.Description);
-            }
-
-            //foreach (var line in new Shortcuts().Get())
-            //{
-            //    string[] split = line.Text.Split("|");
-            //    table.AddRow(split[0].Trim(), split[1].Trim());
-            //}
-
-            string[] lines = table.ToString().Split(
-                new[] { "\r\n", "\r", "\n" },
-                StringSplitOptions.None
-            );
-
-            var patchLines = new List<PatchLine>(lines.Length);
-            foreach (var line in lines)
-            {
-                patchLines.Add(new PatchLine(PatchLineKind.Context, line));
-            }
-
-            _view.Document = new PatchDocument(null, patchLines);
+            _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);
             _helpShowed = true;
 
             UpdateHeader();
