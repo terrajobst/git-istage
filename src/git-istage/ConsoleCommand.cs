@@ -38,10 +38,13 @@ namespace GitIStage
 
         public string GetCommandShortcut()
         {
+            string key = _key.ToString().Replace("Arrow", "");
             if (_modifiers != 0)
-                return $"{_modifiers.ToString()} + {_key.ToString()}";
+            {
+                return $"{_modifiers.ToString().Replace("Control", "CTRL")} + {key.ToString()}";
+            }
             else
-                return _key.ToString();
+                return key.ToString();
         }
     }
 }
