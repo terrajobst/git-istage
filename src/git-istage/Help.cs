@@ -7,8 +7,7 @@ namespace GitIStage
     {
         public PatchDocument GetKeyboardShortcutsInfo(ConsoleCommand[] commands)
         {
-            var options = new ConsoleTableOptions { EnableCount = false, Columns = new List<string> { "Shortcut", "Description" }, HideRowLines = true };
-            var table = new ConsoleTable(options);
+            var table = new ConsoleTable(commands.Length);
 
             foreach (var command in commands)
             {
