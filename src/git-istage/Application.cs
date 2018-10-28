@@ -132,7 +132,7 @@ namespace GitIStage
             {
                 _view.VisibleWhitespace = oldView.VisibleWhitespace;
                 _view.SelectedLine = oldView.SelectedLine;
-                _view.BringIntoView(_view.SelectedLine);   
+                _view.BringIntoView(_view.SelectedLine);
             }
         }
 
