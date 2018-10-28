@@ -391,6 +391,7 @@ namespace GitIStage
 
         private void GoPreviousFile()
         {
+            if (_helpShowed) return;
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
@@ -402,6 +403,7 @@ namespace GitIStage
 
         private void GoNextFile()
         {
+            if (_helpShowed) return;
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
