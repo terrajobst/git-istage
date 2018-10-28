@@ -258,6 +258,9 @@ namespace GitIStage
 
         private void GoHome()
         {
+            if (_view.DocumentHeight == 0)
+                return;
+
             _view.LeftChar = 0;
             _view.SelectedLine = 0;
             _view.BringIntoView(_view.SelectedLine);
@@ -273,6 +276,9 @@ namespace GitIStage
 
         private void GoEnd()
         {
+            if (_view.DocumentHeight == 0)
+                return;
+
             _view.LeftChar = 0;
             _view.SelectedLine = _view.DocumentHeight - 1;
             _view.BringIntoView(_view.SelectedLine);
@@ -298,6 +304,9 @@ namespace GitIStage
 
         private void GoLine(int line)
         {
+            if (_view.DocumentHeight == 0)
+                return;
+
             line = line - 1;
             if (line < 0)
                 line = 0;
