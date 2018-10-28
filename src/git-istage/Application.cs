@@ -82,7 +82,8 @@ namespace GitIStage
                 new ConsoleCommand(AppendLineDigit7, ConsoleKey.D7, "Append digit 7 to line."),
                 new ConsoleCommand(AppendLineDigit8, ConsoleKey.D8, "Append digit 8 to line."),
                 new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9, "Append digit 9 to line."),
-                new ConsoleCommand(ShowHelpPage, ConsoleKey.F1, "Show / hide help page")
+                new ConsoleCommand(ShowHelpPage, ConsoleKey.F1, "Show / hide help page"),
+                new ConsoleCommand(ShowHelpPage, ConsoleKey.Oem2, ConsoleModifiers.Shift, "Show / hide help page")
             };
 
             Console.CursorVisible = false;
