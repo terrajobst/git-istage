@@ -248,12 +248,14 @@ namespace GitIStage
 
         private void IncreaseContext()
         {
+            if (_helpShowed) return;
             _contextLines++;
             UpdateRepository();
         }
 
         private void DecreaseContext()
         {
+            if (_helpShowed) return;
             if (_contextLines == 0)
                 return;
 
