@@ -338,6 +338,11 @@ namespace GitIStage
 
         private void SelectUp()
         {
+            if (_helpShowed)
+            {
+                ScrollUp();
+                return;
+            }
             if (_view.SelectedLine <= 0)
                 return;
 
@@ -348,6 +353,11 @@ namespace GitIStage
 
         private void SelectDown()
         {
+            if (_helpShowed)
+            {
+                ScrollDown();
+                return;
+            }
             if (_view.SelectedLine == _view.DocumentHeight - 1)
                 return;
 
