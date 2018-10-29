@@ -226,21 +226,25 @@ namespace GitIStage
 
         private void Commit()
         {
+            if (_helpShowed) return;
             RunGit("commit -v");
         }
 
         private void CommitAmend()
         {
+            if (_helpShowed) return;
             RunGit("commit -v --amend");
         }
 
         private void Stash()
         {
+            if (_helpShowed) return;
             RunGit("stash -u -k");
         }
 
         private void ToggleBetweenWorkingDirectoryAndStaging()
         {
+            if (_helpShowed) return;
             _viewStage = !_viewStage;
 
             UpdateRepository();
@@ -265,12 +269,14 @@ namespace GitIStage
 
         private void ToogleFullDiff()
         {
+            if (_helpShowed) return;
             _fullFileDiff = !_fullFileDiff;
             UpdateRepository();
         }
 
         private void ToggleWhitespace()
         {
+            if (_helpShowed) return;
             _view.VisibleWhitespace = !_view.VisibleWhitespace;
         }
 
@@ -507,6 +513,7 @@ namespace GitIStage
 
         private void AppendLineDigit(char digit)
         {
+            if (_helpShowed) return;
             _inputLineDigits.Append(digit);
             UpdateFooter();
         }
@@ -529,6 +536,7 @@ namespace GitIStage
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
         {
+            if (_helpShowed) return;
             if (_view.SelectedLine < 0)
                 return;
 
