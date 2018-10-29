@@ -26,6 +26,9 @@ namespace GitIStage
         private bool _helpShowed;
         ConsoleCommand[] _commands;
 
+        private int selectedLineBeforeHelpPageShowed;
+        private int topLineBeforeHelpPageShowed;
+
         public Application(string repositoryPath, string pathToGit)
         {
             _repositoryPath = repositoryPath;
@@ -523,15 +526,25 @@ namespace GitIStage
             if (_helpShowed)
             {
                 _helpShowed = false;
+
+                _view.SelectedLine = selectedLineBeforeHelpPageShowed == -1 ? 0 : selectedLineBeforeHelpPageShowed;
+                _view.TopLine = topLineBeforeHelpPageShowed;
+
                 UpdateRepository();
                 return;
             }
 
-            _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);
+            selectedLineBeforeHelpPageShowed = _view.SelectedLine;
+            topLineBeforeHelpPageShowed = _view.TopLine;
+
+            _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);    
+            _view.SelectedLine = 0;
+            _view.TopLine = 0;
+
             _helpShowed = true;
 
             UpdateHeader();
-            UpdateFooter();
+            UpdateFooter();      
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
