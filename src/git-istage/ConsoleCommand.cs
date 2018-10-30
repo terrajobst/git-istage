@@ -38,14 +38,55 @@ namespace GitIStage
 
         public string GetCommandShortcut()
         {
-            string key = _key.ToString().Replace("Arrow", "");
-            if (key.StartsWith("D") && key.Length == 2)
-                key = key.Replace("D", "");
+            string key = string.Empty;
+
+            switch (_key)
+            {
+                case ConsoleKey.UpArrow:
+                case ConsoleKey.DownArrow:
+                case ConsoleKey.LeftArrow:
+                case ConsoleKey.RightArrow:
+                    key = _key.ToString().Replace("Arrow", "");
+                    break;
+                case ConsoleKey.OemPlus:
+                    key = "+";
+                    break;
+                case ConsoleKey.OemMinus:
+                    key = "-";
+                    break;
+                case ConsoleKey.Oem4:
+                    key = "[";
+                    break;
+                case ConsoleKey.Oem6:
+                    key = "]";
+                    break;
+                case ConsoleKey.Oem7:
+                    key = "'";
+                    break;
+                case ConsoleKey.D0:
+                case ConsoleKey.D1:
+                case ConsoleKey.D2:
+                case ConsoleKey.D3:
+                case ConsoleKey.D4:
+                case ConsoleKey.D5:
+                case ConsoleKey.D6:
+                case ConsoleKey.D7:
+                case ConsoleKey.D8:
+                case ConsoleKey.D9:
+                    key = _key.ToString().Replace("D", "");
+                    break;
+                default:
+                    key = _key.ToString();
+                    break;
+            }
+
+            if (_key == ConsoleKey.Oem2 && _modifiers == ConsoleModifiers.Shift)
+                return "?";
 
             if (_modifiers != 0)
-                return $"{_modifiers.ToString().Replace("Control", "Ctrl")} + {key.ToString()}";
+                return $"{_modifiers.ToString().Replace("Control", "Ctrl")} + {key}";
             else
-                return key.ToString();
+                return key;
         }
     }
 }
