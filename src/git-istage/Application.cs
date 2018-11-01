@@ -547,14 +547,18 @@ namespace GitIStage
             selectedLineBeforeHelpPageShowed = _view.SelectedLine;
             topLineBeforeHelpPageShowed = _view.TopLine;
 
-            _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);    
-            _view.SelectedLine = 0;
-            _view.TopLine = 0;
-
+            _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);
+            
             _helpShowed = true;
 
             UpdateHeader();
-            UpdateFooter();      
+            UpdateFooter();
+
+            // Little trick with chaning selected line to refresh header in help page.
+            // Without this header will not be updated when open help page and SelectedLine is 0.
+            if (_view.SelectedLine == 0) _view.SelectedLine = 1;
+            _view.SelectedLine = 0;
+            _view.TopLine = 0;
         }
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
