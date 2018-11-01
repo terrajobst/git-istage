@@ -23,11 +23,11 @@ namespace GitIStage
         private Label _footer;
         private PatchDocument _document;
         private StringBuilder _inputLineDigits = new StringBuilder();
-        private bool _helpShowed;
+        private bool _helpShowing;
         ConsoleCommand[] _commands;
 
-        private int selectedLineBeforeHelpPageShowed;
-        private int topLineBeforeHelpPageShowed;
+        private int selectedLineBeforeHelpWasShown;
+        private int topLineBeforeHelpWasShown;
 
         public Application(string repositoryPath, string pathToGit)
         {
@@ -168,7 +168,7 @@ namespace GitIStage
 
         private void UpdateHeader()
         {
-            if (_helpShowed)
+            if (_helpShowing)
             {
                 _header.Text = "Keyboard shortcuts";
                 return;
@@ -184,7 +184,7 @@ namespace GitIStage
 
         private void UpdateFooter()
         {
-            if (_helpShowed)
+            if (_helpShowing)
             {
                 _footer.Text = string.Empty;
                 return;
@@ -229,25 +229,25 @@ namespace GitIStage
 
         private void Commit()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             RunGit("commit -v");
         }
 
         private void CommitAmend()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             RunGit("commit -v --amend");
         }
 
         private void Stash()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             RunGit("stash -u -k");
         }
 
         private void ToggleBetweenWorkingDirectoryAndStaging()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             _viewStage = !_viewStage;
 
             UpdateRepository();
@@ -255,14 +255,14 @@ namespace GitIStage
 
         private void IncreaseContext()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             _contextLines++;
             UpdateRepository();
         }
 
         private void DecreaseContext()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             if (_contextLines == 0)
                 return;
 
@@ -272,14 +272,14 @@ namespace GitIStage
 
         private void ToogleFullDiff()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             _fullFileDiff = !_fullFileDiff;
             UpdateRepository();
         }
 
         private void ToggleWhitespace()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             _view.VisibleWhitespace = !_view.VisibleWhitespace;
         }
 
@@ -338,7 +338,7 @@ namespace GitIStage
 
         private void SelectUp()
         {
-            if (_helpShowed)
+            if (_helpShowing)
             {
                 ScrollUp();
                 return;
@@ -353,7 +353,7 @@ namespace GitIStage
 
         private void SelectDown()
         {
-            if (_helpShowed)
+            if (_helpShowing)
             {
                 ScrollDown();
                 return;
@@ -412,7 +412,7 @@ namespace GitIStage
 
         private void GoPreviousFile()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
@@ -424,7 +424,7 @@ namespace GitIStage
 
         private void GoNextFile()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
@@ -436,7 +436,7 @@ namespace GitIStage
 
         private void GoPreviousHunk()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
@@ -447,7 +447,7 @@ namespace GitIStage
 
         private void GoNextHunk()
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             var i = _view.SelectedLine;
             if (i < 0)
                 return;
@@ -526,30 +526,30 @@ namespace GitIStage
 
         private void AppendLineDigit(char digit)
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             _inputLineDigits.Append(digit);
             UpdateFooter();
         }
 
         private void ShowHelpPage()
         {
-            if (_helpShowed)
+            if (_helpShowing)
             {
-                _helpShowed = false;
+                _helpShowing = false;
 
-                _view.SelectedLine = selectedLineBeforeHelpPageShowed == -1 ? 0 : selectedLineBeforeHelpPageShowed;
-                _view.TopLine = topLineBeforeHelpPageShowed;
+                _view.SelectedLine = selectedLineBeforeHelpWasShown == -1 ? 0 : selectedLineBeforeHelpWasShown;
+                _view.TopLine = topLineBeforeHelpWasShown;
 
                 UpdateRepository();
                 return;
             }
 
-            selectedLineBeforeHelpPageShowed = _view.SelectedLine;
-            topLineBeforeHelpPageShowed = _view.TopLine;
+            selectedLineBeforeHelpWasShown = _view.SelectedLine;
+            topLineBeforeHelpWasShown = _view.TopLine;
 
             _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);
             
-            _helpShowed = true;
+            _helpShowing = true;
 
             UpdateHeader();
             UpdateFooter();
@@ -563,7 +563,7 @@ namespace GitIStage
 
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
         {
-            if (_helpShowed) return;
+            if (_helpShowing) return;
             if (_view.SelectedLine < 0)
                 return;
 
