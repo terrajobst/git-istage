@@ -16,7 +16,6 @@
 
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.25.3" />
-    <PackageReference Include="LibGit2Sharp.NativeBinaries" Version="1.0.235" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
