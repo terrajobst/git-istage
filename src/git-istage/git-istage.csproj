@@ -15,18 +15,12 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="LibGit2Sharp">
-      <Version>0.25.3</Version>
-    </PackageReference>
-    <PackageReference Include="LibGit2Sharp.NativeBinaries">
-      <Version>1.0.235</Version>
-    </PackageReference>
+    <PackageReference Include="LibGit2Sharp" Version="0.26.0-preview-0070" />
     <PackageReference Include="Microsoft.DotNet.Analyzers.Compatibility" Version="0.2.12-alpha">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
-    <PackageReference Include="Nerdbank.GitVersioning">
-      <Version>2.2.13</Version>
+    <PackageReference Include="Nerdbank.GitVersioning" Version="2.2.13">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
     </PackageReference>
