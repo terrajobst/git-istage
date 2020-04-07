@@ -2,8 +2,8 @@
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Linq;
+using System.Reflection;
 using System.Text;
-
 using LibGit2Sharp;
 
 namespace GitIStage
@@ -12,6 +12,7 @@ namespace GitIStage
     {
         private readonly string _repositoryPath;
         private readonly string _pathToGit;
+        private readonly KeyBindings _keyBindings;
 
         private bool _done;
         private bool _fullFileDiff;
@@ -29,65 +30,16 @@ namespace GitIStage
         private int selectedLineBeforeHelpWasShown;
         private int topLineBeforeHelpWasShown;
 
-        public Application(string repositoryPath, string pathToGit)
+        public Application(string repositoryPath, string pathToGit, KeyBindings keyBindings)
         {
             _repositoryPath = repositoryPath;
             _pathToGit = pathToGit;
+            _keyBindings = keyBindings;
         }
 
         public void Run()
         {
-            _commands = new[]
-            {
-                new ConsoleCommand(Exit, ConsoleKey.Escape, "Return to command line."),
-                new ConsoleCommand(Exit, ConsoleKey.Q, "Return to command line."),
-                new ConsoleCommand(Commit, ConsoleKey.C, "Author commit"),
-                new ConsoleCommand(CommitAmend, ConsoleKey.C, ConsoleModifiers.Alt, "Authors commit with --amend option"),
-                new ConsoleCommand(Stash, ConsoleKey.S, ConsoleModifiers.Alt, "Stashes changes from the working copy, but leaves the stage as-is."),
-                new ConsoleCommand(ToggleBetweenWorkingDirectoryAndStaging, ConsoleKey.T, "Toggle between working copy changes and staged changes."),
-                new ConsoleCommand(IncreaseContext, ConsoleKey.OemPlus, "Increases the number of contextual lines."),
-                new ConsoleCommand(DecreaseContext, ConsoleKey.OemMinus, "Decreases the number of contextual lines."),
-                new ConsoleCommand(ToogleFullDiff, ConsoleKey.Oem7, "Toggles between standard diff and full diff"),
-                new ConsoleCommand(ToggleWhitespace, ConsoleKey.W, "Toggles between showing and hiding whitespace."),
-                new ConsoleCommand(GoHome, ConsoleKey.Home, "Selects the first line."),
-                new ConsoleCommand(GoHomeOrInputLine, ConsoleKey.G, "Selects the first line (or Line N)."),
-                new ConsoleCommand(GoEnd, ConsoleKey.End, "Selects the last line."),
-                new ConsoleCommand(GoEndOrInputLine, ConsoleKey.G, ConsoleModifiers.Shift, "Selects the last line (or Line N)."),
-                new ConsoleCommand(SelectUp, ConsoleKey.UpArrow, "Selects the previous line."),
-                new ConsoleCommand(SelectUp, ConsoleKey.K, "Selects the previous line."),
-                new ConsoleCommand(SelectDown, ConsoleKey.DownArrow, "Selects the next line."),
-                new ConsoleCommand(SelectDown, ConsoleKey.J, "Selects the next line."),
-                new ConsoleCommand(ScrollUp, ConsoleKey.UpArrow, ConsoleModifiers.Control, "Scrolls up by one line."),
-                new ConsoleCommand(ScrollDown, ConsoleKey.DownArrow, ConsoleModifiers.Control, "Scrolls down by one line."),
-                new ConsoleCommand(ScrollPageUp, ConsoleKey.PageUp, "Selects the line one screen above."),
-                new ConsoleCommand(ScrollPageDown, ConsoleKey.PageDown, "Selects the line one screen below."),
-                new ConsoleCommand(ScrollPageDown, ConsoleKey.Spacebar, "Selects the line one screen below."),
-                new ConsoleCommand(ScrollLeft, ConsoleKey.LeftArrow, ConsoleModifiers.Control, "Scrolls left by one character."),
-                new ConsoleCommand(ScrollRight, ConsoleKey.RightArrow, ConsoleModifiers.Control, "Scrolls right by one character."),
-                new ConsoleCommand(GoPreviousFile, ConsoleKey.LeftArrow, "Go to the previous file."),
-                new ConsoleCommand(GoNextFile, ConsoleKey.RightArrow, "Go to the next file."),
-                new ConsoleCommand(GoPreviousHunk, ConsoleKey.Oem4, "Go to previous change block."),
-                new ConsoleCommand(GoNextHunk, ConsoleKey.Oem6, "Go to next change block."),
-                new ConsoleCommand(Reset, ConsoleKey.R, "When viewing the working copy, removes the selected line from the working copy."),
-                new ConsoleCommand(ResetHunk, ConsoleKey.R, ConsoleModifiers.Shift, "When viewing the working copy, removes the selected block from the working copy."),
-                new ConsoleCommand(Stage, ConsoleKey.S, "When viewing the working copy, stages the selected line."),
-                new ConsoleCommand(StageHunk, ConsoleKey.S, ConsoleModifiers.Shift, "When viewing the working copy, stages the selected block."),
-                new ConsoleCommand(Unstage, ConsoleKey.U, "When viewing the stage, unstages the selected line."),
-                new ConsoleCommand(UnstageHunk, ConsoleKey.U, ConsoleModifiers.Shift, "When viewing the stage, unstages the selected block."),
-                new ConsoleCommand(RemoveLastLineDigit, ConsoleKey.Backspace, "Remove last line digit"),
-                new ConsoleCommand(AppendLineDigit0, ConsoleKey.D0, "Append digit 0 to line."),
-                new ConsoleCommand(AppendLineDigit1, ConsoleKey.D1, "Append digit 1 to line."),
-                new ConsoleCommand(AppendLineDigit2, ConsoleKey.D2, "Append digit 2 to line."),
-                new ConsoleCommand(AppendLineDigit3, ConsoleKey.D3, "Append digit 3 to line."),
-                new ConsoleCommand(AppendLineDigit4, ConsoleKey.D4, "Append digit 4 to line."),
-                new ConsoleCommand(AppendLineDigit5, ConsoleKey.D5, "Append digit 5 to line."),
-                new ConsoleCommand(AppendLineDigit6, ConsoleKey.D6, "Append digit 6 to line."),
-                new ConsoleCommand(AppendLineDigit7, ConsoleKey.D7, "Append digit 7 to line."),
-                new ConsoleCommand(AppendLineDigit8, ConsoleKey.D8, "Append digit 8 to line."),
-                new ConsoleCommand(AppendLineDigit9, ConsoleKey.D9, "Append digit 9 to line."),
-                new ConsoleCommand(ShowHelpPage, ConsoleKey.F1, "Show / hide help page"),
-                new ConsoleCommand(ShowHelpPage, ConsoleKey.Oem2, ConsoleModifiers.Shift, "Show / hide help page")
-            };
+            _commands = LoadConsoleCommands();
 
             Console.CursorVisible = false;
             Console.Clear();
@@ -112,6 +64,61 @@ namespace GitIStage
                 Console.Clear();
                 Console.CursorVisible = true;
             }
+        }
+
+        private ConsoleCommand[] LoadConsoleCommands()
+        {
+            var commands = new List<ConsoleCommand>();
+
+            foreach (var handlerName in _keyBindings.Handlers.Keys)
+            {
+                var binding = _keyBindings.Handlers[handlerName];
+                var handler = ResolveHandler(handlerName);
+                if (handler == null)
+                {
+                    Console.WriteLine($"fatal: invalid key binding handler named `{handlerName}`.");
+                    Environment.Exit(1);
+                }
+
+                foreach (var keyPress in binding.Default)
+                {
+                    var (key, modifiers) = ResolveKey(keyPress);
+
+                    var command = new ConsoleCommand(
+                        handler,
+                        key,
+                        modifiers,
+                        binding.Description
+                        );
+
+                    commands.Add(command);
+                }
+            }
+
+            return commands.ToArray();
+        }
+
+        private (ConsoleKey, ConsoleModifiers) ResolveKey(string key)
+        {
+            var parser = new KeyPressParser();
+            var result = parser.Parse(key);
+            if (result.Succeeded)
+                return (result.Key, result.Modifiers);
+
+            Console.WriteLine($"fatal: invalid key binding '{key}'.");
+            Environment.Exit(1);
+            return (0, 0);
+        }
+
+        private Action ResolveHandler(string handlerName)
+        {
+            var methodInfo = GetType().GetMethod(handlerName, BindingFlags.NonPublic | BindingFlags.Instance);
+            if (methodInfo == null)
+                return null;
+
+            var handler = (Action)Delegate.CreateDelegate(typeof(Action), this, methodInfo);
+
+            return handler;
         }
 
         private void InitializeScreen()
@@ -162,7 +169,7 @@ namespace GitIStage
                     ? _repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
                     : _repository.Diff.Compare<Patch>(paths, true, null, compareOptions)
                 : null;
-           
+
             _document = PatchDocument.Parse(patch);
             _view.Document = _document;
 
@@ -206,7 +213,7 @@ namespace GitIStage
             var workingDeleted = workingChanges.Deleted.Count();
 
             var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits.ToString()}" : "";
-            
+
             _footer.Text = $" [{_repository.Head.FriendlyName} +{stageAdded} ~{stageModified} -{stageDeleted} | +{workingAdded} ~{workingModified} -{workingDeleted}]    {lineNumberText} ";
         }
 
@@ -564,7 +571,7 @@ namespace GitIStage
             topLineBeforeHelpWasShown = _view.TopLine;
 
             _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);
-            
+
             _helpShowing = true;
 
             UpdateHeader();
@@ -590,7 +597,7 @@ namespace GitIStage
             IEnumerable<int> lines;
             if (!entireHunk)
             {
-                lines = new[] {_view.SelectedLine};
+                lines = new[] { _view.SelectedLine };
             }
             else
             {
