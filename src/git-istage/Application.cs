@@ -399,7 +399,10 @@ namespace GitIStage
 
         private void ScrollPageDown()
         {
-            _view.TopLine = Math.Min(_view.DocumentHeight - _view.Height, _view.TopLine + _view.Height);
+            _view.TopLine = Math.Min(
+                Math.Max(0, _view.DocumentHeight - _view.Height),
+                _view.TopLine + _view.Height);
+
             _view.SelectedLine = _view.TopLine;
         }
 
