@@ -1,6 +1,6 @@
 # git istage
 
-[![Build Status](https://terrajobst.visualstudio.com/git-istage/_apis/build/status/terrajobst.git-istage?branchName=master)](https://terrajobst.visualstudio.com/git-istage/_build/latest?definitionId=14) [![nuget](https://img.shields.io/nuget/v/git-istage.svg)](https://www.nuget.org/packages/git-istage/)
+[![Build Status](https://terrajobst.visualstudio.com/git-istage/_apis/build/status/terrajobst.git-istage?branchName=main)](https://terrajobst.visualstudio.com/git-istage/_build/latest?definitionId=14) [![nuget](https://img.shields.io/nuget/v/git-istage.svg)](https://www.nuget.org/packages/git-istage/)
 
 This git extension is designed to be a better alternative to `git add -p`.
 The goal is to make staging whole files, as well as parts of a file, up to
