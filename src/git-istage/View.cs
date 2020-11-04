@@ -149,7 +149,7 @@ namespace GitIStage
 
         private void UpdateSelectedLine(int value)
         {
-            if (_selectedLine == value)
+            if (_selectedLine == value || DocumentHeight == 0)
                 return;
 
             if (value < 0 || value >= DocumentHeight)

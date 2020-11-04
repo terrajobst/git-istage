@@ -152,7 +152,11 @@ namespace GitIStage
             var changes = _viewStage
                 ? _repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
                 : _repository.Diff.Compare<TreeChanges>(null, true);
-            var paths = changes.Select(c => c.Path).ToArray();
+
+            var paths = changes
+                .Where(p => (p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink))
+                .Select(c => c.Path).ToArray();
+
             var patch = paths.Any()
                 ? _viewStage
                     ? _repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
@@ -399,7 +403,10 @@ namespace GitIStage
 
         private void ScrollPageDown()
         {
-            _view.TopLine = Math.Min(_view.DocumentHeight - _view.Height, _view.TopLine + _view.Height);
+            _view.TopLine = Math.Min(
+                Math.Max(0, _view.DocumentHeight - _view.Height),
+                _view.TopLine + _view.Height);
+
             _view.SelectedLine = _view.TopLine;
         }
 
