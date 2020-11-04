@@ -152,7 +152,11 @@ namespace GitIStage
             var changes = _viewStage
                 ? _repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
                 : _repository.Diff.Compare<TreeChanges>(null, true);
-            var paths = changes.Select(c => c.Path).ToArray();
+
+            var paths = changes
+                .Where(p => (p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink))
+                .Select(c => c.Path).ToArray();
+
             var patch = paths.Any()
                 ? _viewStage
                     ? _repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
