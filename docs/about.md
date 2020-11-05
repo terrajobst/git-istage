@@ -90,3 +90,53 @@ Shortcut | Description
 <kbd>Ctrl</kbd> <kbd>→</kbd> | Scrolls right by one character,
 <kbd>Ctrl</kbd> <kbd>↑</kbd> | Scrolls up by one line.
 <kbd>Ctrl</kbd> <kbd>↓</kbd> | Scrolls down by one line.
+
+## Custom Key Bindings
+
+The [default key bindings](#keyboard-shortcuts) are set for a US QWERTY keyboard layout.
+
+The key bindings can be modified by creating a JSON file at the following location:
+
+- On Unix / MacOSX, `$HOME/.git-istage/key-bindings.json`
+- On Windows, `%HOMEDRIVE%%HOMEPATH%\.git-istage\key-bindings.json`
+
+The custom key bindings JSON file contains a JSON objects whose properties are the vailable [command names](/src/git-istage/key-bindings.json), and the their value is a JSON object containing a `KeyBindings` array specifying the new keyboard shortcuts.
+
+For instance, to use the <kbd>X</kbd> key to exit the program in addition of the default <kbd>Esc</kbd> or <kbd>Q</kbd> keys, use the following syntax:
+
+```
+{
+    "Exit": {
+        "keyBindings": ["X"]
+    }
+}
+```
+
+You can also completely override the default keyboard shortcuts. For instance, to exit the program _instead_ of the default <kbd>Esc</kbd> or <kbd>Q</kbd> keys, use the following syntax:
+
+```
+{
+    "Exit": {
+        "default": [],
+        "keyBindings": ["X"]
+    }
+}
+```
+
+Please, note that key binding strings are case insensitive. This means that, `X` and `Shift+x` represent two different key presses.
+
+For instance, on a recent [AZERTY-NF](https://springcomp.github.io/optimized-azerty-win/) keyboard layout, the <kbd>[</kbd> and <kbd>]</kbd> keys are located on the positions for the <kbd>5</kbd> and <kbd>6</kbd> keys, respectively. Since the default commands for these keys are <kbd>Oem4</kbd> and <kbd>Oem6</kbd>, I need to change the `GoNextHunk` and `GoPreviousHunk` key bindings like so:
+
+```
+{
+    "Exit": {
+        "keyBindings": ["X"]
+    },
+    "GoNextHunk": {
+        "keyBindings": ["AltGr+6"]
+    },
+    "GoPreviousHunk": {
+        "keyBindings": ["AltGr+5"]
+    }
+}
+```
