@@ -1,20 +1,25 @@
 ﻿using Newtonsoft.Json;
+using System.Collections.Generic;
 
 namespace GitIStage
 {
     public class KeyBinding
     {
         [JsonProperty("default")]
-        public string[] Default { get; set; }
+        public List<string> Default { get; set; }
         [JsonProperty("description")]
         public string Description { get; set; }
     }
     public class CustomKeyBinding
     {
-        [JsonProperty("before")]
-        public string Before { get; set; }
-        [JsonProperty("after")]
-        public string After { get; set; }
+        // set to an empty array (or null) to clear the default bindings
+        // for the corresponding command
+
+        [JsonProperty("default")]
+        public string[] Default { get; set; }
+
+        [JsonProperty("keyBindings")]
+        public string[] KeyBindings { get; set; }
     }
 
 }

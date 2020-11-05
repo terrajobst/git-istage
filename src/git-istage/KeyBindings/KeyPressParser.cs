@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Text.RegularExpressions;
 
 namespace GitIStage
 {
@@ -7,7 +8,7 @@ namespace GitIStage
     /// A simple parser for expressions referring to a keypress
     /// such as, "ctrl+q", "shift+a", etc.
     /// </summary>
-    internal class KeyPressParser
+    public class KeyPressParser
     {
         /// <summary>
         /// Returns a structure containing
@@ -19,7 +20,7 @@ namespace GitIStage
         /// <returns></returns>
         public Result Parse(string keyPress)
         {
-            var (modifiers, key, succeeded) = SplitLastOf(keyPress, "+");
+            var (modifiers, key, succeeded) = SplitLastOf(keyPress);
             if (succeeded)
             {
                 succeeded &= TryParseModifiers(modifiers, out var _mods);
@@ -224,7 +225,7 @@ namespace GitIStage
 
         private bool TryParseModifiersImpl(string modifiers, ref ConsoleModifiers mods)
         {
-            var (others, modifier, succeeded) = SplitLastOf(modifiers, "+");
+            var (others, modifier, succeeded) = SplitLastOf(modifiers);
             if (!succeeded)
                 return false;
 
@@ -262,22 +263,20 @@ namespace GitIStage
             return false;
         }
 
-        private (string, string, bool) SplitLastOf(string text, string c)
+        private (string, string, bool) SplitLastOf(string text)
         {
-            var second = text;
-            var first = "";
+            if (text.Length == 0)
+                return ("", text, true);
 
-            var pos = text.LastIndexOf("+");
-            if (pos != -1)
-            {
-                if (pos >= text.Length)
-                    return ("", "", false);
+            var pattern = @"(?:(?<first>.+)\+)?(?<second>.+)";
+            var regex = new Regex(pattern);
+            var match = regex.Match(text);
 
-                first = text.Substring(0, pos);
-                second = text.Substring(pos + 1);
-            }
-
-            return (first, second, true);
+            return (
+                match.Groups["first"].Value,
+                match.Groups["second"].Value,
+                match.Success
+                );
         }
     }
 }
