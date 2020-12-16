@@ -7,8 +7,9 @@ on:
     branches: [ main ]
 
 env:
-  SLN: src/git-istage.sln
-  BIN: ../../bin/
+  DOTNET_NOLOGO: true
+  SLN: ${{ github.workspace }}/src/git-istage.sln
+  BIN: ${{ github.workspace }}/bin/
 
 jobs:
   build:
@@ -32,4 +33,5 @@ jobs:
       run: dotnet test --no-build --nologo --verbosity normal $SLN /p:OutDir=$BIN
     - name: Push package
       if: ${{ github.event_name == 'push' && github.event.ref == 'refs/heads/main' }}
-      run: dotnet nuget push $BIN/*.nupkg
+      run: dotnet nuget push $BIN*.nupkg --api-key ${{ github.token }} --skip-duplicate
+

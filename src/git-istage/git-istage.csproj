@@ -6,6 +6,7 @@
     <PackAsTool>true</PackAsTool>
     <PackageOutputPath>$(OutDir)</PackageOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
+    <RepositoryUrl>https://github.com/terrajobst/git-istage</RepositoryUrl>
   </PropertyGroup>
 
   <PropertyGroup>
