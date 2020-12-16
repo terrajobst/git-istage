@@ -155,7 +155,7 @@
         "default": [ "W" ],
         "description": "Toggles between showing and hiding whitespace."
     },
-    "ToogleFullDiff": {
+    "ToggleFullDiff": {
         "default": [ "Oem7" ],
         "description": "Toggles between standard diff and full diff"
     },

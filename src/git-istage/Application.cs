@@ -281,7 +281,7 @@ namespace GitIStage
             UpdateRepository();
         }
 
-        private void ToogleFullDiff()
+        private void ToggleFullDiff()
         {
             if (_helpShowing) return;
             _fullFileDiff = !_fullFileDiff;
