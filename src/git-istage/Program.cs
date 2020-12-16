@@ -1,7 +1,6 @@
 ﻿using System;
 using System.IO;
 using System.Linq;
-
 using LibGit2Sharp;
 
 namespace GitIStage
@@ -27,7 +26,9 @@ namespace GitIStage
                 return;
             }
 
-            var application = new Application(repositoryPath, pathToGit);
+            var keyBindings = KeyBindings.Load();
+
+            var application = new Application(repositoryPath, pathToGit, keyBindings);
             application.Run();
         }
 
