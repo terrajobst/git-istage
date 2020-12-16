@@ -8,6 +8,7 @@ on:
 
 env:
   SLN: src/git-istage.sln
+  BIN: ../../bin/
 
 jobs:
   build:
@@ -20,9 +21,15 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
+        source-url: https://nuget.pkg.github.com/terrajobst/index.json
+      env:
+        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Restore dependencies
       run: dotnet restore $SLN
     - name: Build
-      run: dotnet build --no-restore --nologo $SLN
+      run: dotnet build --no-restore --nologo $SLN /p:OutDir=$BIN
     - name: Test
-      run: dotnet test --no-build --nologo --verbosity normal $SLN
+      run: dotnet test --no-build --nologo --verbosity normal $SLN /p:OutDir=$BIN
+    - name: Push package
+      if: ${{ github.event_name == 'push' && github.event.ref == 'refs/heads/main' }}
+      run: dotnet nuget push $BIN/*.nupkg
