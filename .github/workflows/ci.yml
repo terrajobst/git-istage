@@ -22,9 +22,6 @@ jobs:
       uses: actions/setup-dotnet@v1
       with:
         dotnet-version: 5.0.x
-        source-url: https://nuget.pkg.github.com/terrajobst/index.json
-      env:
-        NUGET_AUTH_TOKEN: ${{secrets.GITHUB_TOKEN}}
     - name: Restore dependencies
       run: dotnet restore $SLN
     - name: Build
@@ -33,5 +30,5 @@ jobs:
       run: dotnet test --no-build --nologo --verbosity normal $SLN /p:OutDir=$BIN
     - name: Push package
       if: ${{ github.event_name == 'push' && github.event.ref == 'refs/heads/main' }}
-      run: dotnet nuget push $BIN*.nupkg --api-key ${{ github.token }} --skip-duplicate
+      run: dotnet nuget push $BIN*.nupkg --source https://nuget.pkg.github.com/terrajobst/index.json --api-key ${{ github.token }} --skip-duplicate
 
