@@ -1,0 +1,28 @@
+name: CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  SLN: src/git-istage.sln
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        fetch-depth: 0 # We need the full history in order to use Git versioning
+    - name: Setup .NET
+      uses: actions/setup-dotnet@v1
+      with:
+        dotnet-version: 3.1.x
+    - name: Restore dependencies
+      run: dotnet restore $SLN
+    - name: Build
+      run: dotnet build --no-restore --nologo $SLN
+    - name: Test
+      run: dotnet test --no-build --nologo --verbosity normal $SLN
