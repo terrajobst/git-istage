@@ -1,5 +1,6 @@
 # git istage
 
+[![CI](https://github.com/terrajobst/git-istage/workflows/CI/badge.svg)](https://github.com/terrajobst/git-istage/actions?query=workflow%3ACI)
 [![nuget](https://img.shields.io/nuget/v/git-istage.svg)](https://www.nuget.org/packages/git-istage/)
 
 This git extension is designed to be a better alternative to `git add -p`.
