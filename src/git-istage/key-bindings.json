@@ -43,6 +43,10 @@
         "default": [ "C" ],
         "description": "Author commit"
     },
+    "CommitAmend": {
+        "default": [ "Alt+C" ],
+        "description": "Amend commit"
+    },
     "DecreaseContext": {
         "default": [ "OemMinus" ],
         "description": "Decreases the number of contextual lines."
