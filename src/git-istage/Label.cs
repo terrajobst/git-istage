@@ -64,7 +64,7 @@ namespace GitIStage
             Console.SetCursorPosition(_left, _top);
             Console.Write(text);
 
-            var remaining = _width - Text.Length;
+            var remaining = _width - textLength;
             Console.Write(_whitespace, 0, remaining);
 
             Console.ForegroundColor = oldForeground;
