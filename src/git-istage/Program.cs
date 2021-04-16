@@ -9,7 +9,7 @@ namespace GitIStage
     {
         private static void Main()
         {
-            if (Win32Console.IsSupported)
+            if (OperatingSystem.IsWindows())
                 Win32Console.Initialize();
 
             var repositoryPath = ResolveRepositoryPath();

@@ -1,12 +1,12 @@
 ﻿using System;
 using System.Runtime.InteropServices;
+using System.Runtime.Versioning;
 
 namespace GitIStage
 {
+    [SupportedOSPlatform("windows")]
     internal static class Win32Console
     {
-        public static bool IsSupported => RuntimeInformation.IsOSPlatform(OSPlatform.Windows);
-
         [DllImport("kernel32.dll")]
         private static extern bool GetConsoleMode(IntPtr hConsoleHandle, out uint lpMode);
 
@@ -24,7 +24,7 @@ namespace GitIStage
 
         public static void Initialize()
         {
-            if (!IsSupported)
+            if (!OperatingSystem.IsWindows())
                 throw new PlatformNotSupportedException();
 
             var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
