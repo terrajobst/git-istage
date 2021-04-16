@@ -1,13 +1,13 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace GitIStage
 {
     public class KeyBinding
     {
-        [JsonProperty("default")]
+        [JsonPropertyName("default")]
         public List<string> Default { get; set; }
-        [JsonProperty("description")]
+        [JsonPropertyName("description")]
         public string Description { get; set; }
     }
     public class CustomKeyBinding
@@ -15,11 +15,10 @@ namespace GitIStage
         // set to an empty array (or null) to clear the default bindings
         // for the corresponding command
 
-        [JsonProperty("default")]
+        [JsonPropertyName("default")]
         public string[] Default { get; set; }
 
-        [JsonProperty("keyBindings")]
+        [JsonPropertyName("keyBindings")]
         public string[] KeyBindings { get; set; }
     }
-
 }

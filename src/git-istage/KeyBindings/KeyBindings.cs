@@ -1,11 +1,11 @@
-﻿using Newtonsoft.Json;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace GitIStage
 {
     public partial class KeyBindings
     {
-        [JsonIgnore()]
+        [JsonIgnore]
         public IDictionary<string, KeyBinding> Handlers { get; set; }
     }
 }

@@ -3,8 +3,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Reflection;
-using System.Runtime.InteropServices;
-using Newtonsoft.Json;
+using System.Text.Json;
 
 namespace GitIStage
 {
@@ -47,41 +46,30 @@ namespace GitIStage
 
         private static IDictionary<string, CustomKeyBinding> LoadCustomKeyBindings(string keyBindingsPath)
         {
-            using (var stream = File.Open(keyBindingsPath, FileMode.Open, FileAccess.Read))
-            using (var reader = new StreamReader(stream))
-            {
-                var content = reader.ReadToEnd();
-                return JsonConvert.DeserializeObject<Dictionary<string, CustomKeyBinding>>(content);
-            }
+            var content = File.ReadAllText(keyBindingsPath);
+            return JsonSerializer.Deserialize<Dictionary<string, CustomKeyBinding>>(content);
         }
 
         private static KeyBindings LoadKeyBindings(Stream stream)
         {
+            using var reader = new StreamReader(stream);
+            var content = reader.ReadToEnd();
             var keyBindings = new KeyBindings();
-
-            using (var reader = new StreamReader(stream))
-            {
-                var content = reader.ReadToEnd();
-                keyBindings.Handlers = JsonConvert.DeserializeObject<Dictionary<string, KeyBinding>>(content);
-            }
-
+            keyBindings.Handlers = JsonSerializer.Deserialize<Dictionary<string, KeyBinding>>(content);
             return keyBindings;
         }
 
         private static string ResolveCustomKeyBindingsPath()
         {
-            const string keyBindingsJsonFileName = ".git-istage/key-bindings.json";
             var appDirectory = GetHomeDirectory();
-            return Path.Combine(appDirectory, keyBindingsJsonFileName);
+            return Path.Combine(appDirectory, ".git-istage/key-bindings.json");
         }
 
         private static string GetHomeDirectory()
-        {
-            string homePath =
-                (RuntimeInformation.IsOSPlatform(OSPlatform.Linux) || RuntimeInformation.IsOSPlatform(OSPlatform.OSX))
-                    ? Environment.GetEnvironmentVariable("HOME")
-                    : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%")
-                    ;
+        {           
+            var homePath = (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
+                ? Environment.GetEnvironmentVariable("HOME")
+                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
 
             return homePath;
         }
