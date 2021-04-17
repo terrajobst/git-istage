@@ -29,8 +29,8 @@ namespace GitIStage
                     var command = customKeyBinding.Key;
                     var key = customKeyBinding.Value.KeyBindings?.FirstOrDefault();
                     if (key != null)
-                    {
-                        var binding = keyBindings.Handlers.SingleOrDefault(h => h.Key.ToLowerInvariant() == command.ToLowerInvariant()).Value;
+                    {                      
+                        var binding = keyBindings.Handlers.SingleOrDefault(h => string.Equals(h.Key, command, StringComparison.OrdinalIgnoreCase)).Value;
                         if (binding != null)
                         {
                             if (customKeyBinding.Value.Default?.Length == 0)
