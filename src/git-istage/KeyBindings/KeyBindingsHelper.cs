@@ -61,17 +61,8 @@ namespace GitIStage
 
         private static string ResolveCustomKeyBindingsPath()
         {
-            var appDirectory = GetHomeDirectory();
-            return Path.Combine(appDirectory, ".git-istage/key-bindings.json");
-        }
-
-        private static string GetHomeDirectory()
-        {           
-            var homePath = (OperatingSystem.IsLinux() || OperatingSystem.IsMacOS())
-                ? Environment.GetEnvironmentVariable("HOME")
-                : Environment.ExpandEnvironmentVariables("%HOMEDRIVE%%HOMEPATH%");
-
-            return homePath;
+            var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+            return Path.Combine(homeDirectory, ".git-istage/key-bindings.json");
         }
     }
 }
