@@ -28,10 +28,17 @@ namespace GitIStage
                 {
                     if (hit.LineIndex == lineIndex)
                     {
-                        Vt100.SetCursorPosition(view.Left + hit.Start, visualLine);
-                        Vt100.NegativeColors();
-                        Console.Write(line.Substring(hit.Start, hit.Length));
-                        Vt100.PositiveColors();
+                        var hitStart = Math.Min(Math.Max(hit.Start - view.LeftChar, 0), view.Width - 1) + view.LeftChar;
+                        var hitEnd = Math.Min(Math.Max(hit.Start + hit.Length - view.LeftChar, 0), view.Width - 1) + view.LeftChar;
+                        var hitLength = hitEnd - hitStart;
+
+                        if (hitLength > 0)
+                        {
+                            Vt100.SetCursorPosition(hitStart - view.LeftChar, visualLine);
+                            Vt100.NegativeColors();
+                            Console.Write(line.Substring(hitStart, hitLength));
+                            Vt100.PositiveColors();
+                        }
                     }
                 }
             }
