@@ -365,12 +365,16 @@ namespace GitIStage
                 ScrollUp();
                 return;
             }
+
             if (_view.SelectedLine <= 0)
                 return;
 
             _view.SelectedLine--;
+
             if (_view.TopLine > _view.SelectedLine)
                 _view.TopLine = _view.SelectedLine;
+            else if (_view.TopLine < _view.SelectedLine - _view.Height + 1)
+                _view.TopLine = _view.SelectedLine - _view.Height + 1;
         }
 
         private void SelectDown()
@@ -380,11 +384,15 @@ namespace GitIStage
                 ScrollDown();
                 return;
             }
+
             if (_view.SelectedLine == _view.DocumentHeight - 1)
                 return;
 
             _view.SelectedLine++;
-            if (_view.TopLine < _view.SelectedLine - _view.Height + 1)
+            
+            if (_view.TopLine > _view.SelectedLine)
+                _view.TopLine = _view.SelectedLine;
+            else if (_view.TopLine < _view.SelectedLine - _view.Height + 1)
                 _view.TopLine = _view.SelectedLine - _view.Height + 1;
         }
 
