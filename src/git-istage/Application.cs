@@ -61,6 +61,7 @@ namespace GitIStage
                         InitializeScreen();
                 }
 
+                Vt100.ResetScrollMargins();
                 Vt100.SwitchToMainBuffer();
                 Vt100.ShowCursor();
             }

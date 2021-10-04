@@ -85,7 +85,12 @@ namespace GitIStage
                     throw new Exception($"Unexpected color: {color}");
             }
         }
- 
+
+        public static void ResetScrollMargins()
+        {
+            Console.Write($"\x1b[r");
+        }
+
         public static void SetScrollMargins(int top, int bottom)
         {
             Console.Write($"\x1b[{top};{bottom}r");
