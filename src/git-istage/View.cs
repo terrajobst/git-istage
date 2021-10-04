@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.InteropServices;
 
 namespace GitIStage
 {
@@ -139,11 +138,10 @@ namespace GitIStage
 
         private void RenderNonExistingLine(int visualLine)
         {
-            Console.SetCursorPosition(0, visualLine);
-            var oldForeground = Console.ForegroundColor;
-            Console.ForegroundColor = ConsoleColor.DarkGray;
+            Vt100.SetCursorPosition(0, visualLine);
+            Vt100.SetForegroundColor(ConsoleColor.DarkGray);
+            Vt100.SetBackgroundColor(ConsoleColor.Black);
             Console.Write("~");
-            Console.ForegroundColor = oldForeground;
             Console.Write(_blankRow, 0, Width - 1);
         }
 
@@ -175,14 +173,7 @@ namespace GitIStage
             var delta = value - _topLine;
             _topLine = value;
 
-            // Windows console output is fairly slow, so we generally want to make differential
-            // updates to the screen, which we do by using Console.MoveBufferArea to copy the
-            // existing lines up or down and only output the net-new lines that came into view.
-            // However, Console.MoveBufferArea is a Windows-only API. Fortunately, console output
-            // on Unix seems to be much faster, so we get away with repainting the entire screen
-            // anyway.
-
-            if (Math.Abs(delta) >= Height || !RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
+            if (Math.Abs(delta) >= Height)
             {
                 Render();
             }
@@ -192,13 +183,7 @@ namespace GitIStage
                 {
                     // We need to scroll up by -delta lines.
 
-                    var sourceVisualLine = Top;
-                    var targetVisualLine = Top - delta;
-                    var visualLineCount = Height + delta;
-
-                    #pragma warning disable PC001 // We know we're on Windows.
-                    Console.MoveBufferArea(Left, sourceVisualLine, Width, visualLineCount, Left, targetVisualLine);
-                    #pragma warning restore PC001
+                    Vt100.ScrollDown(Math.Abs(delta));
 
                     for (var i = 0; i < -delta; i++)
                     {
@@ -210,13 +195,9 @@ namespace GitIStage
                 {
                     // We need to scroll down by delta lines.
 
-                    var sourceVisualLine = Top + delta;
-                    var targetVisualLine = Top;
                     var visualLineCount = Height - delta;
 
-                    #pragma warning disable PC001 // We know we're on Windows.
-                    Console.MoveBufferArea(Left, sourceVisualLine, Width, visualLineCount, Left, targetVisualLine);
-                    #pragma warning restore PC001
+                    Vt100.ScrollUp(delta);
 
                     for (var i = 0; i < delta; i++)
                     {
@@ -224,7 +205,6 @@ namespace GitIStage
                         RenderLine(line);
                     }
                 }
-
             }
 
             TopLineChanged?.Invoke(this, EventArgs.Empty);

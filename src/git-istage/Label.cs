@@ -9,8 +9,8 @@ namespace GitIStage
         private readonly int _width;
         private readonly char[] _whitespace;
 
-        private ConsoleColor _foreground = Console.ForegroundColor;
-        private ConsoleColor _background = Console.BackgroundColor;
+        private ConsoleColor _foreground = ConsoleColor.Gray;
+        private ConsoleColor _background = ConsoleColor.Black;
         private string _text = string.Empty;
 
         public Label(int top, int left, int right)
@@ -56,19 +56,13 @@ namespace GitIStage
             var textLength = Math.Min(_text.Length, _width);
             var text = _text.Substring(0, textLength);
 
-            var oldForeground = Console.ForegroundColor;
-            var oldBackground = Console.BackgroundColor;
-
-            Console.ForegroundColor = Foreground;
-            Console.BackgroundColor = Background;
-            Console.SetCursorPosition(_left, _top);
+            Vt100.SetCursorPosition(_left, _top);
+            Vt100.SetForegroundColor(_foreground);
+            Vt100.SetBackgroundColor(_background);
             Console.Write(text);
 
             var remaining = _width - textLength;
             Console.Write(_whitespace, 0, remaining);
-
-            Console.ForegroundColor = oldForeground;
-            Console.BackgroundColor = oldBackground;
         }
     }
 }

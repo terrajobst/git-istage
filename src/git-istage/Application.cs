@@ -41,8 +41,8 @@ namespace GitIStage
         {
             _commands = LoadConsoleCommands();
 
-            Console.CursorVisible = false;
-            Console.Clear();
+            Vt100.SwitchToAlternateBuffer();
+            Vt100.HideCursor();
 
             InitializeScreen();
 
@@ -61,8 +61,8 @@ namespace GitIStage
                         InitializeScreen();
                 }
 
-                Console.Clear();
-                Console.CursorVisible = true;
+                Vt100.SwitchToMainBuffer();
+                Vt100.ShowCursor();
             }
         }
 
@@ -136,6 +136,8 @@ namespace GitIStage
             _footer = new Label(Console.WindowHeight - 1, 0, Console.WindowWidth);
             _footer.Foreground = ConsoleColor.Yellow;
             _footer.Background = ConsoleColor.DarkGray;
+
+            Vt100.SetScrollMargins(2, Console.WindowHeight - 1);
 
             UpdateRepository();
 

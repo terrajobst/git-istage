@@ -14,23 +14,16 @@ namespace GitIStage
             var textLength = Math.Max(Math.Min(view.Width, line.Length - view.LeftChar), 0);
             var text = textLength < 0 ? string.Empty : line.ToVisual(view.VisibleWhitespace).Substring(textStart, textLength);
 
-            var oldForeground = Console.ForegroundColor;
-            var oldBackgorund = Console.BackgroundColor;
-
-            Console.ForegroundColor = foregroundColor;
-            Console.BackgroundColor = backgroundColor;
-
             var visualLine = lineIndex - view.TopLine + view.Top;
 
-            Console.SetCursorPosition(view.Left, visualLine);
+            Vt100.SetCursorPosition(view.Left, visualLine);
+            Vt100.SetForegroundColor(foregroundColor);
+            Vt100.SetBackgroundColor(backgroundColor);
             Console.Write(text);
 
             var remaining = view.Width - textLength;
             if (remaining > 0)
                 Console.Write(_blankRow, 0, remaining);
-
-            Console.ForegroundColor = oldForeground;
-            Console.BackgroundColor = oldBackgorund;
         }
     }
 }

@@ -14,7 +14,7 @@ namespace GitIStage
         {
             var line = GetLine(view, lineIndex);
             if (line == null)
-                return Console.ForegroundColor;
+                return ConsoleColor.Gray;
 
             switch (line.Kind)
             {
@@ -29,7 +29,7 @@ namespace GitIStage
                 case PatchLineKind.Removal:
                     return ConsoleColor.DarkRed;
                 default:
-                    return Console.ForegroundColor;
+                    return ConsoleColor.Gray;
             }
         }
 
@@ -37,7 +37,7 @@ namespace GitIStage
         {
             var patchLine = GetLine(view, lineIndex);
             if (patchLine == null)
-                return Console.BackgroundColor;
+                return ConsoleColor.Black;
 
             var kind = patchLine.Kind;
 
@@ -49,7 +49,7 @@ namespace GitIStage
                     : ConsoleColor.DarkGray;
             }
 
-            return Console.BackgroundColor;
+            return ConsoleColor.Black;
         }
 
         public override void Render(View view, int lineIndex)
