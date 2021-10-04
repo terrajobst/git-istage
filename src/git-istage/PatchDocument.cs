@@ -24,6 +24,11 @@ namespace GitIStage
 
         public override int Width { get; }
 
+        public override string GetLine(int index)
+        {
+            return Lines[index].Text;
+        }
+
         public PatchEntry FindEntry(int lineIndex)
         {
             var index = FindEntryIndex(lineIndex);

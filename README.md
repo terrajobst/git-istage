@@ -23,5 +23,4 @@ See [documentation](docs/about.md) for details.
 
 ## Missing features
 
-* Support inline search using slash
 * Add ability to edit the patch inline

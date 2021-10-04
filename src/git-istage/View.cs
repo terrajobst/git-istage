@@ -12,6 +12,7 @@ namespace GitIStage
         private int _leftChar;
         private int _selectedLine;
         private bool _visibleWhitespace;
+        private SearchResults _searchResults;
 
         public View(ViewLineRenderer renderer, int top, int left, int bottom, int right)
         {
@@ -78,6 +79,19 @@ namespace GitIStage
                 if (_visibleWhitespace != value)
                 {
                     _visibleWhitespace = value;
+                    Render();
+                }
+            }
+        }
+
+        public SearchResults SearchResults
+        {
+            get { return _searchResults; }
+            set
+            {
+                if (_searchResults != value)
+                {
+                    _searchResults = value;
                     Render();
                 }
             }
@@ -156,8 +170,15 @@ namespace GitIStage
             var unselectedLine = _selectedLine;
             _selectedLine = value;
 
-            RenderLine(unselectedLine);
-            RenderLine(_selectedLine);
+            if (_selectedLine < TopLine)
+                TopLine = _selectedLine;
+            else if (_selectedLine >= TopLine + Height)
+                TopLine = _selectedLine - Height + 1;
+            else
+                RenderLine(_selectedLine);
+
+            if (TopLine <= unselectedLine && unselectedLine < TopLine + Height)
+                RenderLine(unselectedLine);
 
             SelectedLineChanged?.Invoke(this, EventArgs.Empty);
         }

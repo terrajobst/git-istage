@@ -21,6 +21,20 @@ namespace GitIStage
             Vt100.SetBackgroundColor(backgroundColor);
             Vt100.EraseRestOfCurrentLine();
             Console.Write(text);
+
+            if (view.SearchResults != null)
+            {
+                foreach (var hit in view.SearchResults.Hits)
+                {
+                    if (hit.LineIndex == lineIndex)
+                    {
+                        Vt100.SetCursorPosition(view.Left + hit.Start, visualLine);
+                        Vt100.NegativeColors();
+                        Console.Write(line.Substring(hit.Start, hit.Length));
+                        Vt100.PositiveColors();
+                    }
+                }
+            }
         }
     }
 }

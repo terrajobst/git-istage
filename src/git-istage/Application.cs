@@ -370,11 +370,6 @@ namespace GitIStage
                 return;
 
             _view.SelectedLine--;
-
-            if (_view.TopLine > _view.SelectedLine)
-                _view.TopLine = _view.SelectedLine;
-            else if (_view.TopLine < _view.SelectedLine - _view.Height + 1)
-                _view.TopLine = _view.SelectedLine - _view.Height + 1;
         }
 
         private void SelectDown()
@@ -389,11 +384,6 @@ namespace GitIStage
                 return;
 
             _view.SelectedLine++;
-            
-            if (_view.TopLine > _view.SelectedLine)
-                _view.TopLine = _view.SelectedLine;
-            else if (_view.TopLine < _view.SelectedLine - _view.Height + 1)
-                _view.TopLine = _view.SelectedLine - _view.Height + 1;
         }
 
         private void ScrollUp()
@@ -487,6 +477,89 @@ namespace GitIStage
 
             _view.SelectedLine = _document.FindNextChangeBlock(i);
             _view.BringIntoView(_view.SelectedLine);
+        }
+
+        private void Search()
+        {
+            var sb = new StringBuilder();
+
+            while (true)
+            {
+                Vt100.HideCursor();
+                Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
+                Vt100.SetForegroundColor(ConsoleColor.Blue);
+                Vt100.SetBackgroundColor(ConsoleColor.Gray);
+                Console.Write("/");
+                Vt100.EraseRestOfCurrentLine();
+                Console.Write(sb);
+                Vt100.ShowCursor();
+
+                var k = Console.ReadKey(intercept: true);
+
+                if (k.Key == ConsoleKey.Enter)
+                {
+                    break;
+                }
+                else if (k.Key == ConsoleKey.Escape)
+                {
+                    sb.Clear();
+                    break;
+                }
+                else if (k.Key == ConsoleKey.Backspace)
+                {
+                    if (sb.Length > 0)
+                        sb.Length--;
+                }
+                else if (k.KeyChar >= 32)
+                {
+                    sb.Append(k.KeyChar);
+                    if (sb.Length == Console.WindowWidth - 1)
+                        break;
+                }
+            }
+
+            Vt100.HideCursor();
+            UpdateFooter();
+
+            if (sb.Length == 0)
+                return;
+
+            var searchResults = new SearchResults(_document, sb.ToString());
+            if (searchResults.Hits.Count == 0)
+            {
+                Vt100.HideCursor();
+                Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
+                Vt100.SetForegroundColor(ConsoleColor.Blue);
+                Vt100.SetBackgroundColor(ConsoleColor.Gray);
+                Vt100.EraseRestOfCurrentLine();
+                Console.Write("<< NO RESULTS FOUND >>");
+                Console.ReadKey();
+                UpdateFooter();
+                return;
+            }
+
+            _view.SearchResults = searchResults;
+            _view.SelectedLine = searchResults.Hits.First().LineIndex;
+        }
+
+        private void GoPreviousHit()
+        {
+            if (_view.SearchResults == null)
+                return;
+
+            var hit = _view.SearchResults.FindPrevious(_view.SelectedLine);
+            if (hit != null)
+                _view.SelectedLine = hit.LineIndex;
+        }
+
+        private void GoNextHit()
+        {
+            if (_view.SearchResults == null)
+                return;
+
+            var hit = _view.SearchResults.FindNext(_view.SelectedLine);
+            if (hit != null)
+                _view.SelectedLine = hit.LineIndex;
         }
 
         private void Reset()
@@ -616,6 +689,7 @@ namespace GitIStage
                 var length = end - start + 1;
                 lines = Enumerable.Range(start, length);
             }
+
             var patch = Patching.ComputePatch(_document, lines, direction);
 
             Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
