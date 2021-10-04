@@ -100,5 +100,10 @@ namespace GitIStage
         {
             Console.Write($"\x1b[{lines}T");
         }
+
+        public static void EraseRestOfCurrentLine()
+        {
+            Console.Write($"\x1b[K");
+        }
     }
 }

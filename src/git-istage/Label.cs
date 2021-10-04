@@ -59,10 +59,8 @@ namespace GitIStage
             Vt100.SetCursorPosition(_left, _top);
             Vt100.SetForegroundColor(_foreground);
             Vt100.SetBackgroundColor(_background);
+            Vt100.EraseRestOfCurrentLine();
             Console.Write(text);
-
-            var remaining = _width - textLength;
-            Console.Write(_whitespace, 0, remaining);
         }
     }
 }

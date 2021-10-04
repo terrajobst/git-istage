@@ -19,11 +19,8 @@ namespace GitIStage
             Vt100.SetCursorPosition(view.Left, visualLine);
             Vt100.SetForegroundColor(foregroundColor);
             Vt100.SetBackgroundColor(backgroundColor);
+            Vt100.EraseRestOfCurrentLine();
             Console.Write(text);
-
-            var remaining = view.Width - textLength;
-            if (remaining > 0)
-                Console.Write(_blankRow, 0, remaining);
         }
     }
 }
