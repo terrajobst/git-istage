@@ -2,8 +2,10 @@ using System;
 
 namespace GitIStage
 {
-    internal class PatchDocumentLineRenderer : ViewLineRenderer
+    internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
     {
+        public static new PatchDocumentLineRenderer Default { get; } = new PatchDocumentLineRenderer();
+
         private static PatchLine GetLine(View view, int lineIndex)
         {
             var document = view.Document as PatchDocument;

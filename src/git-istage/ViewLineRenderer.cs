@@ -2,11 +2,19 @@ using System;
 
 namespace GitIStage
 {
-    internal abstract class ViewLineRenderer
+    internal class ViewLineRenderer
     {
+        public static ViewLineRenderer Default { get; } = new ViewLineRenderer();
+
         private readonly char[] _blankRow = Whitespace.GetSpaces(Console.WindowWidth);
 
-        public abstract void Render(View view, int lineIndex);
+        public virtual void Render(View view, int lineIndex)
+        {
+            var line = view.Document.GetLine(lineIndex);
+            var foregroundColor = ConsoleColor.Gray;
+            var backgroundColor = ConsoleColor.Black;
+            RenderLine(view, lineIndex, line, foregroundColor, backgroundColor);
+        }
 
         protected void RenderLine(View view, int lineIndex, string line, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
         {

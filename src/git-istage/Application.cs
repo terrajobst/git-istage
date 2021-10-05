@@ -27,8 +27,8 @@ namespace GitIStage
         private bool _helpShowing;
         ConsoleCommand[] _commands;
 
-        private int selectedLineBeforeHelpWasShown;
-        private int topLineBeforeHelpWasShown;
+        private int _selectedLineBeforeHelpWasShown;
+        private int _topLineBeforeHelpWasShown;
 
         public Application(string repositoryPath, string pathToGit, KeyBindings keyBindings)
         {
@@ -130,8 +130,7 @@ namespace GitIStage
             _header.Foreground = ConsoleColor.Yellow;
             _header.Background = ConsoleColor.DarkGray;
 
-            var renderer = new PatchDocumentLineRenderer();
-            _view = new View(renderer, 1, 0, Console.WindowHeight - 1, Console.WindowWidth);
+            _view = new View(1, 0, Console.WindowHeight - 1, Console.WindowWidth);
             _view.SelectedLineChanged += delegate { UpdateHeader(); };
 
             _footer = new Label(Console.WindowHeight - 1, 0, Console.WindowWidth);
@@ -174,6 +173,7 @@ namespace GitIStage
                 : null;
 
             _document = PatchDocument.Parse(patch);
+            _view.LineRenderer = PatchDocumentLineRenderer.Default;
             _view.Document = _document;
 
             UpdateHeader();
@@ -644,26 +644,25 @@ namespace GitIStage
             {
                 _helpShowing = false;
 
-                _view.SelectedLine = selectedLineBeforeHelpWasShown == -1 ? 0 : selectedLineBeforeHelpWasShown;
-                _view.TopLine = topLineBeforeHelpWasShown;
-
                 UpdateRepository();
+
+                _view.SelectedLine = _selectedLineBeforeHelpWasShown == -1 ? 0 : _selectedLineBeforeHelpWasShown;
+                _view.TopLine = _topLineBeforeHelpWasShown;
+
                 return;
             }
 
-            selectedLineBeforeHelpWasShown = _view.SelectedLine;
-            topLineBeforeHelpWasShown = _view.TopLine;
+            _selectedLineBeforeHelpWasShown = _view.SelectedLine;
+            _topLineBeforeHelpWasShown = _view.TopLine;
 
-            _view.Document = new Help().GetKeyboardShortcutsInfo(_commands);
+            _view.LineRenderer = ViewLineRenderer.Default;
+            _view.Document = new HelpDocument(_commands);
 
             _helpShowing = true;
 
             UpdateHeader();
             UpdateFooter();
 
-            // Little trick with chaning selected line to refresh header in help page.
-            // Without this header will not be updated when open help page and SelectedLine is 0.
-            if (_view.SelectedLine == 0) _view.SelectedLine = 1;
             _view.SelectedLine = 0;
             _view.TopLine = 0;
         }

@@ -4,9 +4,9 @@ namespace GitIStage
 {
     internal sealed class View
     {
-        private readonly ViewLineRenderer _renderer;
         private readonly char[] _blankRow;
 
+        private ViewLineRenderer _lineRenderer = ViewLineRenderer.Default;
         private Document _document = Document.Empty;
         private int _topLine;
         private int _leftChar;
@@ -14,15 +14,24 @@ namespace GitIStage
         private bool _visibleWhitespace;
         private SearchResults _searchResults;
 
-        public View(ViewLineRenderer renderer, int top, int left, int bottom, int right)
+        public View(int top, int left, int bottom, int right)
         {
-            _renderer = renderer;
             Top = top;
             Left = left;
             Bottom = bottom;
             Right = right;
             _blankRow = Whitespace.GetSpaces(Width);
             Initialize();
+        }
+
+        public ViewLineRenderer LineRenderer
+        {
+            get { return _lineRenderer; }
+            set
+            {
+                _lineRenderer = value ?? ViewLineRenderer.Default;
+                Initialize();
+            }
         }
 
         public Document Document
@@ -147,7 +156,7 @@ namespace GitIStage
             if (!isVisible)
                 return;
 
-            _renderer.Render(this, lineIndex);
+            _lineRenderer.Render(this, lineIndex);
         }
 
         private void RenderNonExistingLine(int visualLine)
