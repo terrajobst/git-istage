@@ -11,8 +11,9 @@ namespace GitIStage
         public virtual void Render(View view, int lineIndex)
         {
             var line = view.Document.GetLine(lineIndex);
+            var isSelected = view.SelectedLine == lineIndex;
             var foregroundColor = ConsoleColor.Gray;
-            var backgroundColor = ConsoleColor.Black;
+            var backgroundColor = isSelected ? ConsoleColor.DarkGray : ConsoleColor.Black;
             RenderLine(view, lineIndex, line, foregroundColor, backgroundColor);
         }
 

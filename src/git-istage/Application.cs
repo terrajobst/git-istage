@@ -361,12 +361,6 @@ namespace GitIStage
 
         private void SelectUp()
         {
-            if (_helpShowing)
-            {
-                ScrollUp();
-                return;
-            }
-
             if (_view.SelectedLine <= 0)
                 return;
 
@@ -375,12 +369,6 @@ namespace GitIStage
 
         private void SelectDown()
         {
-            if (_helpShowing)
-            {
-                ScrollDown();
-                return;
-            }
-
             if (_view.SelectedLine == _view.DocumentHeight - 1)
                 return;
 
@@ -525,7 +513,7 @@ namespace GitIStage
             if (sb.Length == 0)
                 return;
 
-            var searchResults = new SearchResults(_document, sb.ToString());
+            var searchResults = new SearchResults(_view.Document, sb.ToString());
             if (searchResults.Hits.Count == 0)
             {
                 Vt100.HideCursor();
