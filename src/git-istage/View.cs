@@ -124,6 +124,8 @@ namespace GitIStage
                     _leftChar = 0;
             }
 
+            _searchResults = null;
+
             Render();
         }
 
