@@ -76,7 +76,7 @@ namespace GitIStage
 
         public int Width => Right - Left;
 
-        public int DocumentWidth { get; private set; }
+        public int DocumentWidth => Document.Width;
 
         public int DocumentHeight => Document.Height;
 
@@ -108,7 +108,6 @@ namespace GitIStage
 
         private void Initialize()
         {
-            DocumentWidth = _document.Width;
             _topLine = Math.Max(0, Math.Min(Math.Min(_topLine, DocumentHeight - 1), DocumentHeight - Height));
             _selectedLine = Math.Min(_selectedLine, DocumentHeight - 1);
             _leftChar = Math.Min(_leftChar, DocumentWidth - 1);
