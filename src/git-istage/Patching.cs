@@ -142,9 +142,7 @@ namespace GitIStage
             // passing -v to git apply will output more useful information in case of a patch failure
             var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
 
-            // Write patch to file with Environment NewLine to ensure line endings are normalized
-            foreach (var pLine in patchLines)
-                File.AppendAllText(patchFilePath,  pLine + Environment.NewLine);
+            File.WriteAllLines(patchFilePath, patchLines);
             
             var startInfo = new ProcessStartInfo
             {
