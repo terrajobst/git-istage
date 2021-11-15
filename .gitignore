@@ -249,3 +249,6 @@ Temporary Items
 Session.vim
 .netrwhist
 *~
+
+# rider configuration files
+src/.idea/
