@@ -13,8 +13,7 @@ namespace GitIStage
     {
         public static string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
         {
-            var isUndo = direction == PatchDirection.Reset ||
-                         direction == PatchDirection.Unstage;
+            var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
 
             var newPatch = new StringBuilder();
 
@@ -84,18 +83,18 @@ namespace GitIStage
                     newPatch.Append(oldStart);
                     if (oldLength != 1)
                     {
-                        newPatch.Append(",");
+                        newPatch.Append(',');
                         newPatch.Append(oldLength);
                     }
                     newPatch.Append(" +");
                     newPatch.Append(newStart);
                     if (newLength != 1)
                     {
-                        newPatch.Append(",");
+                        newPatch.Append(',');
                         newPatch.Append(newLength);
                     }
                     newPatch.Append(" @@");
-                    newPatch.Append("\n");
+                    newPatch.Append('\n');
 
                     // Write hunk
 
@@ -110,15 +109,15 @@ namespace GitIStage
                             previousIncluded && kind == PatchLineKind.NoEndOfLine)
                         {
                             newPatch.Append(line.Text);
-                            newPatch.Append("\n");
+                            newPatch.Append('\n');
                             previousIncluded = true;
                         }
                         else if (!isUndo && kind == PatchLineKind.Removal ||
                                  isUndo && kind == PatchLineKind.Addition)
                         {
-                            newPatch.Append(" ");
+                            newPatch.Append(' ');
                             newPatch.Append(line.Text, 1, line.Text.Length - 1);
-                            newPatch.Append("\n");
+                            newPatch.Append('\n');
                             previousIncluded = true;
                         }
                         else
@@ -134,14 +133,17 @@ namespace GitIStage
 
         public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, PatchDirection direction)
         {
-            var isUndo = direction == PatchDirection.Reset ||
-                         direction == PatchDirection.Unstage;
+            var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
             var patchFilePath = Path.GetTempFileName();
             var reverse = isUndo ? "--reverse" : string.Empty;
             var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
-            var arguments = $@"apply {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
+            var patchLines = patch.Split('\n');
+            
+            // passing -v to git apply will output more useful information in case of a patch failure
+            var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
 
-            File.WriteAllText(patchFilePath, patch);
+            File.WriteAllLines(patchFilePath, patchLines);
+            
             var startInfo = new ProcessStartInfo
             {
                 FileName = pathToGit,
@@ -157,30 +159,32 @@ namespace GitIStage
             {
                 var output = new List<string>();
 
-                DataReceivedEventHandler handler = (s, e) =>
+                void Handler(object _, DataReceivedEventArgs e)
                 {
                     lock (output)
                     {
-                        if (e.Data != null)
-                            output.Add(e.Data);
+                        if (e.Data != null) output.Add(e.Data);
                     }
-                };
+                }
 
                 process.StartInfo = startInfo;
-                process.OutputDataReceived += handler;
-                process.ErrorDataReceived += handler;
+                process.OutputDataReceived += Handler;
+                process.ErrorDataReceived += Handler;
                 process.Start();
                 process.BeginOutputReadLine();
                 process.BeginErrorReadLine();
                 process.WaitForExit();
 
-                if (output.Any(l => l.Trim().Length > 0))
+                // show output only when an error occurred
+                if (output.Any(l => l.Trim().Length > 0) && output.Any(q => q.StartsWith("error:")))
                 {
                     Console.Clear();
                     foreach (var line in output)
                         Console.WriteLine(line);
 
-                    Console.Write(patch);
+                    foreach (var line in patchLines)
+                        Console.WriteLine(line);
+                     
                     Console.ReadKey();
                 }
             }
