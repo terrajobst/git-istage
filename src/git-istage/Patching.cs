@@ -139,11 +139,15 @@ namespace GitIStage
             var patchFilePath = Path.GetTempFileName();
             var reverse = isUndo ? "--reverse" : string.Empty;
             var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
+            var patchLines = patch.Split('\n');
             
             // passing -v to git apply will output more useful information in case of a patch failure
             var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
 
-            File.WriteAllText(patchFilePath, patch);
+            // Write patch to file with Environment NewLine to ensure line endings are normalized
+            foreach (var pLine in patchLines)
+                File.AppendAllText(patchFilePath,  pLine + Environment.NewLine);
+            
             var startInfo = new ProcessStartInfo
             {
                 FileName = pathToGit,
@@ -176,13 +180,14 @@ namespace GitIStage
                 process.BeginErrorReadLine();
                 process.WaitForExit();
 
-                if (output.Any(l => l.Trim().Length > 0))
+                // show output only when an error occurred
+                if (output.Any(l => l.Trim().Length > 0) && output.Any(q => q.StartsWith("error:")))
                 {
                     Console.Clear();
                     foreach (var line in output)
                         Console.WriteLine(line);
 
-                    foreach (var line in patch.Split('\n'))
+                    foreach (var line in patchLines)
                         Console.WriteLine(line);
                      
                     Console.ReadKey();
