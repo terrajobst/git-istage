@@ -178,11 +178,10 @@ namespace GitIStage
                 {
                     Console.Clear();
                     foreach (var line in output)
-                        Console.WriteLine(line.Trim());
+                        Console.WriteLine(line);
 
-                    // foreach (var line in patch.Split('\n'))
-                    //     Console.WriteLine(line);
-                    Console.Write(patch);
+                    foreach (var line in patch.Split('\n'))
+                        Console.WriteLine(line);
                      
                     Console.ReadKey();
                 }
