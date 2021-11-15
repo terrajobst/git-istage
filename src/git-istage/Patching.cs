@@ -139,7 +139,9 @@ namespace GitIStage
             var patchFilePath = Path.GetTempFileName();
             var reverse = isUndo ? "--reverse" : string.Empty;
             var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
-            var arguments = $@"apply {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
+            
+            // passing -v to git apply will output more useful information in case of a patch failure
+            var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
 
             File.WriteAllText(patchFilePath, patch);
             var startInfo = new ProcessStartInfo
