@@ -1,17 +1,22 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Text;
-
 using LibGit2Sharp;
 
 namespace GitIStage
 {
-    internal static class Patching
+    internal class Patching
     {
-        public static string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
+        private readonly IProcessRunner _processRunner;
+
+        public Patching(IProcessRunner processRunner)
+        {
+            _processRunner = processRunner ?? throw new ArgumentNullException(nameof(processRunner));
+        }
+
+        public string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
         {
             var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
 
@@ -131,7 +136,7 @@ namespace GitIStage
             return newPatch.ToString();
         }
 
-        public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, PatchDirection direction)
+        public void ApplyPatch(string pathToGit, string workingDirectory, string patch, PatchDirection direction)
         {
             var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
             var patchFilePath = Path.GetTempFileName();
@@ -143,49 +148,19 @@ namespace GitIStage
 
             File.WriteAllText(patchFilePath, patch);
 
-            var startInfo = new ProcessStartInfo
+            IEnumerable<string> output = _processRunner.Run(pathToGit, arguments, workingDirectory, redirectStandardStreams: true);
+
+            // show output only when an error occurred
+            if (output.Any(l => l.Trim().Length > 0) && output.Any(q => q.StartsWith("error:")))
             {
-                FileName = pathToGit,
-                WorkingDirectory = workingDirectory,
-                Arguments = arguments,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            };
+                Console.Clear();
+                foreach (var line in output)
+                    Console.WriteLine(line);
 
-            using (var process = new Process())
-            {
-                var output = new List<string>();
+                foreach (var line in patch.Split('\n'))
+                    Console.WriteLine(line);
 
-                void Handler(object _, DataReceivedEventArgs e)
-                {
-                    lock (output)
-                    {
-                        if (e.Data != null) output.Add(e.Data);
-                    }
-                }
-
-                process.StartInfo = startInfo;
-                process.OutputDataReceived += Handler;
-                process.ErrorDataReceived += Handler;
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
-
-                // show output only when an error occurred
-                if (output.Any(l => l.Trim().Length > 0) && output.Any(q => q.StartsWith("error:")))
-                {
-                    Console.Clear();
-                    foreach (var line in output)
-                        Console.WriteLine(line);
-
-                    foreach (var line in patch.Split('\n'))
-                        Console.WriteLine(line);
-
-                    Console.ReadKey();
-                }
+                Console.ReadKey();
             }
 
             File.Delete(patchFilePath);

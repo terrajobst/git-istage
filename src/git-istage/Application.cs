@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.Linq;
 using System.Reflection;
 using System.Text;
@@ -30,11 +29,16 @@ namespace GitIStage
         private int _selectedLineBeforeHelpWasShown;
         private int _topLineBeforeHelpWasShown;
 
+        private readonly IProcessRunner _processRunner;
+
         public Application(string repositoryPath, string pathToGit, KeyBindings keyBindings)
         {
             _repositoryPath = repositoryPath;
             _pathToGit = pathToGit;
             _keyBindings = keyBindings;
+
+            //TODO: Dependecy Injection for unit testing?.
+            _processRunner = new ProcessRunner();
         }
 
         public void Run()
@@ -227,16 +231,7 @@ namespace GitIStage
 
         private void RunGit(string command)
         {
-            var startupInfo = new ProcessStartInfo
-            {
-                FileName = _pathToGit,
-                Arguments = command,
-                CreateNoWindow = true,
-                UseShellExecute = false
-            };
-
-            var process = Process.Start(startupInfo);
-            process.WaitForExit();
+            _processRunner.Run(_pathToGit, command);
 
             UpdateRepository();
         }
@@ -678,9 +673,11 @@ namespace GitIStage
                 lines = Enumerable.Range(start, length);
             }
 
-            var patch = Patching.ComputePatch(_document, lines, direction);
+            var patching = new Patching(_processRunner);
 
-            Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
+            var patch = patching.ComputePatch(_document, lines, direction);
+
+            patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
             UpdateRepository();
         }
     }
