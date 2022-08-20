@@ -169,6 +169,8 @@ namespace GitIStage
             {
                 var kind = PatchLineKind.Header;
                 var text = lines[i];
+                if (text.StartsWith("diff --git"))
+                    kind = PatchLineKind.DiffLine;
                 var line = new PatchLine(kind, text);
                 result.Add(line);
             }

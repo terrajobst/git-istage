@@ -4,6 +4,7 @@ namespace GitIStage
 {
     internal enum PatchLineKind
     {
+        DiffLine,
         Header,
         Hunk,
         Context,

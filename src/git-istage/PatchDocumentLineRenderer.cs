@@ -20,6 +20,8 @@ namespace GitIStage
 
             switch (line.Kind)
             {
+                case PatchLineKind.DiffLine:
+                    return ConsoleColor.Yellow;
                 case PatchLineKind.Header:
                     return ConsoleColor.White;
                 case PatchLineKind.Hunk:
@@ -51,7 +53,7 @@ namespace GitIStage
                     : ConsoleColor.DarkGray;
             }
 
-            return ConsoleColor.Black;
+            return kind == PatchLineKind.DiffLine ? ConsoleColor.DarkBlue : ConsoleColor.Black;
         }
 
         public override void Render(View view, int lineIndex)
