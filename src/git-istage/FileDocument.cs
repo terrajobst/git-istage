@@ -38,27 +38,24 @@ internal sealed class FileDocument : Document
     public static FileDocument Create(string repositoryPath, TreeChanges changes, bool viewStage)
     {
         var builder = new StringBuilder();
-
-        builder.AppendLine();
-
-        if (viewStage)
-            builder.AppendLine("Changes to be committed:");
-        else
-            builder.AppendLine("Changes not staged for commit:");
-
-        builder.AppendLine();
-
-        var indent = new string(' ', 8);
-
-        foreach (var c in changes)
+        if (changes.Any())
         {
-            var path = Path.GetRelativePath(repositoryPath, c.Path);
-            var change = (c.Status.ToString().ToLower() + ":").PadRight(12);
-
-            builder.Append(indent);
-            builder.Append(change);
-            builder.Append(path);
             builder.AppendLine();
+            builder.AppendLine(viewStage ? "Changes to be committed:" : "Changes not staged for commit:");
+            builder.AppendLine();
+
+            var indent = new string(' ', 8);
+
+            foreach (var c in changes)
+            {
+                var path = Path.GetRelativePath(repositoryPath, c.Path);
+                var change = (c.Status.ToString().ToLower() + ":").PadRight(12);
+
+                builder.Append(indent);
+                builder.Append(change);
+                builder.Append(path);
+                builder.AppendLine();
+            }
         }
 
         var indexOfFirstFile = 3;
