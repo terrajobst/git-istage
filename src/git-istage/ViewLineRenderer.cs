@@ -45,7 +45,7 @@ namespace GitIStage
                         {
                             Vt100.SetCursorPosition(hitStart - view.LeftChar, visualLine);
                             Vt100.NegativeColors();
-                            Console.Write(line.Substring(hitStart, hitLength));
+                            Console.Write(line.Substring(hitStart, hitLength)); // todo : 
                             Vt100.PositiveColors();
                         }
                     }
