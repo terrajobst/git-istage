@@ -155,7 +155,7 @@ internal sealed class View
         _lineRenderer.Render(this, lineIndex);
     }
 
-    private void RenderNonExistingLine(int visualLine)
+    private static void RenderNonExistingLine(int visualLine)
     {
         Vt100.SetCursorPosition(0, visualLine);
         Vt100.SetForegroundColor(ConsoleColor.DarkGray);

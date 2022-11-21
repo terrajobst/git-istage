@@ -100,8 +100,7 @@ internal sealed class Application
 
     private static (ConsoleKey, ConsoleModifiers) ResolveKey(string key)
     {
-        var parser = new KeyPressParser();
-        var result = parser.Parse(key);
+        var result = KeyPressParser.Parse(key);
         if (result.Succeeded)
             return (result.Key, result.Modifiers);
 

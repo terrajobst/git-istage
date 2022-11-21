@@ -6,7 +6,7 @@ namespace GitIStage;
 /// A simple parser for expressions referring to a keypress
 /// such as, "ctrl+q", "shift+a", etc.
 /// </summary>
-public class KeyPressParser
+public static class KeyPressParser
 {
     /// <summary>
     /// Returns a structure containing
@@ -16,7 +16,7 @@ public class KeyPressParser
     /// </summary>
     /// <param name="keyPress"></param>
     /// <returns></returns>
-    public Result Parse(string keyPress)
+    public static Result Parse(string keyPress)
     {
         var (modifiers, key, succeeded) = SplitLastOf(keyPress);
         if (succeeded)
@@ -43,7 +43,7 @@ public class KeyPressParser
         public ConsoleModifiers Modifiers { get; set; }
     }
 
-    private bool TryParseKey(string s, out ConsoleKey key)
+    private static bool TryParseKey(string s, out ConsoleKey key)
     {
         key = 0;
 
@@ -210,35 +210,35 @@ public class KeyPressParser
         return false;
     }
 
-    private bool IsKey(string c, string text)
+    private static bool IsKey(string c, string text)
     {
         return String.Compare(c, text, true) == 0;
     }
 
-    private bool TryParseModifiers(string modifier, out ConsoleModifiers mods)
+    private static bool TryParseModifiers(string modifier, out ConsoleModifiers mods)
     {
         mods = 0;
         return TryParseModifiersImpl(modifier, ref mods);
     }
 
-    private bool TryParseModifiersImpl(string modifiers, ref ConsoleModifiers mods)
+    private static bool TryParseModifiersImpl(string modifiers, ref ConsoleModifiers mods)
     {
-        var (others, modifier, succeeded) = SplitLastOf(modifiers);
-        if (!succeeded)
-            return false;
+        while (true)
+        {
+            var (others, modifier, succeeded) = SplitLastOf(modifiers);
+            if (!succeeded) return false;
 
-        if (modifier.Length == 0)
-            return true;
+            if (modifier.Length == 0) return true;
 
-        if (!TryParseModifier(modifier, out var mod))
-            return false;
+            if (!TryParseModifier(modifier, out var mod)) return false;
 
-        mods |= mod;
+            mods |= mod;
 
-        return TryParseModifiersImpl(others, ref mods);
+            modifiers = others;
+        }
     }
 
-    private bool TryParseModifier(string modifier, out ConsoleModifiers mods)
+    private static bool TryParseModifier(string modifier, out ConsoleModifiers mods)
     {
         mods = 0;
 
@@ -261,7 +261,7 @@ public class KeyPressParser
         return false;
     }
 
-    private (string, string, bool) SplitLastOf(string text)
+    private static (string, string, bool) SplitLastOf(string text)
     {
         if (text.Length == 0)
             return ("", text, true);

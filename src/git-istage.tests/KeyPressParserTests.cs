@@ -7,8 +7,7 @@ public class KeyPressParserTests
     [Fact]
     public void KeyPressParser_ParseKey()
     {
-        var parser = new KeyPressParser();
-        var result = parser.Parse("shift+ctrl+R");
+        var result = KeyPressParser.Parse("shift+ctrl+R");
 
         Assert.True(result.Succeeded);
         Assert.Equal(ConsoleKey.R, result.Key);
@@ -17,8 +16,7 @@ public class KeyPressParserTests
     [Fact]
     public void KeyPressParser_ParseMinusKey()
     {
-        var parser = new KeyPressParser();
-        var result = parser.Parse("-");
+        var result = KeyPressParser.Parse("-");
 
         Assert.True(result.Succeeded);
         Assert.Equal(ConsoleKey.OemMinus, result.Key);
@@ -26,8 +24,7 @@ public class KeyPressParserTests
     [Fact]
     public void KeyPressParser_ParsePlusKey()
     {
-        var parser = new KeyPressParser();
-        var result = parser.Parse("+");
+        var result = KeyPressParser.Parse("+");
 
         Assert.True(result.Succeeded);
         Assert.Equal(ConsoleKey.OemPlus, result.Key);
@@ -35,8 +32,7 @@ public class KeyPressParserTests
     [Fact]
     public void KeyPressParser_ParseCtrlPlusKey()
     {
-        var parser = new KeyPressParser();
-        var result = parser.Parse("ctrl++");
+        var result = KeyPressParser.Parse("ctrl++");
 
         Assert.True(result.Succeeded);
         Assert.Equal(ConsoleKey.OemPlus, result.Key);
