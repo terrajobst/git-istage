@@ -19,7 +19,7 @@ namespace GitIStage
         {
             var textStart = Math.Min(view.LeftChar, line.Length);
             var textLength = Math.Max(Math.Min(view.Width, line.Length - view.LeftChar), 0);
-            var text = textLength < 0 ? string.Empty : line.ToVisual(view.VisibleWhitespace).Substring(textStart, textLength);
+            var text = line.ToVisual(view.VisibleWhitespace).Substring(textStart, textLength);
 
             var visualLine = lineIndex - view.TopLine + view.Top;
 
