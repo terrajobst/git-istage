@@ -266,6 +266,7 @@ public static class KeyPressParser
         if (text.Length == 0)
             return ("", text, true);
 
+        // language=regex
         var pattern = @"(?:(?<first>.+)\+)?(?<second>.+)";
         var regex = new Regex(pattern);
         var match = regex.Match(text);
