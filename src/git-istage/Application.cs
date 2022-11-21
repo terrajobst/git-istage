@@ -101,7 +101,7 @@ namespace GitIStage
             return commands.ToArray();
         }
 
-        private (ConsoleKey, ConsoleModifiers) ResolveKey(string key)
+        private static (ConsoleKey, ConsoleModifiers) ResolveKey(string key)
         {
             var parser = new KeyPressParser();
             var result = parser.Parse(key);

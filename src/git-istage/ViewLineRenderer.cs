@@ -15,7 +15,7 @@ namespace GitIStage
             RenderLine(view, lineIndex, line, foregroundColor, backgroundColor);
         }
 
-        protected void RenderLine(View view, int lineIndex, string line, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
+        protected static void RenderLine(View view, int lineIndex, string line, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
         {
             var textStart = Math.Min(view.LeftChar, line.Length);
             var textLength = Math.Max(Math.Min(view.Width, line.Length - view.LeftChar), 0);
