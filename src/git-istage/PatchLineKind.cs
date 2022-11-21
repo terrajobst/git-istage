@@ -1,13 +1,12 @@
-﻿namespace GitIStage
+﻿namespace GitIStage;
+
+internal enum PatchLineKind
 {
-    internal enum PatchLineKind
-    {
-        DiffLine,
-        Header,
-        Hunk,
-        Context,
-        Addition,
-        Removal,
-        NoEndOfLine
-    }
+    DiffLine,
+    Header,
+    Hunk,
+    Context,
+    Addition,
+    Removal,
+    NoEndOfLine
 }

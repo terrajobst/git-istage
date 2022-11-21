@@ -1,10 +1,9 @@
 ﻿using System.Text.Json.Serialization;
 
-namespace GitIStage
+namespace GitIStage;
+
+public partial class KeyBindings
 {
-    public partial class KeyBindings
-    {
-        [JsonIgnore]
-        public IDictionary<string, KeyBinding> Handlers { get; set; }
-    }
+    [JsonIgnore]
+    public IDictionary<string, KeyBinding> Handlers { get; set; }
 }

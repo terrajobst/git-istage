@@ -3,188 +3,187 @@ using System.Text;
 
 using LibGit2Sharp;
 
-namespace GitIStage
+namespace GitIStage;
+
+internal static class Patching
 {
-    internal static class Patching
+    public static string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
     {
-        public static string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
+        var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
+
+        var newPatch = new StringBuilder();
+
+        var entryLines = lineIndexes.Select(i => new { i, e = document.FindEntry(i) }).GroupBy(t => t.e, t => t.i);
+
+        foreach (var entryLine in entryLines)
         {
-            var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
+            var entry = entryLine.Key;
+            var hunkLines = entryLine.Select(i => new { i, h = entry.FindHunk(i) }).GroupBy(t => t.h, t => t.i);
 
-            var newPatch = new StringBuilder();
-
-            var entryLines = lineIndexes.Select(i => new { i, e = document.FindEntry(i) }).GroupBy(t => t.e, t => t.i);
-
-            foreach (var entryLine in entryLines)
+            foreach (var hunkLine in hunkLines)
             {
-                var entry = entryLine.Key;
-                var hunkLines = entryLine.Select(i => new { i, h = entry.FindHunk(i) }).GroupBy(t => t.h, t => t.i);
+                var hunk = hunkLine.Key;
+                var lineSet = new HashSet<int>(hunkLine);
 
-                foreach (var hunkLine in hunkLines)
+                // Get current hunk information
+
+                var oldStart = hunk.OldStart;
+                var newStart = hunk.NewStart;
+
+                // Compute the new hunk size
+
+                var oldLength = 0;
+
+                for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
                 {
-                    var hunk = hunkLine.Key;
-                    var lineSet = new HashSet<int>(hunkLine);
+                    var line = document.Lines[i];
+                    var kind = line.Kind;
 
-                    // Get current hunk information
+                    var wasPresent = kind == PatchLineKind.Context ||
+                                     kind == PatchLineKind.Removal && (!isUndo || lineSet.Contains(i)) ||
+                                     kind == PatchLineKind.Addition && (isUndo && !lineSet.Contains(i));
 
-                    var oldStart = hunk.OldStart;
-                    var newStart = hunk.NewStart;
+                    if (wasPresent)
+                        oldLength++;
+                }
 
-                    // Compute the new hunk size
+                var delta = lineSet.Select(i => document.Lines[i])
+                    .Select(l => l.Kind)
+                    .Where(k => k.IsAdditionOrRemoval())
+                    .Select(k => k == PatchLineKind.Addition ? 1 : -1)
+                    .Sum();
 
-                    var oldLength = 0;
+                var newLength = oldLength + delta;
 
-                    for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
+                // Add header
+
+                var changes = entry.Changes;
+                var oldPath = changes.OldPath.Replace(@"\", "/");
+                var oldExists = oldLength != 0 || changes.OldMode != Mode.Nonexistent;
+                var path = changes.Path.Replace(@"\", "/");
+
+                if (oldExists)
+                {
+                    newPatch.AppendFormat("--- {0}\n", oldPath);
+                }
+                else
+                {
+                    newPatch.AppendFormat("new file mode {0}\n", changes.Mode);
+                    newPatch.Append("--- /dev/null\n");
+                }
+                newPatch.AppendFormat("+++ b/{0}\n", path);
+
+                // Write hunk header
+
+                newPatch.Append("@@ -");
+                newPatch.Append(oldStart);
+                if (oldLength != 1)
+                {
+                    newPatch.Append(',');
+                    newPatch.Append(oldLength);
+                }
+                newPatch.Append(" +");
+                newPatch.Append(newStart);
+                if (newLength != 1)
+                {
+                    newPatch.Append(',');
+                    newPatch.Append(newLength);
+                }
+                newPatch.Append(" @@");
+                newPatch.Append('\n');
+
+                // Write hunk
+
+                var previousIncluded = false;
+
+                for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
+                {
+                    var line = document.Lines[i];
+                    var kind = line.Kind;
+                    if (lineSet.Contains(i) ||
+                        kind == PatchLineKind.Context ||
+                        previousIncluded && kind == PatchLineKind.NoEndOfLine)
                     {
-                        var line = document.Lines[i];
-                        var kind = line.Kind;
-
-                        var wasPresent = kind == PatchLineKind.Context ||
-                                         kind == PatchLineKind.Removal && (!isUndo || lineSet.Contains(i)) ||
-                                         kind == PatchLineKind.Addition && (isUndo && !lineSet.Contains(i));
-
-                        if (wasPresent)
-                            oldLength++;
+                        newPatch.Append(line.Text);
+                        newPatch.Append('\n');
+                        previousIncluded = true;
                     }
-
-                    var delta = lineSet.Select(i => document.Lines[i])
-                                       .Select(l => l.Kind)
-                                       .Where(k => k.IsAdditionOrRemoval())
-                                       .Select(k => k == PatchLineKind.Addition ? 1 : -1)
-                                       .Sum();
-
-                    var newLength = oldLength + delta;
-
-                    // Add header
-
-                    var changes = entry.Changes;
-                    var oldPath = changes.OldPath.Replace(@"\", "/");
-                    var oldExists = oldLength != 0 || changes.OldMode != Mode.Nonexistent;
-                    var path = changes.Path.Replace(@"\", "/");
-
-                    if (oldExists)
+                    else if (!isUndo && kind == PatchLineKind.Removal ||
+                             isUndo && kind == PatchLineKind.Addition)
                     {
-                        newPatch.AppendFormat("--- {0}\n", oldPath);
+                        newPatch.Append(' ');
+                        newPatch.Append(line.Text, 1, line.Text.Length - 1);
+                        newPatch.Append('\n');
+                        previousIncluded = true;
                     }
                     else
                     {
-                        newPatch.AppendFormat("new file mode {0}\n", changes.Mode);
-                        newPatch.Append("--- /dev/null\n");
-                    }
-                    newPatch.AppendFormat("+++ b/{0}\n", path);
-
-                    // Write hunk header
-
-                    newPatch.Append("@@ -");
-                    newPatch.Append(oldStart);
-                    if (oldLength != 1)
-                    {
-                        newPatch.Append(',');
-                        newPatch.Append(oldLength);
-                    }
-                    newPatch.Append(" +");
-                    newPatch.Append(newStart);
-                    if (newLength != 1)
-                    {
-                        newPatch.Append(',');
-                        newPatch.Append(newLength);
-                    }
-                    newPatch.Append(" @@");
-                    newPatch.Append('\n');
-
-                    // Write hunk
-
-                    var previousIncluded = false;
-
-                    for (var i = hunk.Offset; i < hunk.Offset + hunk.Length; i++)
-                    {
-                        var line = document.Lines[i];
-                        var kind = line.Kind;
-                        if (lineSet.Contains(i) ||
-                            kind == PatchLineKind.Context ||
-                            previousIncluded && kind == PatchLineKind.NoEndOfLine)
-                        {
-                            newPatch.Append(line.Text);
-                            newPatch.Append('\n');
-                            previousIncluded = true;
-                        }
-                        else if (!isUndo && kind == PatchLineKind.Removal ||
-                                 isUndo && kind == PatchLineKind.Addition)
-                        {
-                            newPatch.Append(' ');
-                            newPatch.Append(line.Text, 1, line.Text.Length - 1);
-                            newPatch.Append('\n');
-                            previousIncluded = true;
-                        }
-                        else
-                        {
-                            previousIncluded = false;
-                        }
+                        previousIncluded = false;
                     }
                 }
             }
-
-            return newPatch.ToString();
         }
 
-        public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, PatchDirection direction)
+        return newPatch.ToString();
+    }
+
+    public static void ApplyPatch(string pathToGit, string workingDirectory, string patch, PatchDirection direction)
+    {
+        var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
+        var patchFilePath = Path.GetTempFileName();
+        var reverse = isUndo ? "--reverse" : string.Empty;
+        var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
+
+        // passing -v to git apply will output more useful information in case of a patch failure
+        var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
+        File.WriteAllText(patchFilePath, patch);
+
+        var startInfo = new ProcessStartInfo
         {
-            var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
-            var patchFilePath = Path.GetTempFileName();
-            var reverse = isUndo ? "--reverse" : string.Empty;
-            var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
+            FileName = pathToGit,
+            WorkingDirectory = workingDirectory,
+            Arguments = arguments,
+            CreateNoWindow = true,
+            UseShellExecute = false,
+            RedirectStandardError = true,
+            RedirectStandardOutput = true
+        };
 
-            // passing -v to git apply will output more useful information in case of a patch failure
-            var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
-            File.WriteAllText(patchFilePath, patch);
+        using (var process = new Process())
+        {
+            var output = new List<string>();
 
-            var startInfo = new ProcessStartInfo
+            void Handler(object _, DataReceivedEventArgs e)
             {
-                FileName = pathToGit,
-                WorkingDirectory = workingDirectory,
-                Arguments = arguments,
-                CreateNoWindow = true,
-                UseShellExecute = false,
-                RedirectStandardError = true,
-                RedirectStandardOutput = true
-            };
-
-            using (var process = new Process())
-            {
-                var output = new List<string>();
-
-                void Handler(object _, DataReceivedEventArgs e)
+                lock (output)
                 {
-                    lock (output)
-                    {
-                        if (e.Data != null) output.Add(e.Data);
-                    }
-                }
-
-                process.StartInfo = startInfo;
-                process.OutputDataReceived += Handler;
-                process.ErrorDataReceived += Handler;
-                process.Start();
-                process.BeginOutputReadLine();
-                process.BeginErrorReadLine();
-                process.WaitForExit();
-
-                // show output only when an error occurred
-                if (output.Any(l => l.Trim().Length > 0) && output.Any(q => q.StartsWith("error:")))
-                {
-                    Console.Clear();
-                    foreach (var line in output)
-                        Console.WriteLine(line);
-
-                    var patchLines = patch.Split('\n');
-                    foreach (var line in patchLines)
-                        Console.WriteLine(line);
-
-                    Console.ReadKey();
+                    if (e.Data != null) output.Add(e.Data);
                 }
             }
 
-            File.Delete(patchFilePath);
+            process.StartInfo = startInfo;
+            process.OutputDataReceived += Handler;
+            process.ErrorDataReceived += Handler;
+            process.Start();
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+            process.WaitForExit();
+
+            // show output only when an error occurred
+            if (output.Any(l => l.Trim().Length > 0) && output.Any(q => q.StartsWith("error:")))
+            {
+                Console.Clear();
+                foreach (var line in output)
+                    Console.WriteLine(line);
+
+                var patchLines = patch.Split('\n');
+                foreach (var line in patchLines)
+                    Console.WriteLine(line);
+
+                Console.ReadKey();
+            }
         }
+
+        File.Delete(patchFilePath);
     }
 }

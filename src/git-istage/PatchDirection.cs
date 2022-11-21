@@ -1,9 +1,8 @@
-namespace GitIStage
+namespace GitIStage;
+
+internal enum PatchDirection
 {
-    internal enum PatchDirection
-    {
-        Stage,
-        Unstage,
-        Reset
-    }
+    Stage,
+    Unstage,
+    Reset
 }
