@@ -691,12 +691,20 @@ internal sealed class Application
             var change = _fileDocument.GetChange(_view.SelectedLine);
             if (change != null)
             {
-                if (direction == PatchDirection.Stage)
-                    RunGit($"add \"{change.Path}\"");
-                else if (direction == PatchDirection.Unstage)
-                    RunGit($"reset \"{change.Path}\"");
-                else if (direction == PatchDirection.Reset)
-                    RunGit($"checkout \"{change.Path}\"");
+                var canBeHandled = change.Status is ChangeKind.Added or 
+                                                    ChangeKind.Renamed or
+                                                    ChangeKind.Modified or
+                                                    ChangeKind.Deleted;
+
+                if (canBeHandled)
+                {
+                    if (direction == PatchDirection.Stage)
+                        RunGit($"add \"{change.Path}\"");
+                    else if (direction == PatchDirection.Unstage)
+                        RunGit($"reset \"{change.Path}\"");
+                    else if (direction == PatchDirection.Reset)
+                        RunGit($"checkout \"{change.Path}\"");
+                }
             }
         }
         else
