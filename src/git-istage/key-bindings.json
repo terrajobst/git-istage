@@ -167,6 +167,10 @@
         "default": [ "T" ],
         "description": "Toggle between working copy changes and staged changes."
     },
+    "ToggleFilesAndChanges": {
+        "default": [ "F" ],
+        "description": "Toggle between seeing changes and changed files."
+    },
     "ToggleWhitespace": {
         "default": [ "W" ],
         "description": "Toggles between showing and hiding whitespace."

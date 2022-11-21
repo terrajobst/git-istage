@@ -18,10 +18,12 @@ namespace GitIStage
         private bool _fullFileDiff;
         private int _contextLines = 3;
         private Repository _repository;
+        private bool _viewFiles;
         private bool _viewStage;
         private Label _header;
         private View _view;
         private Label _footer;
+        private FileDocument _fileDocument;
         private PatchDocument _document;
         private StringBuilder _inputLineDigits = new StringBuilder();
         private bool _helpShowing;
@@ -172,9 +174,19 @@ namespace GitIStage
                     : _repository.Diff.Compare<Patch>(paths, true, null, compareOptions)
                 : null;
 
+            _fileDocument = FileDocument.Create(_repositoryPath, changes, _viewStage);
             _document = PatchDocument.Parse(patch);
-            _view.LineRenderer = PatchDocumentLineRenderer.Default;
-            _view.Document = _document;
+
+            if (_viewFiles)
+            {
+                _view.LineRenderer = FileDocumentLineRenderer.Default;
+                _view.Document = _fileDocument;
+            }
+            else
+            {
+                _view.LineRenderer = PatchDocumentLineRenderer.Default;
+                _view.Document = _document;
+            }
 
             UpdateHeader();
             UpdateFooter();
@@ -184,7 +196,7 @@ namespace GitIStage
         {
             if (_helpShowing)
             {
-                _header.Text = "Keyboard shortcuts";
+                _header.Text = " Keyboard shortcuts";
                 return;
             }
 
@@ -193,7 +205,14 @@ namespace GitIStage
             var path = entry == null ? emptyMarker : entry.Changes.Path;
             var mode = _viewStage ? "S" : "W";
 
-            _header.Text = $" {mode} | {path}";
+            if (_viewFiles)
+            {
+                _header.Text = $" {mode} | Files ";
+            }
+            else
+            {
+                _header.Text = $" {mode} | {path}";
+            }
         }
 
         private void UpdateFooter()
@@ -232,7 +251,8 @@ namespace GitIStage
                 FileName = _pathToGit,
                 Arguments = command,
                 CreateNoWindow = true,
-                UseShellExecute = false
+                UseShellExecute = false,
+                WorkingDirectory = _repository.Info.WorkingDirectory
             };
 
             var process = Process.Start(startupInfo);
@@ -263,6 +283,14 @@ namespace GitIStage
         {
             if (_helpShowing) return;
             _viewStage = !_viewStage;
+
+            UpdateRepository();
+        }
+
+        private void ToggleFilesAndChanges()
+        {
+            if (_helpShowing) return;
+            _viewFiles = !_viewFiles;
 
             UpdateRepository();
         }
@@ -658,29 +686,47 @@ namespace GitIStage
         private void ApplyPatch(PatchDirection direction, bool entireHunk)
         {
             if (_helpShowing) return;
+
             if (_view.SelectedLine < 0)
                 return;
 
-            var line = _document.Lines[_view.SelectedLine];
-            if (!line.Kind.IsAdditionOrRemoval())
-                return;
-
-            IEnumerable<int> lines;
-            if (!entireHunk)
+            if (_viewFiles)
             {
-                lines = new[] { _view.SelectedLine };
+                var change = _fileDocument.GetChange(_view.SelectedLine);
+                if (change != null)
+                {
+                    if (direction == PatchDirection.Stage)
+                        RunGit($"add \"{change.Path}\"");
+                    else if (direction == PatchDirection.Unstage)
+                        RunGit($"reset \"{change.Path}\"");
+                    else if (direction == PatchDirection.Reset)
+                        RunGit($"checkout \"{change.Path}\"");
+                }
             }
             else
             {
-                var start = _document.FindStartOfChangeBlock(_view.SelectedLine);
-                var end = _document.FindEndOfChangeBlock(_view.SelectedLine);
-                var length = end - start + 1;
-                lines = Enumerable.Range(start, length);
+                var line = _document.Lines[_view.SelectedLine];
+                if (!line.Kind.IsAdditionOrRemoval())
+                    return;
+
+                IEnumerable<int> lines;
+                if (!entireHunk)
+                {
+                    lines = new[] {_view.SelectedLine};
+                }
+                else
+                {
+                    var start = _document.FindStartOfChangeBlock(_view.SelectedLine);
+                    var end = _document.FindEndOfChangeBlock(_view.SelectedLine);
+                    var length = end - start + 1;
+                    lines = Enumerable.Range(start, length);
+                }
+
+                var patch = Patching.ComputePatch(_document, lines, direction);
+
+                Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
             }
 
-            var patch = Patching.ComputePatch(_document, lines, direction);
-
-            Patching.ApplyPatch(_pathToGit, _repository.Info.WorkingDirectory, patch, direction);
             UpdateRepository();
         }
     }
