@@ -4,8 +4,6 @@ namespace GitIStage
 {
     internal sealed class View
     {
-        private readonly char[] _blankRow;
-
         private ViewLineRenderer _lineRenderer = ViewLineRenderer.Default;
         private Document _document = Document.Empty;
         private int _topLine;
@@ -20,7 +18,6 @@ namespace GitIStage
             Left = left;
             Bottom = bottom;
             Right = right;
-            _blankRow = Whitespace.GetSpaces(Width);
             Initialize();
         }
 
@@ -166,7 +163,7 @@ namespace GitIStage
             Vt100.SetForegroundColor(ConsoleColor.DarkGray);
             Vt100.SetBackgroundColor(ConsoleColor.Black);
             Console.Write("~");
-            Console.Write(_blankRow, 0, Width - 1);
+            Vt100.EraseRestOfCurrentLine();
         }
 
         private void UpdateSelectedLine(int value)

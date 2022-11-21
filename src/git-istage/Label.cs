@@ -7,7 +7,6 @@ namespace GitIStage
         private readonly int _top;
         private readonly int _left;
         private readonly int _width;
-        private readonly char[] _whitespace;
 
         private ConsoleColor _foreground = ConsoleColor.Gray;
         private ConsoleColor _background = ConsoleColor.Black;
@@ -18,7 +17,6 @@ namespace GitIStage
             _top = top;
             _left = left;
             _width = right - left;
-            _whitespace = Whitespace.GetSpaces(_width);
         }
 
         public ConsoleColor Foreground

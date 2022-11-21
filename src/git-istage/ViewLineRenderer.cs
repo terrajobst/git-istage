@@ -6,8 +6,6 @@ namespace GitIStage
     {
         public static ViewLineRenderer Default { get; } = new ViewLineRenderer();
 
-        private readonly char[] _blankRow = Whitespace.GetSpaces(Console.WindowWidth);
-
         public virtual void Render(View view, int lineIndex)
         {
             var line = view.Document.GetLine(lineIndex);
