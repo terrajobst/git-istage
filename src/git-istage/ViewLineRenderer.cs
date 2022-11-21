@@ -1,5 +1,3 @@
-using System;
-
 namespace GitIStage
 {
     internal class ViewLineRenderer

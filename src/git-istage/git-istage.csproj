@@ -4,6 +4,7 @@
     <OutputType>Exe</OutputType>
     <TargetFramework>net6.0</TargetFramework>
     <PackAsTool>true</PackAsTool>
+    <ImplicitUsings>enable</ImplicitUsings>
     <PackageOutputPath>$(OutDir)</PackageOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/terrajobst/git-istage</RepositoryUrl>

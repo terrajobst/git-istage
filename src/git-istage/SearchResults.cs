@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 namespace GitIStage
 {
     internal sealed class SearchResults

@@ -1,6 +1,4 @@
-﻿using System;
-
-namespace GitIStage
+﻿namespace GitIStage
 {
     internal enum PatchLineKind
     {
