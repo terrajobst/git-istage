@@ -58,7 +58,7 @@ namespace GitIStage
         public int TopLine
         {
             get { return _topLine; }
-            set { UpdateTopLine(value);}
+            set { UpdateTopLine(value); }
         }
 
         public int LeftChar
@@ -261,7 +261,7 @@ namespace GitIStage
             if (!offScreen)
                 return;
 
-            var topLine = _selectedLine - Height/2;
+            var topLine = _selectedLine - Height / 2;
             if (topLine < 0)
                 topLine = 0;
 

@@ -52,7 +52,7 @@ namespace GitIStage
             while (end < document.Lines.Count - 1 && !document.Lines[end].Kind.IsAdditionOrRemoval())
                 end++;
 
-            if (end >=  document.Lines.Count || !document.Lines[end].Kind.IsAdditionOrRemoval())
+            if (end >= document.Lines.Count || !document.Lines[end].Kind.IsAdditionOrRemoval())
                 return lineIndex;
 
             return end;

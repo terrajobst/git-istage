@@ -6,7 +6,7 @@ namespace GitIStage;
 internal sealed class FileDocumentLineRenderer : ViewLineRenderer
 {
     public static new FileDocumentLineRenderer Default { get; } = new FileDocumentLineRenderer();
-        
+
     private static TreeEntryChanges GetChanges(View view, int lineIndex)
     {
         var document = view.Document as FileDocument;
@@ -38,7 +38,7 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
                 return ConsoleColor.Gray;
         }
     }
-    
+
     private static ConsoleColor GetBackgroundColor(View view, int lineIndex)
     {
         var foregroundColor = GetForegroundColor(view, lineIndex);

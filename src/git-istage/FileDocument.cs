@@ -21,7 +21,7 @@ namespace GitIStage
         }
 
         public override int Height => _lines.Length;
-        
+
         public override int Width { get; }
 
         public override string GetLine(int index)
@@ -66,7 +66,7 @@ namespace GitIStage
 
             var indexOfFirstFile = 3;
             var lines = builder.ToString().Split(Environment.NewLine);
-            
+
             var width = lines.Select(l => l.Length)
                              .DefaultIfEmpty(0)
                              .Max();

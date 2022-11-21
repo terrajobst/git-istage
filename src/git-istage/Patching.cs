@@ -17,12 +17,12 @@ namespace GitIStage
 
             var newPatch = new StringBuilder();
 
-            var entryLines = lineIndexes.Select(i => new {i, e = document.FindEntry(i)}).GroupBy(t => t.e, t => t.i);
+            var entryLines = lineIndexes.Select(i => new { i, e = document.FindEntry(i) }).GroupBy(t => t.e, t => t.i);
 
             foreach (var entryLine in entryLines)
             {
                 var entry = entryLine.Key;
-                var hunkLines = entryLine.Select(i => new {i, h = entry.FindHunk(i)}).GroupBy(t => t.h, t => t.i);
+                var hunkLines = entryLine.Select(i => new { i, h = entry.FindHunk(i) }).GroupBy(t => t.h, t => t.i);
 
                 foreach (var hunkLine in hunkLines)
                 {
@@ -137,11 +137,11 @@ namespace GitIStage
             var patchFilePath = Path.GetTempFileName();
             var reverse = isUndo ? "--reverse" : string.Empty;
             var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
-            
+
             // passing -v to git apply will output more useful information in case of a patch failure
             var arguments = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
             File.WriteAllText(patchFilePath, patch);
-            
+
             var startInfo = new ProcessStartInfo
             {
                 FileName = pathToGit,
@@ -183,7 +183,7 @@ namespace GitIStage
                     var patchLines = patch.Split('\n');
                     foreach (var line in patchLines)
                         Console.WriteLine(line);
-                     
+
                     Console.ReadKey();
                 }
             }

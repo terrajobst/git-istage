@@ -712,7 +712,7 @@ namespace GitIStage
                 IEnumerable<int> lines;
                 if (!entireHunk)
                 {
-                    lines = new[] {_view.SelectedLine};
+                    lines = new[] { _view.SelectedLine };
                 }
                 else
                 {
