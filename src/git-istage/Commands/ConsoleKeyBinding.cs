@@ -26,7 +26,7 @@ internal readonly struct ConsoleKeyBinding
 
         throw new FormatException($"Invalid key binding: {text}");
     }
-    
+
     public static bool TryParse(string text, out ConsoleKeyBinding result)
     {
         var (modifiersText, keyText, succeeded) = SplitLastOf(text);
@@ -43,7 +43,7 @@ internal readonly struct ConsoleKeyBinding
         result = default;
         return false;
     }
-    
+
     private static bool TryParseKey(string s, out ConsoleKey key)
     {
         key = 0;
@@ -278,7 +278,7 @@ internal readonly struct ConsoleKeyBinding
             match.Success
         );
     }
-    
+
     public override string ToString()
     {
         var key = Key switch

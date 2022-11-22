@@ -47,10 +47,10 @@ internal sealed class UIService
     {
         Vt100.SwitchToAlternateBuffer();
         Vt100.HideCursor();
-        
+
         ResizeScreen();
     }
-    
+
     public void Hide()
     {
         Vt100.ResetScrollMargins();
@@ -84,7 +84,7 @@ internal sealed class UIService
             _view.BringIntoView(_view.SelectedLine);
         }
     }
-    
+
     private void DocumentServiceOnChanged(object? sender, EventArgs e)
     {
         UpdateRepositoryState();
@@ -96,7 +96,7 @@ internal sealed class UIService
             _view.LineRenderer = FileDocumentLineRenderer.Default;
         else
             _view.LineRenderer = PatchDocumentLineRenderer.Default;
-        
+
         _view.Document = _documentService.Document;
         UpdateHeader();
         UpdateFooter();
@@ -118,7 +118,7 @@ internal sealed class UIService
         }
         else
         {
-            var document = (PatchDocument) _documentService.Document;
+            var document = (PatchDocument)_documentService.Document;
             var entry = document.Lines.Any() ? document.FindEntry(_view.SelectedLine) : null;
             var emptyMarker = _documentService.ViewStage ? "*nothing to commit*" : "*clean*";
             var path = entry is null ? emptyMarker : entry.Changes.Path;
@@ -244,7 +244,7 @@ internal sealed class UIService
     private void ShowHelp()
     {
         var commands = _serviceProvider.GetRequiredService<CommandService>().Commands;
-        
+
         _selectedLineBeforeHelpWasShown = _view.SelectedLine;
         _topLineBeforeHelpWasShown = _view.TopLine;
 

@@ -12,7 +12,7 @@ internal sealed class HelpDocument : Document
         var rows = commands.SelectMany(c => c.KeyBindings, (c, k) => (Command: c, KeyBinding: k))
                            .Select(t => (KeyBinding: t.KeyBinding.ToString(), t.Command.Name, t.Command.Description))
                            .ToArray();
-        
+
         var maxKeyBindingLength = rows.Select(r => r.KeyBinding.Length)
                                       .DefaultIfEmpty(0)
                                       .Max();

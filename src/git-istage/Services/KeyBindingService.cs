@@ -12,7 +12,7 @@ internal sealed class KeyBindingService
         var userKeyBindings = LoadUserKeyBindings();
         if (userKeyBindings is null)
             return result;
-       
+
         foreach (var (name, bindingData) in userKeyBindings)
         {
             if (bindingData?.KeyBindings is not { Length: > 0 })
@@ -54,7 +54,7 @@ internal sealed class KeyBindingService
         var path = UserKeyBindingsPath();
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
             return null;
-        
+
         var content = File.ReadAllText(path);
         var options = new JsonSerializerOptions(JsonSerializerDefaults.General)
         {

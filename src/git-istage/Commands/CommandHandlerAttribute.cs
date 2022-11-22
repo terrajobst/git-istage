@@ -8,7 +8,7 @@ internal sealed class CommandHandlerAttribute : Attribute
         Description = description;
         KeyBindings = keyBindings;
     }
-    
+
     public string Description { get; }
 
     public string[]? KeyBindings { get; }

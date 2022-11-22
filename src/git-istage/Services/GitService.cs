@@ -24,7 +24,7 @@ internal sealed class GitService
         // NOTE: Why are we doing this again? Seems not necessary.
         _repository?.Dispose();
         _repository = new Repository(_environment.RepositoryPath);
-        
+
         RepositoryChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -47,7 +47,7 @@ internal sealed class GitService
 
         using var process = Process.Start(startupInfo);
         process?.WaitForExit();
-        
+
         UpdateRepository();
     }
 

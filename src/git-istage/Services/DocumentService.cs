@@ -12,7 +12,7 @@ internal sealed class DocumentService
     private bool _viewStage;
     private bool _fullFileDiff;
     private int _contextLines = 3;
-    
+
     private Document _document = Document.Empty;
 
     public DocumentService(GitService gitService)
@@ -49,7 +49,7 @@ internal sealed class DocumentService
             }
         }
     }
-    
+
     public bool ViewFullDiff
     {
         get => _fullFileDiff;
@@ -106,7 +106,7 @@ internal sealed class DocumentService
 
             _document = PatchDocument.Parse(patch);
         }
-        
+
         Changed?.Invoke(this, EventArgs.Empty);
     }
 

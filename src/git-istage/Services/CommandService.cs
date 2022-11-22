@@ -25,7 +25,7 @@ internal sealed class CommandService
         _gitService = gitService;
         _documentService = documentService;
         _uiService = uiService;
-        
+
         var commands = CreateCommands();
         _commands = BindUserKeys(commands, keyBindingService);
     }
@@ -36,7 +36,7 @@ internal sealed class CommandService
     {
         return _commands.FirstOrDefault(c => c.KeyBindings.Any(b => b.Matches(keyInfo)));
     }
-    
+
     private IReadOnlyList<ConsoleCommand> CreateCommands()
     {
         var handlers = GetType().GetMethods(BindingFlags.Public |
@@ -63,7 +63,7 @@ internal sealed class CommandService
 
         return commands.ToArray();
     }
-    
+
     private static ConsoleCommand[] BindUserKeys(IEnumerable<ConsoleCommand> commands, KeyBindingService keyBindingService)
     {
         var commandByName = commands.ToDictionary(c => c.Name);
@@ -217,7 +217,7 @@ internal sealed class CommandService
         _uiService.View.SelectedLine = line;
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
-    
+
     [CommandHandler("Selects the previous line.", "UpArrow", "K")]
     private void SelectUp()
     {
@@ -297,7 +297,7 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument) _documentService.Document;
+        var document = (PatchDocument)_documentService.Document;
         var nextIndex = document.FindPreviousEntryIndex(i);
         _uiService.View.SelectedLine = document.Entries[nextIndex].Offset;
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
@@ -311,7 +311,7 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument) _documentService.Document;
+        var document = (PatchDocument)_documentService.Document;
         var nextIndex = document.FindNextEntryIndex(i);
         _uiService.View.SelectedLine = document.Entries[nextIndex].Offset;
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
@@ -325,7 +325,7 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument) _documentService.Document;
+        var document = (PatchDocument)_documentService.Document;
         _uiService.View.SelectedLine = document.FindPreviousChangeBlock(i);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
@@ -338,7 +338,7 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument) _documentService.Document;
+        var document = (PatchDocument)_documentService.Document;
         _uiService.View.SelectedLine = document.FindNextChangeBlock(i);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
@@ -442,7 +442,7 @@ internal sealed class CommandService
 
     [CommandHandler("Append digit 3 to line.", "3")]
     private void AppendLineDigit3() => AppendLineDigit('3');
-    
+
     [CommandHandler("Append digit 4 to line.", "4")]
     private void AppendLineDigit4() => AppendLineDigit('4');
 
@@ -471,7 +471,7 @@ internal sealed class CommandService
     {
         _uiService.HelpShowing = !_uiService.HelpShowing;
     }
-    
+
     private void ApplyPatch(PatchDirection direction, bool entireHunk)
     {
         if (_uiService.HelpShowing) return;
@@ -481,11 +481,11 @@ internal sealed class CommandService
 
         if (_documentService.ViewFiles)
         {
-            var fileDocument = (FileDocument) _documentService.Document;
+            var fileDocument = (FileDocument)_documentService.Document;
             var change = fileDocument.GetChange(_uiService.View.SelectedLine);
             if (change is not null)
             {
-                var canBeHandled = change.Status is ChangeKind.Added or 
+                var canBeHandled = change.Status is ChangeKind.Added or
                                                     ChangeKind.Renamed or
                                                     ChangeKind.Modified or
                                                     ChangeKind.Deleted;
@@ -503,7 +503,7 @@ internal sealed class CommandService
         }
         else
         {
-            var document = (PatchDocument) _documentService.Document;
+            var document = (PatchDocument)_documentService.Document;
             var line = document.Lines[_uiService.View.SelectedLine];
             if (!line.Kind.IsAdditionOrRemoval())
                 return;
