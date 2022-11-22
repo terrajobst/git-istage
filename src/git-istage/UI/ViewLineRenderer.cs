@@ -2,7 +2,7 @@ namespace GitIStage.UI;
 
 internal class ViewLineRenderer
 {
-    public static ViewLineRenderer Default { get; } = new ViewLineRenderer();
+    public static ViewLineRenderer Default { get; } = new();
 
     public virtual void Render(View view, int lineIndex)
     {
@@ -27,7 +27,7 @@ internal class ViewLineRenderer
         Vt100.EraseRestOfCurrentLine();
         Console.Write(text);
 
-        if (view.SearchResults != null)
+        if (view.SearchResults is not null)
         {
             foreach (var hit in view.SearchResults.Hits)
             {

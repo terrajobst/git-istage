@@ -19,7 +19,7 @@ internal sealed class Label
 
     public ConsoleColor Foreground
     {
-        get { return _foreground; }
+        get => _foreground;
         set
         {
             _foreground = value;
@@ -29,7 +29,7 @@ internal sealed class Label
 
     public ConsoleColor Background
     {
-        get { return _background; }
+        get => _background;
         set
         {
             _background = value;
@@ -39,7 +39,7 @@ internal sealed class Label
 
     public string Text
     {
-        get { return _text; }
+        get => _text;
         set
         {
             _text = value;

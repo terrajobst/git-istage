@@ -25,7 +25,7 @@ internal sealed class PatchDocument : Document
         return Lines[index].Text;
     }
 
-    public PatchEntry FindEntry(int lineIndex)
+    public PatchEntry? FindEntry(int lineIndex)
     {
         var index = FindEntryIndex(lineIndex);
         return index < 0 ? null : Entries[index];
@@ -45,9 +45,9 @@ internal sealed class PatchDocument : Document
         return -1;
     }
 
-    public static PatchDocument Parse(Patch patch)
+    public static PatchDocument Parse(Patch? patch)
     {
-        if (patch == null)
+        if (patch is null)
             return new PatchDocument(Array.Empty<PatchEntry>(), Array.Empty<PatchLine>());
 
         var lines = new List<PatchLine>();
@@ -69,11 +69,7 @@ internal sealed class PatchDocument : Document
                 var hunkLength = hunkEnd - hunkOffset + 1;
                 var hunkLine = changeLines[hunkOffset].Text;
 
-                int oldStart;
-                int oldLength;
-                int newStart;
-                int newLength;
-                if (TryGetHunkInformation(hunkLine, out oldStart, out oldLength, out newStart, out newLength))
+                if (TryGetHunkInformation(hunkLine, out var oldStart, out var oldLength, out var newStart, out var newLength))
                 {
                     var hunk = new PatchHunk(entryOffset + hunkOffset, hunkLength, oldStart, oldLength, newStart, newLength);
                     hunks.Add(hunk);
@@ -82,7 +78,7 @@ internal sealed class PatchDocument : Document
                 hunkOffset = hunkEnd + 1;
             }
 
-            var entry = new PatchEntry(entryOffset, entryLength, patch, change, hunks);
+            var entry = new PatchEntry(entryOffset, entryLength, change, hunks);
             entries.Add(entry);
         }
 
@@ -212,8 +208,8 @@ internal sealed class PatchDocument : Document
 
         using (var sr = new StringReader(content))
         {
-            string line;
-            while ((line = sr.ReadLine()) != null)
+            string? line;
+            while ((line = sr.ReadLine()) is not null)
                 lines.Add(line);
         }
 

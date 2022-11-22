@@ -10,21 +10,23 @@ internal sealed class KeyBindingService
     {
         var result = new Dictionary<string, IReadOnlyList<ConsoleKeyBinding>>();
         var userKeyBindings = LoadUserKeyBindings();
-        if (userKeyBindings == null)
+        if (userKeyBindings is null)
             return result;
        
         foreach (var (name, bindingData) in userKeyBindings)
         {
-            if (bindingData.KeyBindings == null ||
-                bindingData.KeyBindings.Length == 0)
+            if (bindingData?.KeyBindings is not { Length: > 0 })
                 continue;
 
             var bindings = new List<ConsoleKeyBinding>();
 
-            if (bindingData.KeyBindings != null)
+            if (bindingData.KeyBindings is not null)
             {
                 foreach (var bindingText in bindingData.KeyBindings)
                 {
+                    if (bindingText is null)
+                        continue;
+
                     if (!ConsoleKeyBinding.TryParse(bindingText, out var binding))
                     {
                         Console.WriteLine($"fatal: invalid key binding for '{name}': {binding}");
@@ -47,14 +49,14 @@ internal sealed class KeyBindingService
         return Path.Join(homeDirectory, ".git-istage", "key-bindings.json");
     }
 
-    private static IDictionary<string, CustomKeyBinding> LoadUserKeyBindings()
+    private static IDictionary<string, CustomKeyBinding?>? LoadUserKeyBindings()
     {
         var path = UserKeyBindingsPath();
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
             return null;
         
         var content = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<Dictionary<string, CustomKeyBinding>>(content);
+        return JsonSerializer.Deserialize<Dictionary<string, CustomKeyBinding?>>(content);
     }
 
     private sealed class CustomKeyBinding
@@ -63,9 +65,9 @@ internal sealed class KeyBindingService
         // for the corresponding command
 
         [JsonPropertyName("default")]
-        public string[] Default { get; set; }
+        public string?[]? Default { get; set; }
 
         [JsonPropertyName("keyBindings")]
-        public string[] KeyBindings { get; set; }
+        public string?[]? KeyBindings { get; set; }
     }
 }

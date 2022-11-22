@@ -8,7 +8,7 @@ internal sealed class View
     private int _leftChar;
     private int _selectedLine;
     private bool _visibleWhitespace;
-    private SearchResults _searchResults;
+    private SearchResults? _searchResults;
 
     public View(int top, int left, int bottom, int right)
     {
@@ -21,17 +21,17 @@ internal sealed class View
 
     public ViewLineRenderer LineRenderer
     {
-        get { return _lineRenderer; }
+        get => _lineRenderer;
         set
         {
-            _lineRenderer = value ?? ViewLineRenderer.Default;
+            _lineRenderer = value;
             Initialize();
         }
     }
 
     public Document Document
     {
-        get { return _document; }
+        get => _document;
         set
         {
             _document = value;
@@ -41,8 +41,8 @@ internal sealed class View
 
     public int SelectedLine
     {
-        get { return _selectedLine; }
-        set { UpdateSelectedLine(value); }
+        get => _selectedLine;
+        set => UpdateSelectedLine(value);
     }
 
     public int Top { get; }
@@ -55,14 +55,14 @@ internal sealed class View
 
     public int TopLine
     {
-        get { return _topLine; }
-        set { UpdateTopLine(value); }
+        get => _topLine;
+        set => UpdateTopLine(value);
     }
 
     public int LeftChar
     {
-        get { return _leftChar; }
-        set { UpdateLeftChar(value); }
+        get => _leftChar;
+        set => UpdateLeftChar(value);
     }
 
     public int BottomLine => TopLine + Height - 1;
@@ -77,7 +77,7 @@ internal sealed class View
 
     public bool VisibleWhitespace
     {
-        get { return _visibleWhitespace; }
+        get => _visibleWhitespace;
         set
         {
             if (_visibleWhitespace != value)
@@ -88,9 +88,9 @@ internal sealed class View
         }
     }
 
-    public SearchResults SearchResults
+    public SearchResults? SearchResults
     {
-        get { return _searchResults; }
+        get => _searchResults;
         set
         {
             if (_searchResults != value)
@@ -269,9 +269,9 @@ internal sealed class View
         UpdateTopLine(topLine);
     }
 
-    public event EventHandler SelectedLineChanged;
+    public event EventHandler? SelectedLineChanged;
 
-    public event EventHandler TopLineChanged;
+    public event EventHandler? TopLineChanged;
 
-    public event EventHandler LeftCharChanged;
+    public event EventHandler? LeftCharChanged;
 }

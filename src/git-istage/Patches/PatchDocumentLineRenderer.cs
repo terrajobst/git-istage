@@ -4,9 +4,9 @@ namespace GitIStage.Patches;
 
 internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
 {
-    public static new PatchDocumentLineRenderer Default { get; } = new PatchDocumentLineRenderer();
+    public new static PatchDocumentLineRenderer Default { get; } = new();
 
-    private static PatchLine GetLine(View view, int lineIndex)
+    private static PatchLine? GetLine(View view, int lineIndex)
     {
         var document = view.Document as PatchDocument;
         return document?.Lines[lineIndex];
@@ -15,7 +15,7 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
     private static ConsoleColor GetForegroundColor(View view, int lineIndex)
     {
         var line = GetLine(view, lineIndex);
-        if (line == null)
+        if (line is null)
             return ConsoleColor.Gray;
 
         switch (line.Kind)
@@ -40,7 +40,7 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
     private static ConsoleColor GetBackgroundColor(View view, int lineIndex)
     {
         var patchLine = GetLine(view, lineIndex);
-        if (patchLine == null)
+        if (patchLine is null)
             return ConsoleColor.Black;
 
         var kind = patchLine.Kind;
@@ -59,7 +59,7 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
     public override void Render(View view, int lineIndex)
     {
         var line = GetLine(view, lineIndex);
-        if (line == null)
+        if (line is null)
             return;
 
         var foregroundColor = GetForegroundColor(view, lineIndex);

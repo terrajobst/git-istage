@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
 using GitIStage.Patches;
 using LibGit2Sharp;
 
@@ -17,6 +18,7 @@ internal sealed class GitService
 
     public Repository Repository => _repository;
 
+    [MemberNotNull(nameof(_repository))]
     private void UpdateRepository()
     {
         // NOTE: Why are we doing this again? Seems not necessary.
@@ -49,5 +51,5 @@ internal sealed class GitService
         UpdateRepository();
     }
 
-    public event EventHandler RepositoryChanged;
+    public event EventHandler? RepositoryChanged;
 }

@@ -12,12 +12,14 @@ internal static class Patching
 
         var newPatch = new StringBuilder();
 
-        var entryLines = lineIndexes.Select(i => new { i, e = document.FindEntry(i) }).GroupBy(t => t.e, t => t.i);
+        var entryLines = lineIndexes.Select(i => (LineIndex: i, Entry: document.FindEntry(i)!))
+                                    .GroupBy(t => t.Entry, t => t.LineIndex);
 
         foreach (var entryLine in entryLines)
         {
             var entry = entryLine.Key;
-            var hunkLines = entryLine.Select(i => new { i, h = entry.FindHunk(i) }).GroupBy(t => t.h, t => t.i);
+            var hunkLines = entryLine.Select(i => (LineIndex: i, Hunk: entry.FindHunk(i)!))
+                                     .GroupBy(t => t.Hunk, t => t.LineIndex);
 
             foreach (var hunkLine in hunkLines)
             {
@@ -47,10 +49,10 @@ internal static class Patching
                 }
 
                 var delta = lineSet.Select(i => document.Lines[i])
-                    .Select(l => l.Kind)
-                    .Where(k => k.IsAdditionOrRemoval())
-                    .Select(k => k == PatchLineKind.Addition ? 1 : -1)
-                    .Sum();
+                                   .Select(l => l.Kind)
+                                   .Where(k => k.IsAdditionOrRemoval())
+                                   .Select(k => k == PatchLineKind.Addition ? 1 : -1)
+                                   .Sum();
 
                 var newLength = oldLength + delta;
 
@@ -63,14 +65,15 @@ internal static class Patching
 
                 if (oldExists)
                 {
-                    newPatch.AppendFormat("--- {0}\n", oldPath);
+                    newPatch.Append($"--- {oldPath}\n");
                 }
                 else
                 {
-                    newPatch.AppendFormat("new file mode {0}\n", changes.Mode);
+                    newPatch.Append($"new file mode {changes.Mode}\n");
                     newPatch.Append("--- /dev/null\n");
                 }
-                newPatch.AppendFormat("+++ b/{0}\n", path);
+
+                newPatch.Append($"+++ b/{path}\n");
 
                 // Write hunk header
 
@@ -156,7 +159,7 @@ internal static class Patching
             {
                 lock (output)
                 {
-                    if (e.Data != null) output.Add(e.Data);
+                    if (e.Data is not null) output.Add(e.Data);
                 }
             }
 

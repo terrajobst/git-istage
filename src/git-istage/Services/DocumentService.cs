@@ -6,7 +6,6 @@ namespace GitIStage.Services;
 
 internal sealed class DocumentService
 {
-    private readonly GitEnvironment _gitEnvironment;
     private readonly GitService _gitService;
 
     private bool _viewFiles;
@@ -16,9 +15,8 @@ internal sealed class DocumentService
     
     private Document _document = Document.Empty;
 
-    public DocumentService(GitEnvironment gitEnvironment, GitService gitService)
+    public DocumentService(GitService gitService)
     {
-        _gitEnvironment = gitEnvironment;
         _gitService = gitService;
         _gitService.RepositoryChanged += GitServiceOnRepositoryChanged;
         UpdateDocument();
@@ -112,10 +110,10 @@ internal sealed class DocumentService
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
-    private void GitServiceOnRepositoryChanged(object sender, EventArgs e)
+    private void GitServiceOnRepositoryChanged(object? sender, EventArgs e)
     {
         UpdateDocument();
     }
 
-    public event EventHandler Changed;
+    public event EventHandler? Changed;
 }

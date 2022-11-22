@@ -4,8 +4,8 @@ internal static class PatchExtension
 {
     public static bool IsAdditionOrRemoval(this PatchLineKind kind)
     {
-        return kind == PatchLineKind.Addition ||
-               kind == PatchLineKind.Removal;
+        return kind is PatchLineKind.Addition or
+                       PatchLineKind.Removal;
     }
 
     public static int FindPreviousEntryIndex(this PatchDocument document, int lineIndex)

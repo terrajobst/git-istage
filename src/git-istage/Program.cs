@@ -43,7 +43,7 @@ internal static class Program
         await host.WaitForShutdownAsync();
     }
 
-    private static string ResolveRepositoryPath()
+    private static string? ResolveRepositoryPath()
     {
         var currentDirectory = Directory.GetCurrentDirectory();
         var repositoryPath = Repository.Discover(currentDirectory);
@@ -57,7 +57,7 @@ internal static class Program
         return repositoryPath;
     }
 
-    private static string ResolveGitPath()
+    private static string? ResolveGitPath()
     {
         var path = Environment.GetEnvironmentVariable("PATH");
         if (string.IsNullOrEmpty(path))

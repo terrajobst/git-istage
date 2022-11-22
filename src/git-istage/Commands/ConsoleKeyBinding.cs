@@ -4,22 +4,19 @@ namespace GitIStage.Commands;
 
 internal readonly struct ConsoleKeyBinding
 {
-    private readonly ConsoleKey _key;
-    private readonly ConsoleModifiers _modifiers;
-
     public ConsoleKeyBinding(ConsoleModifiers modifiers, ConsoleKey key)
     {
-        _key = key;
-        _modifiers = modifiers;
+        Key = key;
+        Modifiers = modifiers;
     }
 
-    public ConsoleModifiers Modifiers => _modifiers;
+    public ConsoleModifiers Modifiers { get; }
 
-    public ConsoleKey Key => _key;
+    public ConsoleKey Key { get; }
 
     public bool Matches(ConsoleKeyInfo keyInfo)
     {
-        return _key == keyInfo.Key && _modifiers == keyInfo.Modifiers;
+        return Key == keyInfo.Key && Modifiers == keyInfo.Modifiers;
     }
 
     public static ConsoleKeyBinding Parse(string text)
@@ -216,13 +213,13 @@ internal readonly struct ConsoleKeyBinding
 
     private static bool IsKey(string c, string text)
     {
-        return String.Compare(c, text, true) == 0;
+        return string.Compare(c, text, StringComparison.OrdinalIgnoreCase) == 0;
     }
 
-    private static bool TryParseModifiers(string modifier, out ConsoleModifiers mods)
+    private static bool TryParseModifiers(string modifier, out ConsoleModifiers modifiers)
     {
-        mods = 0;
-        return TryParseModifiersImpl(modifier, ref mods);
+        modifiers = 0;
+        return TryParseModifiersImpl(modifier, ref modifiers);
     }
 
     private static bool TryParseModifiersImpl(string modifiers, ref ConsoleModifiers mods)
@@ -284,33 +281,33 @@ internal readonly struct ConsoleKeyBinding
     
     public override string ToString()
     {
-        var key = _key switch
+        var key = Key switch
         {
-            ConsoleKey.UpArrow => _key.ToString().Replace("Arrow", ""),
-            ConsoleKey.DownArrow => _key.ToString().Replace("Arrow", ""),
-            ConsoleKey.LeftArrow => _key.ToString().Replace("Arrow", ""),
-            ConsoleKey.RightArrow => _key.ToString().Replace("Arrow", ""),
+            ConsoleKey.UpArrow => Key.ToString().Replace("Arrow", ""),
+            ConsoleKey.DownArrow => Key.ToString().Replace("Arrow", ""),
+            ConsoleKey.LeftArrow => Key.ToString().Replace("Arrow", ""),
+            ConsoleKey.RightArrow => Key.ToString().Replace("Arrow", ""),
             ConsoleKey.OemPlus => "+",
             ConsoleKey.OemMinus => "-",
             ConsoleKey.Oem4 => "[",
             ConsoleKey.Oem6 => "]",
             ConsoleKey.Oem7 => "'",
-            ConsoleKey.D0 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D1 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D2 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D3 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D4 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D5 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D6 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D7 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D8 => _key.ToString().Replace("D", ""),
-            ConsoleKey.D9 => _key.ToString().Replace("D", ""),
-            _ => _key.ToString()
+            ConsoleKey.D0 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D1 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D2 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D3 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D4 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D5 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D6 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D7 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D8 => Key.ToString().Replace("D", ""),
+            ConsoleKey.D9 => Key.ToString().Replace("D", ""),
+            _ => Key.ToString()
         };
 
-        if (_key == ConsoleKey.Oem2 && _modifiers == ConsoleModifiers.Shift)
+        if (Key == ConsoleKey.Oem2 && Modifiers == ConsoleModifiers.Shift)
             return "?";
 
-        return _modifiers != 0 ? $"{_modifiers.ToString().Replace("Control", "Ctrl")} + {key}" : key;
+        return Modifiers != 0 ? $"{Modifiers.ToString().Replace("Control", "Ctrl")} + {key}" : key;
     }
 }

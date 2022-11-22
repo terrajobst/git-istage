@@ -32,7 +32,7 @@ internal sealed class CommandService
 
     public IReadOnlyList<ConsoleCommand> Commands => _commands;
 
-    public ConsoleCommand GetCommand(ConsoleKeyInfo keyInfo)
+    public ConsoleCommand? GetCommand(ConsoleKeyInfo keyInfo)
     {
         return _commands.FirstOrDefault(c => c.KeyBindings.Any(b => b.Matches(keyInfo)));
     }
@@ -45,7 +45,8 @@ internal sealed class CommandService
                                             BindingFlags.Static)
                                 .Where(m => m.GetParameters().Length == 0)
                                 .Select(m => (Method: m, Attribute: m.GetCustomAttributes<CommandHandlerAttribute>().FirstOrDefault()))
-                                .Where(t => t.Attribute != null)
+                                .Where(t => t.Attribute is not null)
+                                .Select(t => (t.Method, Attribute: t.Attribute!))
                                 .ToArray();
 
         var commands = new List<ConsoleCommand>(handlers.Length);
@@ -351,22 +352,22 @@ internal sealed class CommandService
     [CommandHandler("Go to the previous search hit.", "p")]
     private void GoPreviousHit()
     {
-        if (_uiService.View.SearchResults == null)
+        if (_uiService.View.SearchResults is null)
             return;
 
         var hit = _uiService.View.SearchResults.FindPrevious(_uiService.View.SelectedLine);
-        if (hit != null)
+        if (hit is not null)
             _uiService.View.SelectedLine = hit.LineIndex;
     }
 
     [CommandHandler("Go to next search hit.", "n")]
     private void GoNextHit()
     {
-        if (_uiService.View.SearchResults == null)
+        if (_uiService.View.SearchResults is null)
             return;
 
         var hit = _uiService.View.SearchResults.FindNext(_uiService.View.SelectedLine);
-        if (hit != null)
+        if (hit is not null)
             _uiService.View.SelectedLine = hit.LineIndex;
     }
 
@@ -482,7 +483,7 @@ internal sealed class CommandService
         {
             var fileDocument = (FileDocument) _documentService.Document;
             var change = fileDocument.GetChange(_uiService.View.SelectedLine);
-            if (change != null)
+            if (change is not null)
             {
                 var canBeHandled = change.Status is ChangeKind.Added or 
                                                     ChangeKind.Renamed or

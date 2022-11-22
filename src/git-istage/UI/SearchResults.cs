@@ -23,9 +23,9 @@ internal sealed class SearchResults
 
     public IReadOnlyList<SearchHit> Hits { get; }
 
-    public SearchHit FindPrevious(int line)
+    public SearchHit? FindPrevious(int line)
     {
-        for (int i = Hits.Count - 1; i >= 0; i--)
+        for (var i = Hits.Count - 1; i >= 0; i--)
         {
             if (Hits[i].LineIndex < line)
                 return Hits[i];
@@ -34,9 +34,9 @@ internal sealed class SearchResults
         return null;
     }
 
-    public SearchHit FindNext(int line)
+    public SearchHit? FindNext(int line)
     {
-        for (int i = 0; i < Hits.Count; i++)
+        for (var i = 0; i < Hits.Count; i++)
         {
             if (Hits[i].LineIndex > line)
                 return Hits[i];

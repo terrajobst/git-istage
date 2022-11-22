@@ -11,11 +11,11 @@ internal sealed class CommandHandlerAttribute : Attribute
     
     public string Description { get; }
 
-    public string[] KeyBindings { get; }
+    public string[]? KeyBindings { get; }
 
     public IReadOnlyList<ConsoleKeyBinding> GetKeyBindings()
     {
-        return KeyBindings == null
+        return KeyBindings is null
             ? Array.Empty<ConsoleKeyBinding>()
             : KeyBindings.Select(ConsoleKeyBinding.Parse).ToArray();
     }

@@ -37,7 +37,7 @@ internal static class Whitespace
             return text;
 
         var sb = new StringBuilder(text.Length);
-        for (int i = 0; i < text.Length; i++)
+        for (var i = 0; i < text.Length; i++)
         {
             var c = text[i];
             if (c == ' ' && visibleWhitespace)

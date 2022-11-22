@@ -12,14 +12,14 @@ internal sealed class UIService
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
 
-    private Label _header;
-    private View _view;
-    private Label _footer;
+    private Label _header = null!;
+    private View _view = null!;
+    private Label _footer = null!;
     private bool _helpShowing;
     private int _selectedLineBeforeHelpWasShown;
     private int _topLineBeforeHelpWasShown;
 
-    private readonly StringBuilder _inputLineDigits = new StringBuilder();
+    private readonly StringBuilder _inputLineDigits = new();
 
     public UIService(IServiceProvider serviceProvider, GitService gitService, DocumentService documentService)
     {
@@ -60,7 +60,7 @@ internal sealed class UIService
 
     public void ResizeScreen()
     {
-        var oldView = _view;
+        var oldView = (View?)_view;
 
         _header = new Label(0, 0, Console.WindowWidth);
         _header.Foreground = ConsoleColor.Yellow;
@@ -77,7 +77,7 @@ internal sealed class UIService
 
         UpdateRepositoryState();
 
-        if (oldView != null)
+        if (oldView is not null)
         {
             _view.VisibleWhitespace = oldView.VisibleWhitespace;
             _view.SelectedLine = oldView.SelectedLine;
@@ -85,7 +85,7 @@ internal sealed class UIService
         }
     }
     
-    private void DocumentServiceOnChanged(object sender, EventArgs e)
+    private void DocumentServiceOnChanged(object? sender, EventArgs e)
     {
         UpdateRepositoryState();
     }
@@ -121,7 +121,7 @@ internal sealed class UIService
             var document = (PatchDocument) _documentService.Document;
             var entry = document.Lines.Any() ? document.FindEntry(_view.SelectedLine) : null;
             var emptyMarker = _documentService.ViewStage ? "*nothing to commit*" : "*clean*";
-            var path = entry == null ? emptyMarker : entry.Changes.Path;
+            var path = entry is null ? emptyMarker : entry.Changes.Path;
             _header.Text = $" {mode} | {path}";
         }
     }
@@ -213,14 +213,7 @@ internal sealed class UIService
         _view.SelectedLine = searchResults.Hits.First().LineIndex;
     }
 
-    public void RemoveLastLineDigit()
-    {
-        if (_inputLineDigits.Length == 0)
-            return;
-
-        _inputLineDigits.Remove(_inputLineDigits.Length - 1, 1);
-        UpdateFooter();
-    }
+    public bool HasInputLine => _inputLineDigits.Length > 0;
 
     public void AppendLineDigit(char digit)
     {
@@ -229,9 +222,13 @@ internal sealed class UIService
         UpdateFooter();
     }
 
-    public bool HasInputLine
+    public void RemoveLastLineDigit()
     {
-        get => _inputLineDigits.Length > 0;
+        if (_inputLineDigits.Length == 0)
+            return;
+
+        _inputLineDigits.Remove(_inputLineDigits.Length - 1, 1);
+        UpdateFooter();
     }
 
     public bool TryGetInputLine(out int result)

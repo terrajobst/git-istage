@@ -4,9 +4,9 @@ namespace GitIStage.UI;
 
 internal sealed class FileDocumentLineRenderer : ViewLineRenderer
 {
-    public static new FileDocumentLineRenderer Default { get; } = new FileDocumentLineRenderer();
+    public new static FileDocumentLineRenderer Default { get; } = new();
 
-    private static TreeEntryChanges GetChanges(View view, int lineIndex)
+    private static TreeEntryChanges? GetChanges(View view, int lineIndex)
     {
         var document = view.Document as FileDocument;
         return document?.GetChange(lineIndex);
@@ -15,7 +15,7 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
     private static ConsoleColor GetForegroundColor(View view, int lineIndex)
     {
         var changes = GetChanges(view, lineIndex);
-        if (changes == null)
+        if (changes is null)
             return ConsoleColor.Gray;
 
         switch (changes.Status)

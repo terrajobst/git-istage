@@ -26,7 +26,7 @@ internal sealed class FileDocument : Document
         return _lines[index];
     }
 
-    public TreeEntryChanges GetChange(int index)
+    public TreeEntryChanges? GetChange(int index)
     {
         var changeIndex = index - _indexOfFirstFile;
         if (changeIndex < 0 || changeIndex >= _changes.Length)
@@ -58,7 +58,7 @@ internal sealed class FileDocument : Document
             }
         }
 
-        var indexOfFirstFile = 3;
+        const int indexOfFirstFile = 3;
         var lines = builder.ToString().Split(Environment.NewLine);
 
         var width = lines.Select(l => l.Length)
