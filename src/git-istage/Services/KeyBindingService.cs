@@ -56,17 +56,26 @@ internal sealed class KeyBindingService
             return null;
         
         var content = File.ReadAllText(path);
-        return JsonSerializer.Deserialize<Dictionary<string, CustomKeyBinding?>>(content);
+        var options = new JsonSerializerOptions(JsonSerializerDefaults.General)
+        {
+            AllowTrailingCommas = true,
+            ReadCommentHandling = JsonCommentHandling.Skip
+        };
+
+        try
+        {
+            return JsonSerializer.Deserialize<Dictionary<string, CustomKeyBinding?>>(content, options);
+        }
+        catch (JsonException ex)
+        {
+            Console.WriteLine($"fatal: user key bindings in {path} are malformed: {ex.Message}");
+            Environment.Exit(1);
+            throw;
+        }
     }
 
     private sealed class CustomKeyBinding
     {
-        // set to an empty array (or null) to clear the default bindings
-        // for the corresponding command
-
-        [JsonPropertyName("default")]
-        public string?[]? Default { get; set; }
-
         [JsonPropertyName("keyBindings")]
         public string?[]? KeyBindings { get; set; }
     }
