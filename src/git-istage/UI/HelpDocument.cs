@@ -10,21 +10,28 @@ internal sealed class HelpDocument : Document
     public HelpDocument(IReadOnlyCollection<ConsoleCommand> commands)
     {
         var rows = commands.SelectMany(c => c.KeyBindings, (c, k) => (Command: c, KeyBinding: k))
-                           .Select(t => (KeyBinding: t.KeyBinding.ToString(), t.Command.Description))
-                           .ToList();
+                           .Select(t => (KeyBinding: t.KeyBinding.ToString(), t.Command.Name, t.Command.Description))
+                           .ToArray();
         
         var maxKeyBindingLength = rows.Select(r => r.KeyBinding.Length)
                                       .DefaultIfEmpty(0)
                                       .Max();
 
+        var maxNameLength = rows.Select(r => r.Name.Length)
+                                .DefaultIfEmpty(0)
+                                .Max();
+
         var lines = new List<string>();
         var sb = new StringBuilder();
 
-        foreach (var (keyBinding, description) in rows)
+        foreach (var (keyBinding, name, description) in rows)
         {
             sb.Clear();
             sb.Append(keyBinding);
             sb.Append(' ', maxKeyBindingLength - keyBinding.Length);
+            sb.Append(" | ");
+            sb.Append(name);
+            sb.Append(' ', maxNameLength - name.Length);
             sb.Append(" | ");
             sb.Append(description);
             lines.Add(sb.ToString());

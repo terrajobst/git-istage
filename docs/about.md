@@ -51,45 +51,60 @@ Notes in parentheses indicate the behavior if N is given.
 
 ## Keyboard shortcuts
 
-Shortcut | Description
----------|------------
-<kbd>Esc</kbd> | Return to command line.
-<kbd>Q</kbd> | Return to command line.
-<kbd>C</kbd> | Author commit
-<kbd>Alt</kbd> <kbd>C</kbd> | Authors commit with `--amend` option
-<kbd>Alt</kbd> <kbd>S</kbd> | Stashes changes from the working copy, but leaves the stage as-is.
-<kbd>T</kbd> | Toggle between working copy changes and staged changes.
-<kbd>R</kbd> | When viewing the working copy, removes the selected line from the working copy.
-<kbd>S</kbd> | When viewing the working copy, stages the selected line.
-<kbd>U</kbd> | When viewing the stage, unstages the selected line.
-<kbd>Shift</kbd> <kbd>R</kbd> | When viewing the working copy, removes the selected block from the working copy.
-<kbd>Shift</kbd> <kbd>S</kbd> | When viewing the working copy, stages the selected block.
-<kbd>Shift</kbd> <kbd>U</kbd> | When viewing the stage, unstages the selected block.
-<kbd>+</kbd> | Increases the number of contextual lines.
-<kbd>-</kbd> | Decreases the number of contextual lines.
-<kbd>\\</kbd> | Toggles between viewing entire files and changes only.
-<kbd>W</kbd> | Toggles between showing and hiding whitespace.
-<kbd>↑</kbd> | Selects the previous line.
-<kbd>K</kbd> | Selects the previous line.
-<kbd>↓</kbd> | Selects the next line.
-<kbd>J</kbd> | Selects the next line.
-<kbd>←</kbd> | Go to the previous file.
-<kbd>→</kbd> | Go to the next file.
-<kbd>[</kbd> | Go to previous change block.
-<kbd>]</kbd> | Go to next change block.
-<kbd>PgUp</kbd> | Selects the line one screen above.
-<kbd>PgDown</kbd> | Selects the line one screen below.
-<kbd>Space</kbd> | Selects the line one screen below.
-<kbd>Home</kbd>| Selects the first line.
-<kbd>G</kbd>| Selects the first line (or Line N).
-<kbd>End</kbd> | Selects the last line.
-<kbd>Shift</kbd> <kbd>G</kbd> | Selects the last line (or Line N).
-<kbd>Ctrl</kbd> <kbd>PgUp</kbd> | Scrolls up by one screen.
-<kbd>Ctrl</kbd> <kbd>PgDown</kbd> | Scrolls down by one screen.
-<kbd>Ctrl</kbd> <kbd>←</kbd> | Scrolls left by one character,
-<kbd>Ctrl</kbd> <kbd>→</kbd> | Scrolls right by one character,
-<kbd>Ctrl</kbd> <kbd>↑</kbd> | Scrolls up by one line.
-<kbd>Ctrl</kbd> <kbd>↓</kbd> | Scrolls down by one line.
+| Shortcut                       | Name                                    | Description                                                                      |
+| ------------------------------ | --------------------------------------- | -------------------------------------------------------------------------------- |
+| <kbd>0</kbd>                   | AppendLineDigit0                        | Append digit 0 to line.                                                          |
+| <kbd>1</kbd>                   | AppendLineDigit1                        | Append digit 1 to line.                                                          |
+| <kbd>2</kbd>                   | AppendLineDigit2                        | Append digit 2 to line.                                                          |
+| <kbd>3</kbd>                   | AppendLineDigit3                        | Append digit 3 to line.                                                          |
+| <kbd>4</kbd>                   | AppendLineDigit4                        | Append digit 4 to line.                                                          |
+| <kbd>5</kbd>                   | AppendLineDigit5                        | Append digit 5 to line.                                                          |
+| <kbd>6</kbd>                   | AppendLineDigit6                        | Append digit 6 to line.                                                          |
+| <kbd>7</kbd>                   | AppendLineDigit7                        | Append digit 7 to line.                                                          |
+| <kbd>8</kbd>                   | AppendLineDigit8                        | Append digit 8 to line.                                                          |
+| <kbd>9</kbd>                   | AppendLineDigit9                        | Append digit 9 to line.                                                          |
+| <kbd>C</kbd>                   | Commit                                  | Author commit                                                                    |
+| <kbd>Alt</kbd> <kbd>C</kbd>    | CommitAmend                             | Amend commit                                                                     |
+| <kbd>-</kbd>                   | DecreaseContext                         | Decreases the number of contextual lines.                                        |
+| <kbd>ESC</kbd>                 | Exit                                    | Return to command line.                                                          |
+| <kbd>Q</kbd>                   | Exit                                    | Return to command line.                                                          |
+| <kbd>End</kbd>                 | GoEnd                                   | Selects the last line.                                                           |
+| <kbd>Shift</kbd> <kbd>G</kbd>  | GoEndOrInputLine                        | Selects the last line (or Line N).                                               |
+| <kbd>Home</kbd>                | GoHome                                  | Selects the first line.                                                          |
+| <kbd>G</kbd>                   | GoHomeOrInputLine                       | Selects the first line (or Line N).                                              |
+| <kbd>→</kbd>                   | GoNextFile                              | Go to the next file.                                                             |
+| <kbd>N</kbd>                   | GoNextHit                               | Go to next search hit.                                                           |
+| <kbd>]</kbd>                   | GoNextHunk                              | Go to next change block.                                                         |
+| <kbd>←</kbd>                   | GoPreviousFile                          | Go to the previous file.                                                         |
+| <kbd>P</kbd>                   | GoPreviousHit                           | Go to the previous search hit.                                                   |
+| <kbd>[</kbd>                   | GoPreviousHunk                          | Go to previous change block.                                                     |
+| <kbd>+</kbd>                   | IncreaseContext                         | Increases the number of contextual lines.                                        |
+| <kbd>Backspace</kbd>           | RemoveLastLineDigit                     | Remove last line digit                                                           |
+| <kbd>R</kbd>                   | Reset                                   | When viewing the working copy, removes the selected line from the working copy.  |
+| <kbd>Shift</kbd> <kbd>R</kbd>  | ResetHunk                               | When viewing the working copy, removes the selected block from the working copy. |
+| <kbd>Ctrl</kbd> + <kbd>↓</kbd> | ScrollDown                              | Scrolls down by one line.                                                        |
+| <kbd>Ctrl</kbd> + <kbd>←</kbd> | ScrollLeft                              | Scrolls left by one character.                                                   |
+| <kbd>PgDown</kbd>              | ScrollPageDown                          | Selects the line one screen below.                                               |
+| <kbd>Space</kbd>               | ScrollPageDown                          | Selects the line one screen below.                                               |
+| <kbd>PgUp</kbd>                | ScrollPageUp                            | Selects the line one screen above.                                               |
+| <kbd>Ctrl</kbd> + <kbd>→</kbd> | ScrollRight                             | Scrolls right by one character.                                                  |
+| <kbd>Ctrl</kbd> + <kbd>↑</kbd> | ScrollUp                                | Scrolls up by one line.                                                          |
+| <kbd>/</kbd>                   | Search                                  | Searches for a pattern.                                                          |
+| <kbd>↓</kbd>                   | SelectDown                              | Selects the next line.                                                           |
+| <kbd>J</kbd>                   | SelectDown                              | Selects the next line.                                                           |
+| <kbd>↑</kbd>                   | SelectUp                                | Selects the previous line.                                                       |
+| <kbd>K</kbd>                   | SelectUp                                | Selects the previous line.                                                       |
+| <kbd>F1</kbd>                  | ShowHelpPage                            | Show / hide help page.                                                           |
+| <kbd>?</kbd>                   | ShowHelpPage                            | Show / hide help page.                                                           |
+| <kbd>S</kbd>                   | Stage                                   | When viewing the working copy, stages the selected line.                         |
+| <kbd>Shift</kbd> <kbd>S</kbd>  | StageHunk                               | When viewing the working copy, stages the selected block.                        |
+| <kbd>Alt</kbd> <kbd>S</kbd>    | Stash                                   | Stashes changes from the working copy, but leaves the stage as-is.               |
+| <kbd>T</kbd>                   | ToggleBetweenWorkingDirectoryAndStaging | Toggle between working copy changes and staged changes.                          |
+| <kbd>F</kbd>                   | ToggleFilesAndChanges                   | Toggle between seeing changes and changed files.                                 |
+| <kbd>'</kbd>                   | ToggleFullDiff                          | Toggles between standard diff and full diff                                      |
+| <kbd>W</kbd>                   | ToggleWhitespace                        | Toggles between showing and hiding whitespace.                                   |
+| <kbd>U</kbd>                   | Unstage                                 | When viewing the stage, unstages the selected line.                              |
+| <kbd>Shift</kbd> <kbd>U</kbd>  | UnstageHunk                             | When viewing the stage, unstages the selected block.                             |
 
 ## Custom Key Bindings
 
@@ -100,7 +115,7 @@ The key bindings can be modified by creating a JSON file at the following locati
 - On Unix / MacOSX, `$HOME/.git-istage/key-bindings.json`
 - On Windows, `%HOMEDRIVE%%HOMEPATH%\.git-istage\key-bindings.json`
 
-The custom key bindings JSON file contains a JSON objects whose properties are the vailable [command names](/src/git-istage/key-bindings.json), and the their value is a JSON object containing a `KeyBindings` array specifying the new keyboard shortcuts.
+The custom key bindings JSON file contains a JSON objects whose properties are the available [command names](/src/git-istage/key-bindings.json), and the their value is a JSON object containing a `KeyBindings` array specifying the new keyboard shortcuts.
 
 For instance, to use the <kbd>X</kbd> key to exit the program in addition of the default <kbd>Esc</kbd> or <kbd>Q</kbd> keys, use the following syntax:
 
@@ -112,18 +127,17 @@ For instance, to use the <kbd>X</kbd> key to exit the program in addition of the
 }
 ```
 
-You can also completely override the default keyboard shortcuts. For instance, to exit the program _instead_ of the default <kbd>Esc</kbd> or <kbd>Q</kbd> keys, use the following syntax:
+This will override the default keyboard shorts. If you want to add them, you need to add them back. For example, in order to preserve the default <kbd>Esc</kbd> and <kbd>Q</kbd> key, you need to specify them in your JSON:
 
 ```
 {
     "Exit": {
-        "default": [],
-        "keyBindings": ["X"]
+        "keyBindings": ["Escape", "Q", "X"]
     }
 }
 ```
 
-Please, note that key binding strings are case insensitive. This means that, `X` and `Shift+x` represent two different key presses.
+Please, note that key binding strings are case insensitive. In order to differ by case, you need to prefix them with a `Shift` modifier, such as `Shift+X`.
 
 For instance, on a recent [AZERTY-NF](https://springcomp.github.io/optimized-azerty-win/) keyboard layout, the <kbd>[</kbd> and <kbd>]</kbd> keys are located on the positions for the <kbd>5</kbd> and <kbd>6</kbd> keys, respectively. Since the default commands for these keys are <kbd>Oem4</kbd> and <kbd>Oem6</kbd>, I need to change the `GoNextHunk` and `GoPreviousHunk` key bindings like so:
 
