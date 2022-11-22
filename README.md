@@ -20,7 +20,3 @@ the line level, a breeze. See [documentation](docs/about.md) for details.
 ## Documentation
 
 See [documentation](docs/about.md) for details.
-
-## Missing features
-
-* Add ability to edit the patch inline
