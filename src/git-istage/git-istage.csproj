@@ -8,6 +8,7 @@
     <PackageOutputPath>$(OutDir)</PackageOutputPath>
     <GeneratePackageOnBuild>True</GeneratePackageOnBuild>
     <RepositoryUrl>https://github.com/terrajobst/git-istage</RepositoryUrl>
+    <RootNamespace>GitIStage</RootNamespace>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -18,6 +19,7 @@
 
   <ItemGroup>
     <PackageReference Include="LibGit2Sharp" Version="0.26.2" />
+    <PackageReference Include="Microsoft.Extensions.Hosting" Version="6.0.1" />
     <PackageReference Include="Nerdbank.GitVersioning" Version="3.4.244">
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>
       <PrivateAssets>all</PrivateAssets>
@@ -26,10 +28,6 @@
 
   <ItemGroup>
     <None Remove="key-bindings.json" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <EmbeddedResource Include="key-bindings.json" />
   </ItemGroup>
 
   <ItemGroup>

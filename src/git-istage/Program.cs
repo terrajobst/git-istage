@@ -1,10 +1,15 @@
-﻿using LibGit2Sharp;
+﻿using GitIStage.Services;
+using GitIStage.UI;
+using LibGit2Sharp;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.Hosting;
+using Microsoft.Extensions.Logging;
 
 namespace GitIStage;
 
 internal static class Program
 {
-    private static void Main()
+    private static async Task Main()
     {
         if (OperatingSystem.IsWindows())
             Win32Console.Initialize();
@@ -23,10 +28,19 @@ internal static class Program
             return;
         }
 
-        var keyBindings = KeyBindings.Load();
+        var gitEnvironment = new GitEnvironment(repositoryPath, pathToGit);
 
-        var application = new Application(repositoryPath, pathToGit, keyBindings);
+        using var host = Host.CreateDefaultBuilder()
+                             .ConfigureServices(s => ConfigureServices(s, gitEnvironment))
+                             .ConfigureLogging(l => l.ClearProviders())
+                             .Build();
+        host.Start();
+
+        var application = host.Services.GetRequiredService<Application>();
         application.Run();
+
+        await host.StopAsync();
+        await host.WaitForShutdownAsync();
     }
 
     private static string ResolveRepositoryPath()
@@ -61,5 +75,16 @@ internal static class Program
         var searchPaths = paths.SelectMany(p => fileNames.Select(f => Path.Combine(p, f)));
 
         return searchPaths.FirstOrDefault(File.Exists);
+    }
+
+    private static void ConfigureServices(IServiceCollection serviceCollection, GitEnvironment gitEnvironment)
+    {
+        serviceCollection.AddSingleton(gitEnvironment);
+        serviceCollection.AddSingleton<Application>();
+        serviceCollection.AddSingleton<GitService>();
+        serviceCollection.AddSingleton<DocumentService>();
+        serviceCollection.AddSingleton<UIService>();
+        serviceCollection.AddSingleton<CommandService>();
+        serviceCollection.AddSingleton<KeyBindingService>();
     }
 }
