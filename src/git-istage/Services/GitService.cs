@@ -50,7 +50,7 @@ internal sealed class GitService : IDisposable
         {
             File.Delete(patchFilePath);
         }
-        
+
         UpdateRepository();
     }
 

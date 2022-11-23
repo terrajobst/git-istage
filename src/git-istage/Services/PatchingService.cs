@@ -24,18 +24,33 @@ internal sealed class PatchingService
             if (change is not null)
             {
                 var canBeHandled = change.Status is ChangeKind.Added or
-                    ChangeKind.Renamed or
-                    ChangeKind.Modified or
-                    ChangeKind.Deleted;
+                                                    ChangeKind.Renamed or
+                                                    ChangeKind.Modified or
+                                                    ChangeKind.Deleted;
 
                 if (canBeHandled)
                 {
                     if (direction == PatchDirection.Stage)
+                    {
                         _gitService.ExecuteGit($"add \"{change.Path}\"");
+                    }
                     else if (direction == PatchDirection.Unstage)
-                        _gitService.ExecuteGit($"reset \"{change.Path}\"");
+                    {
+                        if (change.Status == ChangeKind.Deleted)
+                            _gitService.ExecuteGit($"restore --staged \"{change.Path}\"");
+                        else
+                            _gitService.ExecuteGit($"reset \"{change.Path}\"");
+                    }
                     else if (direction == PatchDirection.Reset)
-                        _gitService.ExecuteGit($"checkout \"{change.Path}\"");
+                    {
+                        if (change.Status == ChangeKind.Added)
+                        {
+                            _gitService.ExecuteGit($"add \"{change.Path}\"");
+                            _gitService.ExecuteGit($"rm -f \"{change.Path}\"");
+                        }
+                        else
+                            _gitService.ExecuteGit($"checkout \"{change.Path}\"");
+                    }
                 }
             }
         }

@@ -204,7 +204,7 @@ internal sealed class PatchDocument : Document
         return -1;
     }
 
-    private static IReadOnlyList<(string Line, string LineBreak)> GetLines(string content)   
+    private static IReadOnlyList<(string Line, string LineBreak)> GetLines(string content)
     {
         var lines = new List<(string Line, string LineBreak)>();
 
@@ -215,7 +215,7 @@ internal sealed class PatchDocument : Document
         {
             const char cr = '\r';
             const char lf = '\n';
-            
+
             var c = content[i];
             var l = i < content.Length - 1 ? content[i + 1] : '\0';
             var lineBreakWidth = 0;

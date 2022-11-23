@@ -21,12 +21,12 @@ internal static class Program
         {
             Console.WriteLine(ex.Message);
             return -100;
-        }       
+        }
         catch (Exception ex)
         {
             Console.WriteLine($"fatal: unhandled error {ex}");
             return -500;
-        }       
+        }
     }
 
     private static async Task Run()
@@ -80,18 +80,18 @@ internal static class ExceptionBuilder
     {
         return new GitIStageStartupException("fatal: Not a git repository");
     }
-    
+
     public static Exception GitNotFound()
     {
         return new GitIStageStartupException("fatal: git is not in your path");
     }
-    
+
     public static Exception KeyBindingsAreInvalidJson(string fileName, JsonException jsonException)
     {
         var message = $"fatal: user key bindings in '{fileName}' is not valid JSON: {jsonException.Message}";
         return new GitIStageStartupException(message);
     }
-    
+
     public static Exception KeyBindingsReferToInvalidCommand(string fileName, string command)
     {
         var message = $"fatal: user key bindings in '{fileName}' refer to an invalid command {command}.";

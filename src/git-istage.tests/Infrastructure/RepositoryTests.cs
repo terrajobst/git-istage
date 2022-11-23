@@ -1,4 +1,5 @@
-﻿using GitIStage.UI;
+﻿using System.Text.RegularExpressions;
+using GitIStage.UI;
 using LibGit2Sharp;
 
 namespace GitIStage.Tests.Infrastructure;
@@ -17,7 +18,7 @@ public abstract class RepositoryTests : IDisposable
         _tempPath = Path.Join(Path.GetTempPath(), "git-istage-test_" + Guid.NewGuid());
         Directory.CreateDirectory(_tempPath);
         Repository.Init(_tempPath, isBare: false);
-        
+
         var gitEnvironment = new GitEnvironment(repositoryPath: _tempPath);
         _gitService = new GitService(gitEnvironment);
         _documentService = new DocumentService(_gitService);
@@ -27,11 +28,11 @@ public abstract class RepositoryTests : IDisposable
     public void Dispose()
     {
         _gitService.Dispose();
-        
+
         // Directory.Delete() will fail for any read only files. Need to reset attributes first.
         foreach (var file in Directory.EnumerateFiles(_tempPath, "*", SearchOption.AllDirectories))
             File.SetAttributes(file, FileAttributes.Normal);
-        
+
         Directory.Delete(_tempPath, recursive: true);
     }
 
@@ -39,7 +40,7 @@ public abstract class RepositoryTests : IDisposable
     {
         _gitService.Repository.Config.Set("core.autocrlf", false);
     }
-    
+
     internal void WriteTheFile(string contents)
     {
         WriteFile("file.txt", contents);
@@ -50,13 +51,28 @@ public abstract class RepositoryTests : IDisposable
         StageFile("file.txt");
     }
 
+    internal void TouchFile(string fileName)
+    {
+        var fullPath = Path.Combine(_tempPath, fileName);
+        File.WriteAllText(fullPath, string.Empty);
+        _wroteToWorkingDirectory = true;
+    }
+
     internal void WriteFile(string fileName, string contents)
     {
         var fullPath = Path.Combine(_tempPath, fileName);
         File.WriteAllText(fullPath, contents);
         _wroteToWorkingDirectory = true;
     }
-    
+
+    internal void DeleteFile(string fileName)
+    {
+        var fullPath = Path.Combine(_tempPath, fileName);
+        File.Exists(fullPath).Should().BeTrue();
+        File.Delete(fullPath);
+        _wroteToWorkingDirectory = true;
+    }
+
     internal string ReadTheFile()
     {
         return ReadFile("file.txt");
@@ -68,6 +84,13 @@ public abstract class RepositoryTests : IDisposable
         return File.ReadAllText(fullPath);
     }
 
+    internal void StageAll()
+    {
+        var changes = _gitService.Repository.Diff.Compare<TreeChanges>(null, true);
+        foreach (var change in changes)
+            LibGit2Sharp.Commands.Stage(_gitService.Repository, change.OldPath);
+    }
+
     internal void StageFile(string fileName)
     {
         LibGit2Sharp.Commands.Stage(_gitService.Repository, fileName);
@@ -75,17 +98,22 @@ public abstract class RepositoryTests : IDisposable
 
     internal void Commit()
     {
+        var tipTree = _gitService.Repository.Head.Tip?.Tree;
+        var changes = _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index);
+        if (!changes.Any())
+            throw new Exception($"Nothing to commit -- did you forget to stage changes?");
+
         var signature = new Signature("git-istage", "git_istage@example.org", DateTimeOffset.Now);
         _gitService.Repository.Commit("Update", signature, signature);
     }
 
-    public bool ViewFiles
+    internal bool ViewFiles
     {
         get => _documentService.ViewFiles;
         set => _documentService.ViewFiles = value;
     }
 
-    public bool ViewStage
+    internal bool ViewStage
     {
         get => _documentService.ViewStage;
         set => _documentService.ViewStage = value;
@@ -93,7 +121,7 @@ public abstract class RepositoryTests : IDisposable
 
     [CustomAssertion]
     internal T GetDocument<T>()
-        where T: Document
+        where T : Document
     {
         EnsureDocumentIsUpToDate();
         return _documentService.Document.Should().BeAssignableTo<T>().Subject;
@@ -107,7 +135,7 @@ public abstract class RepositoryTests : IDisposable
         _wroteToWorkingDirectory = false;
         _documentService.UpdateDocument();
     }
-    
+
     internal void StageLine(string line)
     {
         Apply(PatchDirection.Stage, line, entireHunk: false);
@@ -138,15 +166,27 @@ public abstract class RepositoryTests : IDisposable
         Apply(PatchDirection.Reset, line, entireHunk: true);
     }
 
-    private void Apply(PatchDirection direction, string line, bool entireHunk)
+    private void Apply(PatchDirection direction, string wildcardPattern, bool entireHunk)
     {
         EnsureDocumentIsUpToDate();
 
-        var selectedLine = _documentService.Document.GetLineIndex(line);
-        if (selectedLine == -1)
-            throw new Exception($"Line '{line}' not part of the patch");
-        
-        _patchingService.ApplyPatch(direction, entireHunk, selectedLine);
+        var document = _documentService.Document;
+        var regex = WildcardPatternToRegex(wildcardPattern);
+        var matchingLineIndices = Enumerable
+                                  .Range(0, document.Height)
+                                  .Where(i => Regex.IsMatch(document.GetLine(i), regex));
+
+        var selectedLineIndex = matchingLineIndices.Should().ContainSingle().Subject;
+        _patchingService.ApplyPatch(direction, entireHunk, selectedLineIndex);
+
+        static string WildcardPatternToRegex(string pattern)
+        {
+            return "^"
+                   + Regex.Escape(pattern)
+                          .Replace("\\*", ".*", StringComparison.Ordinal)
+                          .Replace("\\?", ".", StringComparison.Ordinal)
+                   + "$";
+        }
     }
 
     internal void AssertPatch(string expectedPatch, PatchDocument actualPatch)
@@ -154,7 +194,7 @@ public abstract class RepositoryTests : IDisposable
         var actualPatchLines = actualPatch.Lines
                                           .Where(l => l.Kind.IsAdditionOrRemoval())
                                           .Select(l => l.Text);
-        
+
         var expectedPatchLines = expectedPatch.ReplaceLineEndings("\n")
             .Split('\n');
 
@@ -164,5 +204,47 @@ public abstract class RepositoryTests : IDisposable
     internal void AssertPatchEmpty(PatchDocument patch)
     {
         Assert.Empty(patch.Lines);
+    }
+
+    internal static void AssertFiles(string expectedChangesText, FileDocument document)
+    {
+        var expectedChangeLines = expectedChangesText
+            .ReplaceLineEndings(Environment.NewLine)
+            .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+        var actualChangeLines = new List<string>();
+        for (var i = 0; i < document.Height - 1; i++)
+        {
+            var line = document.GetLine(i);
+            var colon = line.IndexOf(':');
+            if (colon < 0)
+                continue;
+
+            var changeText = line.Substring(0, colon).Trim();
+            var path = line.Substring(colon + 1).Trim();
+
+            if (changeText.Length == 0 || path.Length == 0)
+                continue;
+
+            var marker = changeText switch
+            {
+                "added" => "+",
+                "modified" => "~",
+                "deleted" => "-",
+                _ => null
+            };
+
+            if (marker is null)
+                continue;
+
+            actualChangeLines.Add($"{marker} {path}");
+        }
+
+        actualChangeLines.Should().BeEquivalentTo(expectedChangeLines);
+    }
+
+    internal void AssertFilesEmpty(FileDocument document)
+    {
+        document.Changes.Should().BeEmpty();
     }
 }

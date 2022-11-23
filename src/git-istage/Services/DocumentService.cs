@@ -87,7 +87,7 @@ internal sealed class DocumentService
 
         if (_viewFiles)
         {
-            _document = FileDocument.Create(_gitService.Repository.Info.WorkingDirectory, changes, _viewStage);
+            _document = FileDocument.Create(changes, _viewStage);
         }
         else
         {

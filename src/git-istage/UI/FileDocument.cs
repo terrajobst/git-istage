@@ -21,6 +21,8 @@ internal sealed class FileDocument : Document
 
     public override int Width { get; }
 
+    public TreeEntryChanges[] Changes => _changes;
+
     public override string GetLine(int index)
     {
         return _lines[index];
@@ -35,7 +37,7 @@ internal sealed class FileDocument : Document
         return _changes[changeIndex];
     }
 
-    public static FileDocument Create(string repositoryPath, TreeChanges changes, bool viewStage)
+    public static FileDocument Create(TreeChanges changes, bool viewStage)
     {
         var builder = new StringBuilder();
         if (changes.Any())
@@ -48,7 +50,7 @@ internal sealed class FileDocument : Document
 
             foreach (var c in changes)
             {
-                var path = Path.GetRelativePath(repositoryPath, c.Path);
+                var path = c.Path;
                 var change = (c.Status.ToString().ToLower() + ":").PadRight(12);
 
                 builder.Append(indent);

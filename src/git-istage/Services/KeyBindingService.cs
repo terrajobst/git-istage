@@ -12,7 +12,7 @@ internal sealed class KeyBindingService
     {
         _userEnvironment = userEnvironment;
     }
-    
+
     public IReadOnlyDictionary<string, IReadOnlyList<ConsoleKeyBinding>> GetUserKeyBindings()
     {
         var result = new Dictionary<string, IReadOnlyList<ConsoleKeyBinding>>();

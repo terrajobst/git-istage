@@ -8,7 +8,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
         var settings = """
             [
             """;
-        
+
         WriteSettings(settings);
 
         var action = () => KeyBindingService.GetUserKeyBindings();
@@ -28,7 +28,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                 }
             }
             """;
-        
+
         WriteSettings(settings);
 
         var action = () => KeyBindingService.GetUserKeyBindings();
@@ -48,7 +48,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                 }
             }
             """;
-        
+
         WriteSettings(settings);
 
         var action = () => KeyBindingService.GetUserKeyBindings();
@@ -74,13 +74,13 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                 }
             }
             """;
-        
+
         WriteSettings(settings);
 
         var bindings = KeyBindingService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
-    
+
     [Fact]
     public void KeyBindingService_Ignores_NullBindings()
     {
@@ -91,7 +91,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                }
             }
             """;
-        
+
         WriteSettings(settings);
 
         var bindings = KeyBindingService.GetUserKeyBindings();
@@ -108,7 +108,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                }
             }
             """;
-        
+
         WriteSettings(settings);
 
         var bindings = KeyBindingService.GetUserKeyBindings();
@@ -125,13 +125,13 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                }
             }
             """;
-        
+
         WriteSettings(settings);
 
         var bindings = KeyBindingService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
-    
+
     [Fact]
     public void KeyBindingService_Reads_Key_Single()
     {
@@ -152,7 +152,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
                          .WhoseValue
                          .Should().ContainSingle().Which.Should().Be(expectedKey);
     }
-    
+
     [Fact]
     public void KeyBindingService_Reads_Key_Multiple()
     {

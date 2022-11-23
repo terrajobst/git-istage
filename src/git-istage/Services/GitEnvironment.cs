@@ -13,7 +13,7 @@ internal sealed class GitEnvironment
     {
         RepositoryPath = repositoryPath ?? ResolveRepositoryPath();
         PathToGit = pathToGit ?? ResolveGitPath();
-        
+
         if (string.IsNullOrEmpty(RepositoryPath))
             throw ExceptionBuilder.NotAGitRepository();
 
@@ -24,8 +24,7 @@ internal sealed class GitEnvironment
     public string RepositoryPath { get; }
 
     public string PathToGit { get; }
-    
-    
+
     private static string ResolveRepositoryPath()
     {
         var currentDirectory = Directory.GetCurrentDirectory();

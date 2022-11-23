@@ -376,7 +376,7 @@ internal sealed class CommandService
     {
         if (_uiService.HelpShowing || _documentService.ViewStage)
             return;
-        
+
         ApplyPatch(PatchDirection.Reset, false);
     }
 
@@ -392,7 +392,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, stages the selected line.", "S")]
     private void Stage()
     {
-        if (_uiService.HelpShowing ||_documentService.ViewStage)
+        if (_uiService.HelpShowing || _documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Stage, false);
@@ -401,7 +401,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, stages the selected block.", "Shift+S")]
     private void StageHunk()
     {
-        if (_uiService.HelpShowing ||_documentService.ViewStage)
+        if (_uiService.HelpShowing || _documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Stage, true);
@@ -485,7 +485,7 @@ internal sealed class CommandService
 
         if (direction == PatchDirection.Reset && _documentService.ViewStage)
             return;
-        
+
         var selectedLine = _uiService.View.SelectedLine;
         if (selectedLine < 0)
             return;
