@@ -28,10 +28,10 @@ jobs:
         dotnet-version: 7.0.x
     - name: Restore dependencies
       run: dotnet restore $SLN
-    - name: Build
-      run: dotnet build --no-restore --nologo $SLN /p:OutDir=$BIN
     - name: Test
-      run: dotnet test --no-build --nologo --verbosity normal $SLN /p:OutDir=$BIN
+      run: dotnet test --no-restore --nologo -c Debug --verbosity normal $SLN
+    - name: Publish
+      run: dotnet publish --no-restore --nologo -c Release $SLN /p:OutDir=$BIN
     - name: Push package to GPR
       if: ${{ github.event_name == 'push' && env.RELEASE_VERSION == 'main' }}
       run: dotnet nuget push $BIN*.nupkg --source https://nuget.pkg.github.com/terrajobst/index.json --api-key ${{ github.token }} --skip-duplicate
