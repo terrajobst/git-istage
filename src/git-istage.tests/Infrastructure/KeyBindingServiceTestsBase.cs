@@ -1,14 +1,20 @@
 ﻿namespace GitIStage.Tests.Infrastructure;
 
-public abstract class KeyBindingServiceTestsBase
+public abstract class KeyBindingServiceTestsBase : IDisposable
 {
     private readonly KeyBindingService _keyBindingService;
+    private readonly string _userProfile;
 
     protected KeyBindingServiceTestsBase()
     {
-        var userProfile = TempDirectory.Create();
-        var userEnvironment = new UserEnvironment(userProfile);
+        _userProfile = TempDirectory.Create();
+        var userEnvironment = new UserEnvironment(_userProfile);
         _keyBindingService = new KeyBindingService(userEnvironment);
+    }
+
+    public void Dispose()
+    {
+        Directory.Delete(_userProfile, recursive: true);
     }
 
     internal KeyBindingService KeyBindingService => _keyBindingService;
