@@ -21,7 +21,7 @@ internal sealed class FileDocument : Document
 
     public override int Width { get; }
 
-    public TreeEntryChanges[] Changes => _changes;
+    public IReadOnlyList<TreeEntryChanges> Changes => _changes;
 
     public override string GetLine(int index)
     {
