@@ -15,7 +15,7 @@ env:
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-18.04
     steps:
     - uses: actions/checkout@v2
       with:
@@ -29,7 +29,7 @@ jobs:
     - name: Restore dependencies
       run: dotnet restore $SLN
     - name: Test
-      run: dotnet test --no-restore --nologo -c Debug --verbosity normal $SLN
+      run: dotnet test --no-restore --nologo -c Debug --verbosity minimal $SLN
     - name: Publish
       run: dotnet publish --no-restore --nologo -c Release $SLN /p:OutDir=$BIN
     - name: Push package to GPR
