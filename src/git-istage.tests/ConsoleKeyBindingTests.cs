@@ -1,20 +1,18 @@
-using GitIStage.Commands;
-using Xunit;
-
 namespace GitIStage.Tests;
 
-public class KeyPressParserTests
+public class ConsoleKeyBindingTests
 {
     [Fact]
-    public void KeyPressParser_ParseKey()
+    public void ConsoleKeyBinding_ParseKey()
     {
         var result = ConsoleKeyBinding.Parse("shift+ctrl+R");
 
         Assert.Equal(ConsoleKey.R, result.Key);
         Assert.Equal(ConsoleModifiers.Shift | ConsoleModifiers.Control, result.Modifiers);
     }
+
     [Fact]
-    public void KeyPressParser_ParseMinusKey()
+    public void ConsoleKeyBinding_ParseMinusKey()
     {
         var result = ConsoleKeyBinding.Parse("-");
 
@@ -22,7 +20,7 @@ public class KeyPressParserTests
     }
 
     [Fact]
-    public void KeyPressParser_ParsePlusKey()
+    public void ConsoleKeyBinding_ParsePlusKey()
     {
         var result = ConsoleKeyBinding.Parse("+");
 
@@ -30,7 +28,7 @@ public class KeyPressParserTests
     }
 
     [Fact]
-    public void KeyPressParser_ParseCtrlPlusKey()
+    public void ConsoleKeyBinding_ParseCtrlPlusKey()
     {
         var result = ConsoleKeyBinding.Parse("ctrl++");
 

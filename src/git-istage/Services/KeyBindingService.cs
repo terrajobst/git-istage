@@ -6,6 +6,13 @@ namespace GitIStage.Services;
 
 internal sealed class KeyBindingService
 {
+    private readonly UserEnvironment _userEnvironment;
+
+    public KeyBindingService(UserEnvironment userEnvironment)
+    {
+        _userEnvironment = userEnvironment;
+    }
+    
     public IReadOnlyDictionary<string, IReadOnlyList<ConsoleKeyBinding>> GetUserKeyBindings()
     {
         var result = new Dictionary<string, IReadOnlyList<ConsoleKeyBinding>>();
@@ -28,30 +35,28 @@ internal sealed class KeyBindingService
                         continue;
 
                     if (!ConsoleKeyBinding.TryParse(bindingText, out var binding))
-                    {
-                        Console.WriteLine($"fatal: invalid key binding for '{name}': {binding}");
-                        Environment.Exit(1);
-                    }
+                        throw ExceptionBuilder.KeyBindingInvalidBinding(GetUserKeyBindingsPath(), name, bindingText);
 
                     bindings.Add(binding);
                 }
             }
 
-            result.Add(name, bindings.ToArray());
+            if (bindings.Any())
+                result.Add(name, bindings.ToArray());
         }
 
         return result;
     }
 
-    private static string UserKeyBindingsPath()
+    public string GetUserKeyBindingsPath()
     {
-        var homeDirectory = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
+        var homeDirectory = _userEnvironment.UserHomeDirectory;
         return Path.Join(homeDirectory, ".git-istage", "key-bindings.json");
     }
 
-    private static IDictionary<string, CustomKeyBinding?>? LoadUserKeyBindings()
+    private IDictionary<string, CustomKeyBinding?>? LoadUserKeyBindings()
     {
-        var path = UserKeyBindingsPath();
+        var path = GetUserKeyBindingsPath();
         if (string.IsNullOrEmpty(path) || !File.Exists(path))
             return null;
 
@@ -68,9 +73,7 @@ internal sealed class KeyBindingService
         }
         catch (JsonException ex)
         {
-            Console.WriteLine($"fatal: user key bindings in {path} are malformed: {ex.Message}");
-            Environment.Exit(1);
-            throw;
+            throw ExceptionBuilder.KeyBindingsAreInvalidJson(GetUserKeyBindingsPath(), ex);
         }
     }
 

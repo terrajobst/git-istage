@@ -45,6 +45,9 @@ internal sealed class UIService
 
     public void Show()
     {
+        if (OperatingSystem.IsWindows())
+            Win32Console.Initialize();
+
         Vt100.SwitchToAlternateBuffer();
         Vt100.HideCursor();
 
@@ -268,5 +271,12 @@ internal sealed class UIService
 
         _view.SelectedLine = _selectedLineBeforeHelpWasShown == -1 ? 0 : _selectedLineBeforeHelpWasShown;
         _view.TopLine = _topLineBeforeHelpWasShown;
+    }
+
+    public void RenderGitError(GitCommandFailedException ex)
+    {
+        Console.Clear();
+        Console.WriteLine(ex.Message);
+        Console.ReadKey();
     }
 }

@@ -78,7 +78,7 @@ internal sealed class DocumentService
         }
     }
 
-    private void UpdateDocument()
+    public void UpdateDocument()
     {
         var tipTree = _gitService.Repository.Head.Tip?.Tree;
         var changes = _viewStage

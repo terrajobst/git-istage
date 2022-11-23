@@ -1,6 +1,7 @@
-﻿using GitIStage.Services;
-using GitIStage.UI;
-using LibGit2Sharp;
+﻿using System.ComponentModel;
+using System.Text.Json;
+using GitIStage.Commands;
+using GitIStage.Services;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -9,29 +10,29 @@ namespace GitIStage;
 
 internal static class Program
 {
-    private static async Task Main()
+    private static async Task<int> Main()
     {
-        if (OperatingSystem.IsWindows())
-            Win32Console.Initialize();
-
-        var repositoryPath = ResolveRepositoryPath();
-        if (string.IsNullOrEmpty(repositoryPath))
+        try
         {
-            Console.WriteLine("fatal: Not a git repository");
-            return;
+            await Run();
+            return 0;
         }
-
-        var pathToGit = ResolveGitPath();
-        if (string.IsNullOrEmpty(pathToGit))
+        catch (GitIStageStartupException ex)
         {
-            Console.WriteLine("fatal: git is not in your path");
-            return;
-        }
+            Console.WriteLine(ex.Message);
+            return -100;
+        }       
+        catch (Exception ex)
+        {
+            Console.WriteLine($"fatal: unhandled error {ex}");
+            return -500;
+        }       
+    }
 
-        var gitEnvironment = new GitEnvironment(repositoryPath, pathToGit);
-
+    private static async Task Run()
+    {
         using var host = Host.CreateDefaultBuilder()
-                             .ConfigureServices(s => ConfigureServices(s, gitEnvironment))
+                             .ConfigureServices(ConfigureServices)
                              .ConfigureLogging(l => l.ClearProviders())
                              .Build();
         host.Start();
@@ -43,48 +44,69 @@ internal static class Program
         await host.WaitForShutdownAsync();
     }
 
-    private static string? ResolveRepositoryPath()
+    private static void ConfigureServices(IServiceCollection serviceCollection)
     {
-        var currentDirectory = Directory.GetCurrentDirectory();
-        var repositoryPath = Repository.Discover(currentDirectory);
-
-        if (string.IsNullOrEmpty(repositoryPath))
-            return null;
-
-        if (!Repository.IsValid(repositoryPath))
-            return null;
-
-        return repositoryPath;
-    }
-
-    private static string? ResolveGitPath()
-    {
-        var path = Environment.GetEnvironmentVariable("PATH");
-        if (string.IsNullOrEmpty(path))
-            return null;
-
-        var paths = path.Split(Path.PathSeparator);
-
-        // In order to have this work across all operating systems, we
-        // need to include other extensions.
-        //
-        // NOTE: On .NET Core, we should use RuntimeInformation in order
-        //       to limit the extensions based on operating system.
-
-        var fileNames = new[] { "git.exe", "git" };
-        var searchPaths = paths.SelectMany(p => fileNames.Select(f => Path.Combine(p, f)));
-
-        return searchPaths.FirstOrDefault(File.Exists);
-    }
-
-    private static void ConfigureServices(IServiceCollection serviceCollection, GitEnvironment gitEnvironment)
-    {
-        serviceCollection.AddSingleton(gitEnvironment);
+        serviceCollection.AddSingleton<GitEnvironment>();
+        serviceCollection.AddSingleton<UserEnvironment>();
         serviceCollection.AddSingleton<Application>();
         serviceCollection.AddSingleton<GitService>();
+        serviceCollection.AddSingleton<PatchingService>();
         serviceCollection.AddSingleton<DocumentService>();
         serviceCollection.AddSingleton<UIService>();
         serviceCollection.AddSingleton<CommandService>();
         serviceCollection.AddSingleton<KeyBindingService>();
+    }
+}
+
+internal sealed class GitIStageStartupException : Exception
+{
+    public GitIStageStartupException(string message)
+        : base(message)
+    {
+    }
+}
+
+internal sealed class GitCommandFailedException : Exception
+{
+    public GitCommandFailedException(string message)
+        : base(message)
+    {
+    }
+}
+
+internal static class ExceptionBuilder
+{
+    public static Exception NotAGitRepository()
+    {
+        return new GitIStageStartupException("fatal: Not a git repository");
+    }
+    
+    public static Exception GitNotFound()
+    {
+        return new GitIStageStartupException("fatal: git is not in your path");
+    }
+    
+    public static Exception KeyBindingsAreInvalidJson(string fileName, JsonException jsonException)
+    {
+        var message = $"fatal: user key bindings in '{fileName}' is not valid JSON: {jsonException.Message}";
+        return new GitIStageStartupException(message);
+    }
+    
+    public static Exception KeyBindingsReferToInvalidCommand(string fileName, string command)
+    {
+        var message = $"fatal: user key bindings in '{fileName}' refer to an invalid command {command}.";
+        return new GitIStageStartupException(message);
+    }
+
+    public static Exception KeyBindingInvalidBinding(string fileName, string command, string bindingText)
+    {
+        var message = $"fatal: user key bindings in '{fileName}' uses an invalid key binding for command '{command}': '{bindingText}'.";
+        return new GitIStageStartupException(message);
+    }
+
+    public static Exception GitCommandFailed(string command, IReadOnlyList<string> commandLog)
+    {
+        var message = $"Git command failed: {command}{Environment.NewLine}{string.Join(Environment.NewLine, commandLog)}";
+        return new GitCommandFailedException(message);
     }
 }

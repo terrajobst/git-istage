@@ -1,17 +1,18 @@
 ﻿using System.Reflection;
 using GitIStage.Commands;
 using GitIStage.Patches;
-using GitIStage.UI;
-using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GitIStage.Services;
 
+// TODO: Ideally, we should be able to test this class as there is a ton of policy.
+//       However, in order to do that, we need to be able to abstract the UI service.
 internal sealed class CommandService
 {
     private readonly IServiceProvider _serviceProvider;
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
+    private readonly PatchingService _patchingService;
     private readonly UIService _uiService;
     private readonly IReadOnlyList<ConsoleCommand> _commands;
 
@@ -19,11 +20,13 @@ internal sealed class CommandService
                           KeyBindingService keyBindingService,
                           GitService gitService,
                           DocumentService documentService,
+                          PatchingService patchingService,
                           UIService uiService)
     {
         _serviceProvider = serviceProvider;
         _gitService = gitService;
         _documentService = documentService;
+        _patchingService = patchingService;
         _uiService = uiService;
 
         var commands = CreateCommands();
@@ -72,10 +75,7 @@ internal sealed class CommandService
         foreach (var (name, bindings) in userKeyBindings)
         {
             if (!commandByName.TryGetValue(name, out var command))
-            {
-                Console.WriteLine($"fatal: invalid command: {name}");
-                Environment.Exit(1);
-            }
+                throw ExceptionBuilder.KeyBindingsReferToInvalidCommand(keyBindingService.GetUserKeyBindingsPath(), name);
 
             commandByName[name] = command.WithKeyBindings(bindings);
         }
@@ -94,21 +94,21 @@ internal sealed class CommandService
     private void Commit()
     {
         if (_uiService.HelpShowing) return;
-        _gitService.RunCommand("commit -v");
+        _gitService.ExecuteGit("commit -v");
     }
 
     [CommandHandler("Amend commit", "Alt+C")]
     private void CommitAmend()
     {
         if (_uiService.HelpShowing) return;
-        _gitService.RunCommand("commit -v --amend");
+        _gitService.ExecuteGit("commit -v --amend");
     }
 
     [CommandHandler("Stashes changes from the working copy, but leaves the stage as-is.", "Alt+S")]
     private void Stash()
     {
         if (_uiService.HelpShowing) return;
-        _gitService.RunCommand("stash -u -k");
+        _gitService.ExecuteGit("stash -u -k");
     }
 
     [CommandHandler("Toggle between working copy changes and staged changes.", "T")]
@@ -374,16 +374,16 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, removes the selected line from the working copy.", "R")]
     private void Reset()
     {
-        if (_documentService.ViewStage)
+        if (_uiService.HelpShowing || _documentService.ViewStage)
             return;
-
+        
         ApplyPatch(PatchDirection.Reset, false);
     }
 
     [CommandHandler("When viewing the working copy, removes the selected block from the working copy.", "Shift+R")]
     private void ResetHunk()
     {
-        if (_documentService.ViewStage)
+        if (_uiService.HelpShowing || _documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Reset, true);
@@ -392,7 +392,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, stages the selected line.", "S")]
     private void Stage()
     {
-        if (_documentService.ViewStage)
+        if (_uiService.HelpShowing ||_documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Stage, false);
@@ -401,7 +401,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, stages the selected block.", "Shift+S")]
     private void StageHunk()
     {
-        if (_documentService.ViewStage)
+        if (_uiService.HelpShowing ||_documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Stage, true);
@@ -410,7 +410,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the stage, unstages the selected line.", "U")]
     private void Unstage()
     {
-        if (!_documentService.ViewStage)
+        if (_uiService.HelpShowing || !_documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Unstage, false);
@@ -419,7 +419,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the stage, unstages the selected block.", "Shift+U")]
     private void UnstageHunk()
     {
-        if (!_documentService.ViewStage)
+        if (_uiService.HelpShowing || !_documentService.ViewStage)
             return;
 
         ApplyPatch(PatchDirection.Unstage, true);
@@ -474,55 +474,29 @@ internal sealed class CommandService
 
     private void ApplyPatch(PatchDirection direction, bool entireHunk)
     {
-        if (_uiService.HelpShowing) return;
-
-        if (_uiService.View.SelectedLine < 0)
+        if (_uiService.HelpShowing)
             return;
 
-        if (_documentService.ViewFiles)
-        {
-            var fileDocument = (FileDocument)_documentService.Document;
-            var change = fileDocument.GetChange(_uiService.View.SelectedLine);
-            if (change is not null)
-            {
-                var canBeHandled = change.Status is ChangeKind.Added or
-                                                    ChangeKind.Renamed or
-                                                    ChangeKind.Modified or
-                                                    ChangeKind.Deleted;
+        if (direction == PatchDirection.Stage && _documentService.ViewStage)
+            return;
 
-                if (canBeHandled)
-                {
-                    if (direction == PatchDirection.Stage)
-                        _gitService.RunCommand($"add \"{change.Path}\"");
-                    else if (direction == PatchDirection.Unstage)
-                        _gitService.RunCommand($"reset \"{change.Path}\"");
-                    else if (direction == PatchDirection.Reset)
-                        _gitService.RunCommand($"checkout \"{change.Path}\"");
-                }
-            }
+        if (direction == PatchDirection.Unstage && !_documentService.ViewStage)
+            return;
+
+        if (direction == PatchDirection.Reset && _documentService.ViewStage)
+            return;
+        
+        var selectedLine = _uiService.View.SelectedLine;
+        if (selectedLine < 0)
+            return;
+
+        try
+        {
+            _patchingService.ApplyPatch(direction, entireHunk, selectedLine);
         }
-        else
+        catch (GitCommandFailedException ex)
         {
-            var document = (PatchDocument)_documentService.Document;
-            var line = document.Lines[_uiService.View.SelectedLine];
-            if (!line.Kind.IsAdditionOrRemoval())
-                return;
-
-            IEnumerable<int> lines;
-            if (!entireHunk)
-            {
-                lines = new[] { _uiService.View.SelectedLine };
-            }
-            else
-            {
-                var start = document.FindStartOfChangeBlock(_uiService.View.SelectedLine);
-                var end = document.FindEndOfChangeBlock(_uiService.View.SelectedLine);
-                var length = end - start + 1;
-                lines = Enumerable.Range(start, length);
-            }
-
-            var patch = Patching.ComputePatch(document, lines, direction);
-            _gitService.ApplyPatch(patch, direction);
+            _uiService.RenderGitError(ex);
         }
     }
 }

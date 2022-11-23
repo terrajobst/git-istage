@@ -160,16 +160,18 @@ internal sealed class PatchDocument : Document
         for (var i = 0; i <= headerEnd; i++)
         {
             var kind = PatchLineKind.Header;
-            var text = lines[i];
+            var text = lines[i].Line;
+            var lineBreak = lines[i].LineBreak;
             if (text.StartsWith("diff --git"))
                 kind = PatchLineKind.DiffLine;
-            var line = new PatchLine(kind, text);
+            var line = new PatchLine(kind, text, lineBreak);
             result.Add(line);
         }
 
         for (var i = headerEnd + 1; i < lines.Count; i++)
         {
-            var text = lines[i];
+            var text = lines[i].Line;
+            var lineBreak = lines[i].LineBreak;
 
             PatchLineKind kind;
 
@@ -184,35 +186,74 @@ internal sealed class PatchDocument : Document
             else
                 kind = PatchLineKind.Context;
 
-            var line = new PatchLine(kind, text);
+            var line = new PatchLine(kind, text, lineBreak);
             result.Add(line);
         }
 
         return result;
     }
 
-    private static int GetHeaderEnd(IReadOnlyList<string> lines)
+    private static int GetHeaderEnd(IReadOnlyList<(string Line, string LineBreak)> lines)
     {
         for (var i = 0; i < lines.Count; i++)
         {
-            if (lines[i].StartsWith("+++"))
+            if (lines[i].Line.StartsWith("+++"))
                 return i;
         }
 
         return -1;
     }
 
-    private static IReadOnlyList<string> GetLines(string content)
+    private static IReadOnlyList<(string Line, string LineBreak)> GetLines(string content)   
     {
-        var lines = new List<string>();
+        var lines = new List<(string Line, string LineBreak)>();
 
-        using (var sr = new StringReader(content))
+        var beginningOfLine = 0;
+        var i = 0;
+
+        while (i < content.Length)
         {
-            string? line;
-            while ((line = sr.ReadLine()) is not null)
-                lines.Add(line);
+            const char cr = '\r';
+            const char lf = '\n';
+            
+            var c = content[i];
+            var l = i < content.Length - 1 ? content[i + 1] : '\0';
+            var lineBreakWidth = 0;
+
+            if (c == cr && l == lf)
+            {
+                lineBreakWidth = 2;
+            }
+            else if (c is cr or lf)
+            {
+                lineBreakWidth = 1;
+            }
+
+            if (lineBreakWidth > 0)
+            {
+                CommitLine(lines, content, ref beginningOfLine, i, lineBreakWidth);
+                i += lineBreakWidth;
+            }
+            else
+            {
+                i++;
+            }
         }
 
+        CommitLine(lines, content, ref beginningOfLine, i, 0);
+
         return lines.ToArray();
+
+        static void CommitLine(List<(string Line, string LineBreak)> lines, string content, ref int beginningOfLine, int i, int lineBreakWidth)
+        {
+            if (beginningOfLine >= content.Length)
+                return;
+
+            var length = i - beginningOfLine;
+            var line = content.Substring(beginningOfLine, length);
+            var lineBreak = content.Substring(i, lineBreakWidth);
+            lines.Add((line, lineBreak));
+            beginningOfLine = i + lineBreakWidth;
+        }
     }
 }
