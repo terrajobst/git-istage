@@ -52,7 +52,7 @@ jobs:
       uses: actions/upload-artifact@v3
       with:
         name: published-build
-        path: $BIN
+        path: ${{ env.BIN }}
 
   upload-gpr:
     runs-on: ubuntu-latest
@@ -63,7 +63,7 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: published-build
-        path: $BIN
+        path: ${{ env.BIN }}
     - name: Push package to GPR
       run: dotnet nuget push $BIN*.nupkg --source https://nuget.pkg.github.com/terrajobst/index.json --api-key ${{ github.token }} --skip-duplicate
 
@@ -76,6 +76,6 @@ jobs:
       uses: actions/download-artifact@v3
       with:
         name: published-build
-        path: $BIN
+        path: ${{ env.BIN }}
     - name: Push package to nuget.org
       run: dotnet nuget push $BIN*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_TOKEN }} --skip-duplicate
