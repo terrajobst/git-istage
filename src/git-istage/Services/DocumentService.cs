@@ -85,15 +85,17 @@ internal sealed class DocumentService
             ? _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
             : _gitService.Repository.Diff.Compare<TreeChanges>(null, true);
 
+        var filteredChanges = changes
+            .Where(p => p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink)
+            .ToArray();
+        
         if (_viewFiles)
         {
-            _document = FileDocument.Create(changes, _viewStage);
+            _document = FileDocument.Create(filteredChanges, _viewStage);
         }
         else
         {
-            var paths = changes
-                .Where(p => p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink)
-                .Select(c => c.Path).ToArray();
+            var paths = filteredChanges.Select(c => c.Path).ToArray();
 
             var compareOptions = new CompareOptions();
             compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;

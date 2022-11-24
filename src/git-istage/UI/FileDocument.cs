@@ -7,13 +7,13 @@ internal sealed class FileDocument : Document
 {
     private readonly int _indexOfFirstFile;
     private readonly string[] _lines;
-    private readonly TreeEntryChanges[] _changes;
+    private readonly IReadOnlyList<TreeEntryChanges> _changes;
 
-    private FileDocument(int indexOfFirstFile, string[] lines, TreeChanges changes, int width)
+    private FileDocument(int indexOfFirstFile, string[] lines, IReadOnlyList<TreeEntryChanges> changes, int width)
     {
         _indexOfFirstFile = indexOfFirstFile;
         _lines = lines;
-        _changes = changes.ToArray();
+        _changes = changes;
         Width = width;
     }
 
@@ -31,13 +31,13 @@ internal sealed class FileDocument : Document
     public TreeEntryChanges? GetChange(int index)
     {
         var changeIndex = index - _indexOfFirstFile;
-        if (changeIndex < 0 || changeIndex >= _changes.Length)
+        if (changeIndex < 0 || changeIndex >= _changes.Count)
             return null;
 
         return _changes[changeIndex];
     }
 
-    public static FileDocument Create(TreeChanges changes, bool viewStage)
+    public static FileDocument Create(IReadOnlyList<TreeEntryChanges> changes, bool viewStage)
     {
         var builder = new StringBuilder();
         if (changes.Any())
