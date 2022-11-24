@@ -19,6 +19,7 @@ internal static class Win32Console
     private const int STD_OUTPUT_HANDLE = -11;
     private const uint DISABLE_NEWLINE_AUTO_RETURN = 0x0008;
     private const uint ENABLE_WRAP_AT_EOL_OUTPUT = 0x0002;
+    private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
 #pragma warning restore IDE1006 // Naming Styles
 
     public static void Initialize()
@@ -31,7 +32,7 @@ internal static class Win32Console
         if (GetConsoleMode(iStdOut, out var outConsoleMode))
         {
             outConsoleMode &= ~ENABLE_WRAP_AT_EOL_OUTPUT;
-            outConsoleMode |= DISABLE_NEWLINE_AUTO_RETURN;
+            outConsoleMode |= DISABLE_NEWLINE_AUTO_RETURN | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
 
             SetConsoleMode(iStdOut, outConsoleMode);
         }
