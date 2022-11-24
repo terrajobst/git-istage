@@ -16,21 +16,25 @@ internal sealed class Application
     public void Run()
     {
         _uiService.Show();
-
-        while (!_done)
+        try
         {
-            var width = Console.WindowWidth;
-            var height = Console.WindowHeight;
+            while (!_done)
+            {
+                var width = Console.WindowWidth;
+                var height = Console.WindowHeight;
 
-            var key = Console.ReadKey(true);
-            var command = _commandService.GetCommand(key);
-            command?.Execute();
+                var key = Console.ReadKey(true);
+                var command = _commandService.GetCommand(key);
+                command?.Execute();
 
-            if (width != Console.WindowWidth || height != Console.WindowHeight)
-                _uiService.ResizeScreen();
+                if (width != Console.WindowWidth || height != Console.WindowHeight)
+                    _uiService.ResizeScreen();
+            }
         }
-
-        _uiService.Hide();
+        finally
+        {
+            _uiService.Hide();
+        }
     }
 
     public void Exit()
