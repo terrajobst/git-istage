@@ -166,7 +166,7 @@ internal sealed class View
 
     private void UpdateSelectedLine(int value)
     {
-        if (_selectedLine == value || DocumentHeight == 0)
+        if (_selectedLine == -1 || _selectedLine == value || DocumentHeight == 0)
             return;
 
         if (value < 0 || value >= DocumentHeight)
@@ -251,6 +251,9 @@ internal sealed class View
 
     public void BringIntoView(int lineIndex)
     {
+        if (lineIndex == -1)
+            return;
+        
         if (lineIndex < 0 || lineIndex >= DocumentHeight)
             throw new ArgumentOutOfRangeException(nameof(lineIndex));
 
