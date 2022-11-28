@@ -113,7 +113,7 @@ internal sealed class CommandService
             return;
 
         var amendSwitch = amend ? "--amend " : string.Empty;
-        
+
         _uiService.Hide();
         _gitService.ExecuteGit($"commit -v {amendSwitch}", capture: false, updateRepo: false);
         _uiService.Show();

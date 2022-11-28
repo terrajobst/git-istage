@@ -88,7 +88,7 @@ internal sealed class DocumentService
         var filteredChanges = changes
             .Where(p => p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink)
             .ToArray();
-        
+
         if (_viewFiles)
         {
             _document = FileDocument.Create(filteredChanges, _viewStage);

@@ -54,7 +54,7 @@ internal sealed class GitService : IDisposable
         UpdateRepository();
     }
 
-    public void ExecuteGit(string arguments, bool capture=true, bool updateRepo=true)
+    public void ExecuteGit(string arguments, bool capture = true, bool updateRepo = true)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -80,7 +80,7 @@ internal sealed class GitService : IDisposable
 
         using var process = new Process();
         process.StartInfo = startInfo;
-        
+
         if (capture)
         {
             process.OutputDataReceived += Handler;
@@ -88,7 +88,7 @@ internal sealed class GitService : IDisposable
         }
 
         process.Start();
-        
+
         if (capture)
         {
             process.BeginOutputReadLine();

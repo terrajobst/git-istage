@@ -253,7 +253,7 @@ internal sealed class View
     {
         if (lineIndex == -1)
             return;
-        
+
         if (lineIndex < 0 || lineIndex >= DocumentHeight)
             throw new ArgumentOutOfRangeException(nameof(lineIndex));
 
