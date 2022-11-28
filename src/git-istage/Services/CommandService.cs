@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using GitIStage.Commands;
 using GitIStage.Patches;
+using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GitIStage.Services;
@@ -93,15 +94,30 @@ internal sealed class CommandService
     [CommandHandler("Author commit", "C")]
     private void Commit()
     {
-        if (_uiService.HelpShowing) return;
-        _gitService.ExecuteGit("commit -v");
+        ExecuteCommit(amend: false);
     }
 
     [CommandHandler("Amend commit", "Alt+C")]
     private void CommitAmend()
     {
-        if (_uiService.HelpShowing) return;
-        _gitService.ExecuteGit("commit -v --amend");
+        ExecuteCommit(amend: true);
+    }
+
+    private void ExecuteCommit(bool amend)
+    {
+        if (_uiService.HelpShowing)
+            return;
+
+        var tipTree = _gitService.Repository.Head.Tip?.Tree;
+        if (!_gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index).Any())
+            return;
+
+        var amendSwitch = amend ? "--amend " : string.Empty;
+        
+        _uiService.Hide();
+        _gitService.ExecuteGit($"commit -v {amendSwitch}", capture: false, updateRepo: false);
+        _uiService.Show();
+        _gitService.UpdateRepository();
     }
 
     [CommandHandler("Stashes changes from the working copy, but leaves the stage as-is.", "Alt+S")]

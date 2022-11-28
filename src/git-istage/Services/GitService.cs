@@ -24,7 +24,7 @@ internal sealed class GitService : IDisposable
     public Repository Repository => _repository;
 
     [MemberNotNull(nameof(_repository))]
-    private void UpdateRepository()
+    public void UpdateRepository()
     {
         // NOTE: We're re-creating the repo because when we shell out to Git the repository state will be stale.
         _repository?.Dispose();
@@ -54,17 +54,17 @@ internal sealed class GitService : IDisposable
         UpdateRepository();
     }
 
-    public void ExecuteGit(string arguments)
+    public void ExecuteGit(string arguments, bool capture=true, bool updateRepo=true)
     {
         var startInfo = new ProcessStartInfo
         {
             FileName = _environment.PathToGit,
             WorkingDirectory = _repository.Info.WorkingDirectory,
             Arguments = arguments,
-            CreateNoWindow = true,
+            CreateNoWindow = capture,
             UseShellExecute = false,
-            RedirectStandardError = true,
-            RedirectStandardOutput = true
+            RedirectStandardError = capture,
+            RedirectStandardOutput = capture
         };
 
         var log = new List<string>();
@@ -80,20 +80,34 @@ internal sealed class GitService : IDisposable
 
         using var process = new Process();
         process.StartInfo = startInfo;
-        process.OutputDataReceived += Handler;
-        process.ErrorDataReceived += Handler;
+        
+        if (capture)
+        {
+            process.OutputDataReceived += Handler;
+            process.ErrorDataReceived += Handler;
+        }
+
         process.Start();
-        process.BeginOutputReadLine();
-        process.BeginErrorReadLine();
+        
+        if (capture)
+        {
+            process.BeginOutputReadLine();
+            process.BeginErrorReadLine();
+        }
+
         process.WaitForExit();
 
-        var logContainsErrors = log.Any(l => l.StartsWith("fatal:", StringComparison.Ordinal) ||
-                                             l.StartsWith("error:", StringComparison.Ordinal));
+        if (capture)
+        {
+            var logContainsErrors = log.Any(l => l.StartsWith("fatal:", StringComparison.Ordinal) ||
+                                                 l.StartsWith("error:", StringComparison.Ordinal));
 
-        if (logContainsErrors)
-            throw ExceptionBuilder.GitCommandFailed(arguments, log);
+            if (logContainsErrors)
+                throw ExceptionBuilder.GitCommandFailed(arguments, log);
+        }
 
-        UpdateRepository();
+        if (updateRepo)
+            UpdateRepository();
     }
 
     public event EventHandler? RepositoryChanged;
