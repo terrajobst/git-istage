@@ -11,7 +11,8 @@ internal sealed class UIService
     private readonly IServiceProvider _serviceProvider;
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
-
+    private readonly ColorService _colorService;
+    
     private Label _header = null!;
     private View _view = null!;
     private Label _footer = null!;
@@ -21,11 +22,13 @@ internal sealed class UIService
 
     private readonly StringBuilder _inputLineDigits = new();
 
-    public UIService(IServiceProvider serviceProvider, GitService gitService, DocumentService documentService)
+    public UIService(IServiceProvider serviceProvider, GitService gitService, DocumentService documentService, ColorService colorService)
     {
         _serviceProvider = serviceProvider;
         _gitService = gitService;
         _documentService = documentService;
+        _colorService = colorService;
+        _colorService.Changed += ColorServiceOnChanged;
         _documentService.Changed += DocumentServiceOnChanged;
     }
 
@@ -88,6 +91,11 @@ internal sealed class UIService
         }
     }
 
+    private void ColorServiceOnChanged(object? sender, EventArgs e)
+    {
+        ResizeScreen();
+    }
+
     private void DocumentServiceOnChanged(object? sender, EventArgs e)
     {
         UpdateRepositoryState();
@@ -98,7 +106,7 @@ internal sealed class UIService
         if (_documentService.ViewFiles)
             _view.LineRenderer = FileDocumentLineRenderer.Default;
         else
-            _view.LineRenderer = PatchDocumentLineRenderer.Default;
+            _view.LineRenderer = new PatchDocumentLineRenderer(_colorService);
 
         _view.Document = _documentService.Document;
         UpdateHeader();

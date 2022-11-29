@@ -1,3 +1,5 @@
+using GitIStage.Services;
+
 namespace GitIStage.UI;
 
 internal class ViewLineRenderer
@@ -13,7 +15,7 @@ internal class ViewLineRenderer
         RenderLine(view, lineIndex, line, foregroundColor, backgroundColor);
     }
 
-    protected static void RenderLine(View view, int lineIndex, string line, ConsoleColor foregroundColor, ConsoleColor backgroundColor)
+    protected static void RenderLine(View view, int lineIndex, string line, ConsoleColor256 foregroundColor, ConsoleColor256 backgroundColor)
     {
         var textStart = Math.Min(view.LeftChar, line.Length);
         var textLength = Math.Max(Math.Min(view.Width, line.Length - view.LeftChar), 0);

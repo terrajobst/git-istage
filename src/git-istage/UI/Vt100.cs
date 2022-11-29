@@ -47,19 +47,19 @@ internal static class Vt100
         Console.Write($"\x1b[48;2;{r};{g};{b}m");
     }
 
-    public static void SetForegroundColor(ConsoleColor color)
+    public static void SetForegroundColor(ConsoleColor256 color)
     {
-        var (r, g, b) = GetColor(color);
+        var (r, g, b) = color;
         SetForegroundColor(r, g, b);
     }
 
-    public static void SetBackgroundColor(ConsoleColor color)
+    public static void SetBackgroundColor(ConsoleColor256 color)
     {
-        var (r, g, b) = GetColor(color);
+        var (r, g, b) = color;
         SetBackgroundColor(r, g, b);
     }
 
-    private static (int R, int G, int B) GetColor(ConsoleColor color)
+    public static (byte R, byte G, byte B) GetColor(ConsoleColor color)
     {
         switch (color)
         {

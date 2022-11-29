@@ -1,10 +1,16 @@
+using GitIStage.Services;
 using GitIStage.UI;
 
 namespace GitIStage.Patches;
 
 internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
 {
-    public new static PatchDocumentLineRenderer Default { get; } = new();
+    private readonly ColorService _colorService;
+
+    public PatchDocumentLineRenderer(ColorService colorService)
+    {
+        _colorService = colorService;
+    }
 
     private static PatchLine? GetLine(View view, int lineIndex)
     {
@@ -12,48 +18,25 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
         return document?.Lines[lineIndex];
     }
 
-    private static ConsoleColor GetForegroundColor(View view, int lineIndex)
+    private TextColor GetColor(PatchLine line)
     {
-        var line = GetLine(view, lineIndex);
-        if (line is null)
-            return ConsoleColor.Gray;
-
         switch (line.Kind)
         {
             case PatchLineKind.DiffLine:
-                return ConsoleColor.Yellow;
+                return new TextColor(ConsoleColor.Yellow, ConsoleColor.DarkBlue);
             case PatchLineKind.Header:
-                return ConsoleColor.White;
+                return _colorService.DiffMeta;
             case PatchLineKind.Hunk:
-                return ConsoleColor.DarkCyan;
-            case PatchLineKind.Context:
-                goto default;
+                return _colorService.DiffHunk;
             case PatchLineKind.Addition:
-                return ConsoleColor.DarkGreen;
+                return _colorService.DiffNew;
             case PatchLineKind.Removal:
-                return ConsoleColor.DarkRed;
+                return _colorService.DiffOld;
+            case PatchLineKind.Context:
+            case PatchLineKind.NoEndOfLine:
             default:
-                return ConsoleColor.Gray;
+                return _colorService.DiffContext;
         }
-    }
-
-    private static ConsoleColor GetBackgroundColor(View view, int lineIndex)
-    {
-        var patchLine = GetLine(view, lineIndex);
-        if (patchLine is null)
-            return ConsoleColor.Black;
-
-        var kind = patchLine.Kind;
-
-        var isSelected = view.SelectedLine == lineIndex;
-        if (isSelected)
-        {
-            return kind.IsAdditionOrRemoval()
-                ? ConsoleColor.Gray
-                : ConsoleColor.DarkGray;
-        }
-
-        return kind == PatchLineKind.DiffLine ? ConsoleColor.DarkBlue : ConsoleColor.Black;
     }
 
     public override void Render(View view, int lineIndex)
@@ -62,8 +45,13 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
         if (line is null)
             return;
 
-        var foregroundColor = GetForegroundColor(view, lineIndex);
-        var backgroundColor = GetBackgroundColor(view, lineIndex);
+        var textColor = GetColor(line);
+
+        var foregroundColor = textColor.Foreground ?? ConsoleColor.DarkGray;
+        var backgroundColor = textColor.Background ?? ConsoleColor.Black;
+
+        if (lineIndex == view.SelectedLine)
+            backgroundColor = ConsoleColor.DarkGray;
 
         RenderLine(view, lineIndex, line.Text, foregroundColor, backgroundColor);
     }

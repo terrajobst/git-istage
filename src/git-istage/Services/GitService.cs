@@ -16,13 +16,6 @@ internal sealed class GitService : IDisposable
         UpdateRepository();
     }
 
-    public void Dispose()
-    {
-        _repository.Dispose();
-    }
-
-    public Repository Repository => _repository;
-
     [MemberNotNull(nameof(_repository))]
     public void UpdateRepository()
     {
@@ -32,6 +25,13 @@ internal sealed class GitService : IDisposable
 
         RepositoryChanged?.Invoke(this, EventArgs.Empty);
     }
+
+    public void Dispose()
+    {
+        _repository.Dispose();
+    }
+
+    public Repository Repository => _repository;
 
     public void ApplyPatch(string patch, PatchDirection direction)
     {

@@ -55,6 +55,7 @@ internal static class Program
         serviceCollection.AddSingleton<UIService>();
         serviceCollection.AddSingleton<CommandService>();
         serviceCollection.AddSingleton<KeyBindingService>();
+        serviceCollection.AddSingleton<ColorService>();
     }
 }
 
