@@ -1,0 +1,163 @@
+{
+    "$schema": "http://json-schema.org/draft-04/schema",
+    "title": "git-istage key binding schema",
+    "type": "object",
+    "properties": {
+        "AppendLineDigit0": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit1": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit2": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit3": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit4": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit5": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit6": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit7": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit8": {
+            "$ref": "#/definitions/command"
+        },
+        "AppendLineDigit9": {
+            "$ref": "#/definitions/command"
+        },
+        "Commit": {
+            "$ref": "#/definitions/command"
+        },
+        "CommitAmend": {
+            "$ref": "#/definitions/command"
+        },
+        "DecreaseContext": {
+            "$ref": "#/definitions/command"
+        },
+        "Exit": {
+            "$ref": "#/definitions/command"
+        },
+        "GoEnd": {
+            "$ref": "#/definitions/command"
+        },
+        "GoEndOrInputLine": {
+            "$ref": "#/definitions/command"
+        },
+        "GoHome": {
+            "$ref": "#/definitions/command"
+        },
+        "GoHomeOrInputLine": {
+            "$ref": "#/definitions/command"
+        },
+        "GoNextFile": {
+            "$ref": "#/definitions/command"
+        },
+        "GoNextHit": {
+            "$ref": "#/definitions/command"
+        },
+        "GoNextHunk": {
+            "$ref": "#/definitions/command"
+        },
+        "GoPreviousFile": {
+            "$ref": "#/definitions/command"
+        },
+        "GoPreviousHit": {
+            "$ref": "#/definitions/command"
+        },
+        "GoPreviousHunk": {
+            "$ref": "#/definitions/command"
+        },
+        "IncreaseContext": {
+            "$ref": "#/definitions/command"
+        },
+        "RemoveLastLineDigit": {
+            "$ref": "#/definitions/command"
+        },
+        "Reset": {
+            "$ref": "#/definitions/command"
+        },
+        "ResetHunk": {
+            "$ref": "#/definitions/command"
+        },
+        "ScrollDown": {
+            "$ref": "#/definitions/command"
+        },
+        "ScrollLeft": {
+            "$ref": "#/definitions/command"
+        },
+        "ScrollPageDown": {
+            "$ref": "#/definitions/command"
+        },
+        "ScrollPageUp": {
+            "$ref": "#/definitions/command"
+        },
+        "ScrollRight": {
+            "$ref": "#/definitions/command"
+        },
+        "ScrollUp": {
+            "$ref": "#/definitions/command"
+        },
+        "Search": {
+            "$ref": "#/definitions/command"
+        },
+        "SelectDown": {
+            "$ref": "#/definitions/command"
+        },
+        "SelectUp": {
+            "$ref": "#/definitions/command"
+        },
+        "ShowHelpPage": {
+            "$ref": "#/definitions/command"
+        },
+        "Stage": {
+            "$ref": "#/definitions/command"
+        },
+        "StageHunk": {
+            "$ref": "#/definitions/command"
+        },
+        "Stash": {
+            "$ref": "#/definitions/command"
+        },
+        "ToggleBetweenWorkingDirectoryAndStaging": {
+            "$ref": "#/definitions/command"
+        },
+        "ToggleFilesAndChanges": {
+            "$ref": "#/definitions/command"
+        },
+        "ToggleFullDiff": {
+            "$ref": "#/definitions/command"
+        },
+        "ToggleWhitespace": {
+            "$ref": "#/definitions/command"
+        },
+        "Unstage": {
+            "$ref": "#/definitions/command"
+        },
+        "UnstageHunk": {
+            "$ref": "#/definitions/command"
+        }
+    },
+    "definitions": {
+        "command": {
+            "description": "A key binding for a command",
+            "properties": {
+                "keyBindings": {
+                    "type": "array",
+                    "description": "A list of key bindings, such as 'Ctrl+S' or 'Ctrl+Shift+X'",
+                    "items": {
+                        "type": "string",
+                        "description": "A single key binding, such as 'Ctrl+S'"
+                    }
+                }
+            }
+        }
+    }
+}

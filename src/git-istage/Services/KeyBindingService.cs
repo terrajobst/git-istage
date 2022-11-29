@@ -50,8 +50,8 @@ internal sealed class KeyBindingService
 
     public string GetUserKeyBindingsPath()
     {
-        var homeDirectory = _userEnvironment.UserHomeDirectory;
-        return Path.Join(homeDirectory, ".git-istage", "key-bindings.json");
+        var homeDirectory = _userEnvironment.SettingsDirectory;
+        return Path.Join(homeDirectory, "key-bindings.json");
     }
 
     private IDictionary<string, CustomKeyBinding?>? LoadUserKeyBindings()
