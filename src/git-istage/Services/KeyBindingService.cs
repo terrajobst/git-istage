@@ -1,4 +1,5 @@
 ﻿using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using GitIStage.Commands;
 
@@ -66,6 +67,16 @@ internal sealed class KeyBindingService
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip
         };
+        
+        // The built-in dictionary deserialization doesn't like it when it finds a $schema key.
+        // Since the schema is only useful for editors, we just remove it before attempting to
+        // deserialize.
+
+        if (JsonNode.Parse(content) is JsonObject jsonObject)
+        {
+            if (jsonObject.Remove("$schema"))
+                content = jsonObject.ToJsonString();
+        }
 
         try
         {
