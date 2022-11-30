@@ -112,45 +112,40 @@ The [default key bindings](#keyboard-shortcuts) are set for a US QWERTY keyboard
 
 The key bindings can be modified by creating a JSON file at the following location:
 
-- On Unix / MacOSX, `$HOME/.git-istage/key-bindings.json`
-- On Windows, `%HOMEDRIVE%%HOMEPATH%\.git-istage\key-bindings.json`
+- On Unix / macOS it's `$XDG_CONFIG_HOME/.git-istage/key-bindings.json`
+    - If `$XDG_CONFIG_HOME` isn't set, it falls back to `$HOME/.config`
+    - This follows the [XDG conventions](https://specifications.freedesktop.org/basedir-spec/basedir-spec-latest.html)
+- On Windows it's `%APPDATA%\.git-istage\key-bindings.json`
 
-The custom key bindings JSON file contains a JSON objects whose properties are the available [command names](/src/git-istage/key-bindings.json), and the their value is a JSON object containing a `KeyBindings` array specifying the new keyboard shortcuts.
+If you want to get code-completion when editing the file, you should reference the schema:
 
-For instance, to use the <kbd>X</kbd> key to exit the program in addition of the default <kbd>Esc</kbd> or <kbd>Q</kbd> keys, use the following syntax:
-
-```
+```jsonc
 {
+    "$schema": "https://raw.githubusercontent.com/terrajobst/git-istage/main/docs/keyBindings-schema.json",
+    // ...
+}
+```
+
+For instance, to use the <kbd>X</kbd> key to exit the program instead of the default <kbd>Esc</kbd> or <kbd>Q</kbd> keys, use the following syntax:
+
+```jsonc
+{
+    "$schema": "https://raw.githubusercontent.com/terrajobst/git-istage/main/docs/keyBindings-schema.json",
     "Exit": {
         "keyBindings": ["X"]
     }
 }
 ```
 
-This will override the default keyboard shorts. If you want to add them, you need to add them back. For example, in order to preserve the default <kbd>Esc</kbd> and <kbd>Q</kbd> key, you need to specify them in your JSON:
+This will override the default keyboard shorts. If you want to add them, you need to list the ones you want to keep as well. For example, in order to preserve the default <kbd>Esc</kbd> and <kbd>Q</kbd> key, you just include them in the list:
 
-```
+```jsonc
 {
+    "$schema": "https://raw.githubusercontent.com/terrajobst/git-istage/main/docs/keyBindings-schema.json",
     "Exit": {
         "keyBindings": ["Escape", "Q", "X"]
     }
 }
 ```
 
-Please, note that key binding strings are case insensitive. In order to differ by case, you need to prefix them with a `Shift` modifier, such as `Shift+X`.
-
-For instance, on a recent [AZERTY-NF](https://springcomp.github.io/optimized-azerty-win/) keyboard layout, the <kbd>[</kbd> and <kbd>]</kbd> keys are located on the positions for the <kbd>5</kbd> and <kbd>6</kbd> keys, respectively. Since the default commands for these keys are <kbd>Oem4</kbd> and <kbd>Oem6</kbd>, I need to change the `GoNextHunk` and `GoPreviousHunk` key bindings like so:
-
-```
-{
-    "Exit": {
-        "keyBindings": ["X"]
-    },
-    "GoNextHunk": {
-        "keyBindings": ["AltGr+6"]
-    },
-    "GoPreviousHunk": {
-        "keyBindings": ["AltGr+5"]
-    }
-}
-```
+Please note that key binding strings are case insensitive. In order to differ by case, you need to prefix them with a `Shift` modifier, such as `Shift+X`.
