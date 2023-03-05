@@ -20,9 +20,16 @@ internal sealed class PatchDocument : Document
 
     public override int Width { get; }
 
+    public override int EntryCount => Entries.Count;
+
     public override string GetLine(int index)
     {
         return Lines[index].Text;
+    }
+
+    public override int GetLineIndex(int index)
+    {
+        return Entries[index].Offset;
     }
 
     public PatchEntry? FindEntry(int lineIndex)
@@ -31,7 +38,7 @@ internal sealed class PatchDocument : Document
         return index < 0 ? null : Entries[index];
     }
 
-    public int FindEntryIndex(int lineIndex)
+    public override int FindEntryIndex(int lineIndex)
     {
         // TODO: binary search would be more appropriate
 

@@ -21,11 +21,24 @@ internal sealed class FileDocument : Document
 
     public override int Width { get; }
 
+    public override int EntryCount => _changes.Count;
+
     public IReadOnlyList<TreeEntryChanges> Changes => _changes;
 
     public override string GetLine(int index)
     {
         return _lines[index];
+    }
+
+    public override int GetLineIndex(int index)
+    {
+        return _indexOfFirstFile + index;
+    }
+
+    public override int FindEntryIndex(int lineIndex)
+    {
+        var changeIndex = lineIndex - _indexOfFirstFile;
+        return Math.Min(Math.Max(changeIndex, -1), _changes.Count - 1);
     }
 
     public TreeEntryChanges? GetChange(int index)
@@ -44,7 +57,6 @@ internal sealed class FileDocument : Document
         {
             builder.AppendLine();
             builder.AppendLine(viewStage ? "Changes to be committed:" : "Changes not staged for commit:");
-            builder.AppendLine();
 
             var indent = new string(' ', 8);
 
@@ -53,10 +65,10 @@ internal sealed class FileDocument : Document
                 var path = c.Path;
                 var change = (c.Status.ToString().ToLower() + ":").PadRight(12);
 
+                builder.AppendLine();
                 builder.Append(indent);
                 builder.Append(change);
                 builder.Append(path);
-                builder.AppendLine();
             }
         }
 

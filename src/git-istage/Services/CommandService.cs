@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using GitIStage.Commands;
 using GitIStage.Patches;
+using GitIStage.UI;
 using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -313,9 +314,20 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument)_documentService.Document;
-        var nextIndex = document.FindPreviousEntryIndex(i);
-        _uiService.View.SelectedLine = document.Entries[nextIndex].Offset;
+        var document = (Document)_documentService.Document;
+        var currentIndex = document.FindEntryIndex(i);
+        var lineIndex = document.GetLineIndex(currentIndex);
+
+        if (_uiService.View.SelectedLine > lineIndex)
+        {
+            _uiService.View.SelectedLine = lineIndex;
+        }
+        else
+        {
+            var nextIndex = document.FindPreviousEntryIndex(i);
+            _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
+        }
+
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
@@ -327,9 +339,15 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument)_documentService.Document;
+        var document = (Document)_documentService.Document;
         var nextIndex = document.FindNextEntryIndex(i);
-        _uiService.View.SelectedLine = document.Entries[nextIndex].Offset;
+        var lineIndex = document.GetLineIndex(nextIndex);
+
+        if (_uiService.View.SelectedLine < lineIndex)
+            _uiService.View.SelectedLine = lineIndex;
+        else
+            _uiService.View.SelectedLine = document.Height - 1;
+
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
