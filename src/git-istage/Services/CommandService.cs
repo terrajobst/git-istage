@@ -315,19 +315,8 @@ internal sealed class CommandService
             return;
 
         var document = (Document)_documentService.Document;
-        var currentIndex = document.FindEntryIndex(i);
-        var lineIndex = document.GetLineIndex(currentIndex);
-
-        if (_uiService.View.SelectedLine > lineIndex)
-        {
-            _uiService.View.SelectedLine = lineIndex;
-        }
-        else
-        {
-            var nextIndex = document.FindPreviousEntryIndex(i);
-            _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-        }
-
+        var nextIndex = document.FindPreviousEntryIndex(i);
+        _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
@@ -341,12 +330,11 @@ internal sealed class CommandService
 
         var document = (Document)_documentService.Document;
         var nextIndex = document.FindNextEntryIndex(i);
-        var lineIndex = document.GetLineIndex(nextIndex);
 
-        if (_uiService.View.SelectedLine < lineIndex)
-            _uiService.View.SelectedLine = lineIndex;
+        if (nextIndex < document.EntryCount)
+            _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
         else
-            _uiService.View.SelectedLine = document.Height - 1;
+            _uiService.View.SelectedLine = _uiService.View.DocumentHeight - 1;
 
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
