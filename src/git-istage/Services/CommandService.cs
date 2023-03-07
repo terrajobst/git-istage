@@ -314,7 +314,7 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (Document)_documentService.Document;
+        var document = _documentService.Document;
         var nextIndex = document.FindPreviousEntryIndex(i);
         _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
@@ -328,7 +328,7 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (Document)_documentService.Document;
+        var document = _documentService.Document;
         var nextIndex = document.FindNextEntryIndex(i);
 
         if (nextIndex < document.EntryCount)
