@@ -274,18 +274,19 @@ internal sealed class CommandService
     [CommandHandler("Selects the line one screen above.", "PageUp")]
     private void ScrollPageUp()
     {
-        _uiService.View.TopLine = Math.Max(0, _uiService.View.TopLine - _uiService.View.Height);
-        _uiService.View.SelectedLine = _uiService.View.TopLine;
+        var delta = Math.Min(_uiService.View.Height, _uiService.View.SelectedLine);
+        _uiService.View.TopLine = Math.Max(0, _uiService.View.TopLine - delta);
+        _uiService.View.SelectedLine = _uiService.View.SelectedLine - delta;
     }
 
     [CommandHandler("Selects the line one screen below.", "PageDown", "SpaceBar")]
     private void ScrollPageDown()
     {
+        var delta = Math.Min(_uiService.View.Height, _uiService.View.DocumentHeight - _uiService.View.SelectedLine - 1);
         _uiService.View.TopLine = Math.Min(
             Math.Max(0, _uiService.View.DocumentHeight - _uiService.View.Height),
-            _uiService.View.TopLine + _uiService.View.Height);
-
-        _uiService.View.SelectedLine = _uiService.View.TopLine;
+            _uiService.View.TopLine + delta);
+        _uiService.View.SelectedLine = _uiService.View.SelectedLine + delta;
     }
 
     [CommandHandler("Scrolls left by one character.", "Control+LeftArrow")]
