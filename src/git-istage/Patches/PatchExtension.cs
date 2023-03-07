@@ -13,15 +13,15 @@ internal static class PatchExtension
         var start = lineIndex;
 
         // Skip current block
-        while (start > 0 && document.Lines[start].Kind.IsAdditionOrRemoval())
+        while (start >= 0 && document.Lines[start].Kind.IsAdditionOrRemoval())
             start--;
 
         // Find next block
-        while (start > 0 && !document.Lines[start].Kind.IsAdditionOrRemoval())
+        while (start >= 0 && !document.Lines[start].Kind.IsAdditionOrRemoval())
             start--;
 
-        if (start < 0 || !document.Lines[start].Kind.IsAdditionOrRemoval())
-            return lineIndex;
+        if (start < 0)
+            return FindStartOfChangeBlock(document, lineIndex);
 
         return start;
     }
@@ -31,15 +31,15 @@ internal static class PatchExtension
         var end = lineIndex;
 
         // Skip current block
-        while (end < document.Lines.Count - 1 && document.Lines[end].Kind.IsAdditionOrRemoval())
+        while (end < document.Lines.Count && document.Lines[end].Kind.IsAdditionOrRemoval())
             end++;
 
         // Find next block
-        while (end < document.Lines.Count - 1 && !document.Lines[end].Kind.IsAdditionOrRemoval())
+        while (end < document.Lines.Count && !document.Lines[end].Kind.IsAdditionOrRemoval())
             end++;
 
-        if (end >= document.Lines.Count || !document.Lines[end].Kind.IsAdditionOrRemoval())
-            return lineIndex;
+        if (end >= document.Lines.Count)
+            return FindEndOfChangeBlock(document, lineIndex);
 
         return end;
     }

@@ -343,7 +343,7 @@ internal sealed class CommandService
     [CommandHandler("Go to previous change block.", "Oem4")]
     private void GoPreviousHunk()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing || _documentService.ViewFiles) return;
         var i = _uiService.View.SelectedLine;
         if (i < 0)
             return;
@@ -356,7 +356,7 @@ internal sealed class CommandService
     [CommandHandler("Go to next change block.", "Oem6")]
     private void GoNextHunk()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing || _documentService.ViewFiles) return;
         var i = _uiService.View.SelectedLine;
         if (i < 0)
             return;
