@@ -209,6 +209,7 @@ internal sealed class View
             {
                 // We need to scroll up by -delta lines.
 
+                Vt100.SetBackgroundColor(ConsoleColor.Black);
                 Vt100.ScrollDown(Math.Abs(delta));
 
                 for (var i = 0; i < -delta; i++)
@@ -223,6 +224,7 @@ internal sealed class View
 
                 var visualLineCount = Height - delta;
 
+                Vt100.SetBackgroundColor(ConsoleColor.Black);
                 Vt100.ScrollUp(delta);
 
                 for (var i = 0; i < delta; i++)

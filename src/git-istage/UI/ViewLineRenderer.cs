@@ -24,8 +24,8 @@ internal class ViewLineRenderer
         Vt100.SetCursorPosition(view.Left, visualLine);
         Vt100.SetForegroundColor(foregroundColor);
         Vt100.SetBackgroundColor(backgroundColor);
-        Vt100.EraseRestOfCurrentLine();
         Console.Write(text);
+        Vt100.EraseRestOfCurrentLine();
 
         if (view.SearchResults is not null)
         {
