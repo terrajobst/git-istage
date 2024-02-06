@@ -12,11 +12,11 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
         return document?.Lines[lineIndex];
     }
 
-    private static ConsoleColor GetForegroundColor(View view, int lineIndex)
+    private static ConsoleColor? GetForegroundColor(View view, int lineIndex)
     {
         var line = GetLine(view, lineIndex);
         if (line is null)
-            return ConsoleColor.Gray;
+            return null;
 
         switch (line.Kind)
         {
@@ -33,15 +33,15 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
             case PatchLineKind.Removal:
                 return ConsoleColor.DarkRed;
             default:
-                return ConsoleColor.Gray;
+                return null;
         }
     }
 
-    private static ConsoleColor GetBackgroundColor(View view, int lineIndex)
+    private static ConsoleColor? GetBackgroundColor(View view, int lineIndex)
     {
         var patchLine = GetLine(view, lineIndex);
         if (patchLine is null)
-            return ConsoleColor.Black;
+            return null;
 
         var kind = patchLine.Kind;
 
@@ -53,7 +53,7 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
                 : ConsoleColor.DarkGray;
         }
 
-        return kind == PatchLineKind.DiffLine ? ConsoleColor.DarkBlue : ConsoleColor.Black;
+        return kind == PatchLineKind.DiffLine ? ConsoleColor.DarkBlue : null;
     }
 
     public override void Render(View view, int lineIndex)
