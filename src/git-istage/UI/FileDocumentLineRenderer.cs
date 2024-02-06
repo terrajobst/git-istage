@@ -12,11 +12,11 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
         return document?.GetChange(lineIndex);
     }
 
-    private static ConsoleColor GetForegroundColor(View view, int lineIndex)
+    private static ConsoleColor? GetForegroundColor(View view, int lineIndex)
     {
         var changes = GetChanges(view, lineIndex);
         if (changes is null)
-            return ConsoleColor.Gray;
+            return null;
 
         switch (changes.Status)
         {
@@ -34,11 +34,11 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
             case ChangeKind.TypeChanged:
             case ChangeKind.Unreadable:
             default:
-                return ConsoleColor.Gray;
+                return null;
         }
     }
 
-    private static ConsoleColor GetBackgroundColor(View view, int lineIndex)
+    private static ConsoleColor? GetBackgroundColor(View view, int lineIndex)
     {
         var foregroundColor = GetForegroundColor(view, lineIndex);
 
@@ -50,7 +50,7 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
                 : ConsoleColor.DarkGray;
         }
 
-        return ConsoleColor.Black;
+        return null;
     }
 
     public override void Render(View view, int lineIndex)

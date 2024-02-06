@@ -37,48 +37,58 @@ internal static class Vt100
         Console.Write("\x1b[27m");
     }
 
-    public static void SetForegroundColor(int r, int g, int b)
+    public static void SetForegroundColor(ConsoleColor? color = null)
     {
-        Console.Write($"\x1b[38;2;{r};{g};{b}m");
+        // If color is null, set to default
+        var code = color != null ? GetColor(color.Value, foreground: true) : 39;
+        Console.Write($"\x1b[{(int)code}m");
     }
 
-    public static void SetBackgroundColor(int r, int g, int b)
+    public static void SetBackgroundColor(ConsoleColor? color = null)
     {
-        Console.Write($"\x1b[48;2;{r};{g};{b}m");
+        // If color is null, set to default
+        var code = color != null ? GetColor(color.Value, foreground: false) : 49;
+        Console.Write($"\x1b[{(int)code}m");
     }
 
-    public static void SetForegroundColor(ConsoleColor color)
-    {
-        var (r, g, b) = GetColor(color);
-        SetForegroundColor(r, g, b);
-    }
-
-    public static void SetBackgroundColor(ConsoleColor color)
-    {
-        var (r, g, b) = GetColor(color);
-        SetBackgroundColor(r, g, b);
-    }
-
-    private static (int R, int G, int B) GetColor(ConsoleColor color)
+    private static int GetColor(ConsoleColor color, bool foreground)
     {
         switch (color)
         {
-            case ConsoleColor.Black: return (12, 12, 12);
-            case ConsoleColor.DarkBlue: return (0, 55, 218);
-            case ConsoleColor.DarkGreen: return (19, 161, 14);
-            case ConsoleColor.DarkCyan: return (58, 150, 221);
-            case ConsoleColor.DarkRed: return (197, 15, 31);
-            case ConsoleColor.DarkMagenta: return (136, 23, 152);
-            case ConsoleColor.DarkYellow: return (193, 156, 0);
-            case ConsoleColor.Gray: return (204, 204, 204);
-            case ConsoleColor.DarkGray: return (118, 118, 118);
-            case ConsoleColor.Blue: return (59, 120, 255);
-            case ConsoleColor.Green: return (22, 198, 12);
-            case ConsoleColor.Cyan: return (97, 214, 214);
-            case ConsoleColor.Red: return (231, 72, 86);
-            case ConsoleColor.Magenta: return (180, 0, 158);
-            case ConsoleColor.Yellow: return (249, 241, 165);
-            case ConsoleColor.White: return (242, 242, 242);
+            case ConsoleColor.Black when foreground: return 30;
+            case ConsoleColor.DarkBlue when foreground: return 34;
+            case ConsoleColor.DarkGreen when foreground: return 32;
+            case ConsoleColor.DarkCyan when foreground: return 36;
+            case ConsoleColor.DarkRed when foreground: return 31;
+            case ConsoleColor.DarkMagenta when foreground: return 35;
+            case ConsoleColor.DarkYellow when foreground: return 33;
+            case ConsoleColor.Gray when foreground: return 37;
+            case ConsoleColor.DarkGray when foreground: return 90;
+            case ConsoleColor.Blue when foreground: return 94;
+            case ConsoleColor.Green when foreground: return 92;
+            case ConsoleColor.Cyan when foreground: return 96;
+            case ConsoleColor.Red when foreground: return 91;
+            case ConsoleColor.Magenta when foreground: return 95;
+            case ConsoleColor.Yellow when foreground: return 93;
+            case ConsoleColor.White when foreground: return 97;
+
+            case ConsoleColor.Black when !foreground: return 40;
+            case ConsoleColor.DarkBlue when !foreground: return 44;
+            case ConsoleColor.DarkGreen when !foreground: return 42;
+            case ConsoleColor.DarkCyan when !foreground: return 46;
+            case ConsoleColor.DarkRed when !foreground: return 41;
+            case ConsoleColor.DarkMagenta when !foreground: return 45;
+            case ConsoleColor.DarkYellow when !foreground: return 43;
+            case ConsoleColor.Gray when !foreground: return 47;
+            case ConsoleColor.DarkGray when !foreground: return 100;
+            case ConsoleColor.Blue when !foreground: return 104;
+            case ConsoleColor.Green when !foreground: return 102;
+            case ConsoleColor.Cyan when !foreground: return 106;
+            case ConsoleColor.Red when !foreground: return 101;
+            case ConsoleColor.Magenta when !foreground: return 105;
+            case ConsoleColor.Yellow when !foreground: return 103;
+            case ConsoleColor.White when !foreground: return 107;
+
             default:
                 throw new Exception($"Unexpected color: {color}");
         }
