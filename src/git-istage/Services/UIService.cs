@@ -164,8 +164,8 @@ internal sealed class UIService
             Vt100.SetForegroundColor(ConsoleColor.Blue);
             Vt100.SetBackgroundColor(ConsoleColor.Gray);
             Console.Write("/");
-            Vt100.EraseRestOfCurrentLine();
             Console.Write(sb);
+            Vt100.EraseRestOfCurrentLine();
             Vt100.ShowCursor();
 
             var k = Console.ReadKey(intercept: true);
@@ -205,8 +205,8 @@ internal sealed class UIService
             Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
             Vt100.SetForegroundColor(ConsoleColor.Blue);
             Vt100.SetBackgroundColor(ConsoleColor.Gray);
-            Vt100.EraseRestOfCurrentLine();
             Console.Write("<< NO RESULTS FOUND >>");
+            Vt100.EraseRestOfCurrentLine();
             Console.ReadKey();
             UpdateFooter();
             return;

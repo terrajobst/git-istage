@@ -213,7 +213,7 @@ public abstract class RepositoryTests : IDisposable
             .Split(Environment.NewLine, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
 
         var actualChangeLines = new List<string>();
-        for (var i = 0; i < document.Height - 1; i++)
+        for (var i = 0; i < document.Height; i++)
         {
             var line = document.GetLine(i);
             var colon = line.IndexOf(':');

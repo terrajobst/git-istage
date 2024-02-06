@@ -1,6 +1,7 @@
 ﻿using System.Reflection;
 using GitIStage.Commands;
 using GitIStage.Patches;
+using GitIStage.UI;
 using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 
@@ -273,18 +274,19 @@ internal sealed class CommandService
     [CommandHandler("Selects the line one screen above.", "PageUp")]
     private void ScrollPageUp()
     {
-        _uiService.View.TopLine = Math.Max(0, _uiService.View.TopLine - _uiService.View.Height);
-        _uiService.View.SelectedLine = _uiService.View.TopLine;
+        var delta = Math.Min(_uiService.View.Height, _uiService.View.SelectedLine);
+        _uiService.View.TopLine = Math.Max(0, _uiService.View.TopLine - delta);
+        _uiService.View.SelectedLine = _uiService.View.SelectedLine - delta;
     }
 
     [CommandHandler("Selects the line one screen below.", "PageDown", "SpaceBar")]
     private void ScrollPageDown()
     {
+        var delta = Math.Min(_uiService.View.Height, _uiService.View.DocumentHeight - _uiService.View.SelectedLine - 1);
         _uiService.View.TopLine = Math.Min(
             Math.Max(0, _uiService.View.DocumentHeight - _uiService.View.Height),
-            _uiService.View.TopLine + _uiService.View.Height);
-
-        _uiService.View.SelectedLine = _uiService.View.TopLine;
+            _uiService.View.TopLine + delta);
+        _uiService.View.SelectedLine = _uiService.View.SelectedLine + delta;
     }
 
     [CommandHandler("Scrolls left by one character.", "Control+LeftArrow")]
@@ -313,9 +315,9 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument)_documentService.Document;
+        var document = _documentService.Document;
         var nextIndex = document.FindPreviousEntryIndex(i);
-        _uiService.View.SelectedLine = document.Entries[nextIndex].Offset;
+        _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
@@ -327,16 +329,21 @@ internal sealed class CommandService
         if (i < 0)
             return;
 
-        var document = (PatchDocument)_documentService.Document;
+        var document = _documentService.Document;
         var nextIndex = document.FindNextEntryIndex(i);
-        _uiService.View.SelectedLine = document.Entries[nextIndex].Offset;
+
+        if (nextIndex < document.EntryCount)
+            _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
+        else
+            _uiService.View.SelectedLine = _uiService.View.DocumentHeight - 1;
+
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
     [CommandHandler("Go to previous change block.", "Oem4")]
     private void GoPreviousHunk()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing || _documentService.ViewFiles) return;
         var i = _uiService.View.SelectedLine;
         if (i < 0)
             return;
@@ -349,7 +356,7 @@ internal sealed class CommandService
     [CommandHandler("Go to next change block.", "Oem6")]
     private void GoNextHunk()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing || _documentService.ViewFiles) return;
         var i = _uiService.View.SelectedLine;
         if (i < 0)
             return;
