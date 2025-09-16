@@ -10,7 +10,7 @@ on:
 
 env:
   DOTNET_NOLOGO: true
-  DOTNET_VERSION: 7.0.x
+  DOTNET_VERSION: 8.0.x
   SLN: ${{ github.workspace }}/src/git-istage.sln
   ARTIFACTS: ${{ github.workspace }}/artifacts/package
 
