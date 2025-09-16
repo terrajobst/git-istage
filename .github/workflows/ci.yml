@@ -12,7 +12,7 @@ env:
   DOTNET_NOLOGO: true
   DOTNET_VERSION: 7.0.x
   SLN: ${{ github.workspace }}/src/git-istage.sln
-  BIN: ${{ github.workspace }}/bin/
+  ARTIFACTS: ${{ github.workspace }}/artifacts/package
 
 jobs:
   test:
@@ -47,12 +47,12 @@ jobs:
     - name: Restore
       run: dotnet restore $SLN
     - name: Publish
-      run: dotnet publish --no-restore --nologo -c Release $SLN /p:OutDir=$BIN
+      run: dotnet publish --no-restore --nologo -c Release $SLN
     - name: Upload build
       uses: actions/upload-artifact@v4
       with:
         name: published-build
-        path: ${{ env.BIN }}
+        path: ${{ env.ARTIFACTS }}
 
   upload-gpr:
     runs-on: ubuntu-latest
@@ -63,9 +63,9 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: published-build
-        path: ${{ env.BIN }}
+        path: ${{ env.ARTIFACTS }}
     - name: Push package to GPR
-      run: dotnet nuget push $BIN*.nupkg --source https://nuget.pkg.github.com/terrajobst/index.json --api-key ${{ github.token }} --skip-duplicate
+      run: dotnet nuget push $ARTIFACTS/package/*.nupkg --source https://nuget.pkg.github.com/terrajobst/index.json --api-key ${{ github.token }} --skip-duplicate
 
   upload-nuget:
     runs-on: ubuntu-latest
@@ -76,6 +76,6 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: published-build
-        path: ${{ env.BIN }}
+        path: ${{ env.ARTIFACTS }}
     - name: Push package to nuget.org
-      run: dotnet nuget push $BIN*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_TOKEN }} --skip-duplicate
+      run: dotnet nuget push $ARTIFACTS/package/*.nupkg --source https://api.nuget.org/v3/index.json --api-key ${{ secrets.NUGET_ORG_TOKEN }} --skip-duplicate
