@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/solution-items/">
+    <File Path="Directory.Build.props" />
+    <File Path="Directory.Packages.props" />
+  </Folder>
+  <Project Path="git-istage.tests/git-istage.tests.csproj" />
+  <Project Path="git-istage/git-istage.csproj" />
+</Solution>
