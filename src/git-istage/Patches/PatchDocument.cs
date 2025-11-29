@@ -5,16 +5,19 @@ namespace GitIStage.Patches;
 
 internal sealed class PatchDocument : Document
 {
-    public PatchDocument(IReadOnlyList<PatchEntry> entries, IReadOnlyList<PatchLine> lines)
+    public PatchDocument(IReadOnlyList<PatchEntry> entries, IReadOnlyList<PatchLine> lines, bool isStaged)
     {
         Entries = entries;
         Lines = lines;
+        IsStaged = isStaged;
         Width = lines.Select(l => l.Text).DefaultIfEmpty(string.Empty).Max(t => t.LengthVisual());
     }
 
     public IReadOnlyList<PatchEntry> Entries { get; }
 
     public IReadOnlyList<PatchLine> Lines { get; }
+
+    public bool IsStaged { get; }
 
     public override int Height => Lines.Count;
 
@@ -52,10 +55,10 @@ internal sealed class PatchDocument : Document
         return -1;
     }
 
-    public static PatchDocument Parse(Patch? patch)
+    public static PatchDocument Parse(Patch? patch, bool isStaged)
     {
         if (patch is null)
-            return new PatchDocument(Array.Empty<PatchEntry>(), Array.Empty<PatchLine>());
+            return new PatchDocument(Array.Empty<PatchEntry>(), Array.Empty<PatchLine>(), isStaged);
 
         var lines = new List<PatchLine>();
         var entries = new List<PatchEntry>();
@@ -89,7 +92,7 @@ internal sealed class PatchDocument : Document
             entries.Add(entry);
         }
 
-        return new PatchDocument(entries, lines);
+        return new PatchDocument(entries, lines, isStaged);
     }
 
     private static int GetNextHunk(IReadOnlyList<PatchLine> lines, int index)

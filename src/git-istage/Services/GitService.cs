@@ -44,7 +44,7 @@ internal sealed class GitService : IDisposable
         File.WriteAllText(patchFilePath, patch);
         try
         {
-            ExecuteGit(command);
+            ExecuteGit(command, capture: true, updateRepo: false);
         }
         finally
         {

@@ -81,32 +81,34 @@ internal sealed class DocumentService
     public void UpdateDocument()
     {
         var tipTree = _gitService.Repository.Head.Tip?.Tree;
-        var changes = _viewStage
-            ? _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
-            : _gitService.Repository.Diff.Compare<TreeChanges>(null, true);
-
-        var filteredChanges = changes
-            .Where(p => p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink)
-            .ToArray();
 
         if (_viewFiles)
         {
+            var changes = _viewStage
+                ? _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
+                : _gitService.Repository.Diff.Compare<TreeChanges>(null, true);
+
+            var filteredChanges = changes
+                .Where(p => p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink)
+                .ToArray();
+
             _document = FileDocument.Create(filteredChanges, _viewStage);
         }
         else
         {
-            var paths = filteredChanges.Select(c => c.Path).ToArray();
+            IEnumerable<string>? paths = null;
+
+            if (_document is PatchDocument patchDocument && patchDocument.IsStaged == _viewStage)
+                paths = patchDocument.Entries.Select(e => e.Changes.Path).ToArray();
 
             var compareOptions = new CompareOptions();
             compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;
 
-            var patch = paths.Any()
-                ? _viewStage
-                    ? _gitService.Repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
-                    : _gitService.Repository.Diff.Compare<Patch>(paths, true, null, compareOptions)
-                : null;
+            var patch = _viewStage
+                ? _gitService.Repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
+                : _gitService.Repository.Diff.Compare<Patch>(paths, true, null, compareOptions);
 
-            _document = PatchDocument.Parse(patch);
+            _document = PatchDocument.Parse(patch, _viewStage);
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
