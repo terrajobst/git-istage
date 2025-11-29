@@ -99,7 +99,11 @@ internal sealed class DocumentService
             IEnumerable<string>? paths = null;
 
             if (_document is PatchDocument patchDocument && patchDocument.IsStaged == _viewStage)
+            {
                 paths = patchDocument.Entries.Select(e => e.Changes.Path).ToArray();
+                if (!paths.Any())
+                    paths = null;
+            }
 
             var compareOptions = new CompareOptions();
             compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;
