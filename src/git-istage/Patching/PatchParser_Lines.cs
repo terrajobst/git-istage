@@ -1,0 +1,330 @@
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
+using System.Text.RegularExpressions;
+using GitIStage.Patching.Headers;
+using GitIStage.Patching.Text;
+
+namespace GitIStage.Patching;
+
+internal sealed partial class PatchParser
+{
+    private enum LineKind
+    {
+        UnknownHeader,
+        EndOfFile,
+
+        // Entry
+        DiffGitHeader,
+        OldPathHeader,
+        NewPathHeader,
+        OldModeHeader,
+        NewModeHeader,
+        DeletedFileModeHeader,
+        NewFileModeHeader,
+        CopyFromHeader,
+        CopyToHeader,
+        RenameFromHeader,
+        RenameToHeader,
+        SimilarityIndexHeader,
+        DissimilarityIndexHeader,
+        IndexHeader,
+
+        // Hunk
+        HunkHeader,
+        ContextLine,
+        AddedLine,
+        DeletedLine,
+        NoNewLine
+    }
+
+    private static LineKind ToLineKind(PatchNodeKind kind)
+    {
+        switch (kind)
+        {
+            case PatchNodeKind.DiffGitHeader:
+                return LineKind.DiffGitHeader;
+            case PatchNodeKind.OldPathHeader:
+                return LineKind.OldPathHeader;
+            case PatchNodeKind.NewPathHeader:
+                return LineKind.NewPathHeader;
+            case PatchNodeKind.OldModeHeader:
+                return LineKind.OldModeHeader;
+            case PatchNodeKind.NewModeHeader:
+                return LineKind.NewModeHeader;
+            case PatchNodeKind.DeletedFileModeHeader:
+                return LineKind.DeletedFileModeHeader;
+            case PatchNodeKind.NewFileModeHeader:
+                return LineKind.NewFileModeHeader;
+            case PatchNodeKind.CopyFromHeader:
+                return LineKind.CopyFromHeader;
+            case PatchNodeKind.CopyToHeader:
+                return LineKind.CopyToHeader;
+            case PatchNodeKind.RenameFromHeader:
+                return LineKind.RenameFromHeader;
+            case PatchNodeKind.RenameToHeader:
+                return LineKind.RenameToHeader;
+            case PatchNodeKind.SimilarityIndexHeader:
+                return LineKind.SimilarityIndexHeader;
+            case PatchNodeKind.DissimilarityIndexHeader:
+                return LineKind.DissimilarityIndexHeader;
+            case PatchNodeKind.IndexHeader:
+                return LineKind.IndexHeader;
+            case PatchNodeKind.UnknownHeader:
+                return LineKind.UnknownHeader;
+            case PatchNodeKind.HunkHeader:
+                return LineKind.HunkHeader;
+            case PatchNodeKind.ContextLine:
+                return LineKind.ContextLine;
+            case PatchNodeKind.AddedLine:
+                return LineKind.AddedLine;
+            case PatchNodeKind.DeletedLine:
+                return LineKind.DeletedLine;
+            case PatchNodeKind.NoNewLine:
+                return LineKind.NoNewLine;
+            default:
+                throw new UnreachableException($"Unexpected line kind {kind}");
+        }
+    }
+
+    private static readonly ImmutableArray<(Regex Regex, Func<TextLine, Match, PatchLine> Parse)> LineParsers = [
+        (DiffGitRegex(), ParseDiffGitLine),
+        (OldPathRegex(), ParseOldPathLine),
+        (NewPathRegex(), ParseNewPathLine),
+        (OldModeRegex(), ParseOldModeLine),
+        (NewModeRegex(), ParseNewModeLine),
+        (DeletedFileModeRegex(), ParseDeletedFileModeLine),
+        (NewFileModeRegex(), ParseNewFileModeLine),
+        (CopyFromRegex(), ParseCopyFromLine),
+        (CopyToRegex(), ParseCopyToLine),
+        (RenameFromRegex(), ParseRenameFromLine),
+        (RenameToRegex(), ParseRenameToLine),
+        (SimilarityIndexRegex(), ParseSimilarityIndexLine),
+        (DissimilarityIndexRegex(), ParseDissimilarityIndexLine),
+        (IndexRegex(), ParseIndexLine),
+        (HunkRegex(), ParseHunkHeaderLine),
+        (ContextRegex(), ParseContextLine),
+        (AddedRegex(), ParseAddedLine),
+        (DeletedRegex(), ParseDeletedLine),
+        (NoNewLineRegex(), ParseNoNewLine),
+    ];
+
+    private static List<PatchLine> ParseLines(SourceText text)
+    {
+        Debug.Assert(text.Length > 0);
+
+        var fullText = text.ToString();
+        var lines = new List<PatchLine>(text.Lines.Length);
+
+        foreach (var textLine in text.Lines)
+        {
+            var start = textLine.Start;
+            var length = textLine.Length;
+
+            var matchFound = false;
+            foreach (var matcher in LineParsers)
+            {
+                var match = matcher.Regex.Match(fullText, start, length);
+                if (match.Success)
+                {
+                    var line = matcher.Parse(textLine, match);
+                    lines.Add(line);
+                    matchFound = true;
+                    break;
+                }
+            }
+
+            if (!matchFound)
+            {
+                var item = new UnknownPatchEntryHeader(textLine);
+                lines.Add(item);
+            }
+        }
+
+        return lines;
+    }
+
+    private static DiffGitPatchEntryHeader ParseDiffGitLine(TextLine line, Match match)
+    {
+        var oldPath = match.Groups["OldPath"].Value;
+        var newPath = match.Groups["NewPath"].Value;
+        return new DiffGitPatchEntryHeader(line, oldPath, newPath);
+    }
+
+    private static OldPathPatchEntryHeader ParseOldPathLine(TextLine line, Match match)
+    {
+        var path = match.Groups["Path"].Value;
+        return new OldPathPatchEntryHeader(line, path);
+    }
+
+    private static NewPathPatchEntryHeader ParseNewPathLine(TextLine line, Match match)
+    {
+        var path = match.Groups["Path"].Value;
+        return new NewPathPatchEntryHeader(line, path);
+    }
+
+    private static OldModePatchEntryHeader ParseOldModeLine(TextLine line, Match match)
+    {
+        var mode = ParseMode(line, match, "Mode");
+        return new OldModePatchEntryHeader(line, mode);
+    }
+
+    private static NewModePatchEntryHeader ParseNewModeLine(TextLine line, Match match)
+    {
+        var mode = ParseMode(line, match, "Mode");
+        return new NewModePatchEntryHeader(line, mode);
+    }
+
+    private static DeletedFileModePatchEntryHeader ParseDeletedFileModeLine(TextLine line, Match match)
+    {
+        var mode = ParseMode(line, match, "Mode");
+        return new DeletedFileModePatchEntryHeader(line, mode);
+    }
+
+    private static NewFileModePatchEntryHeader ParseNewFileModeLine(TextLine line, Match match)
+    {
+        var mode = ParseMode(line, match, "Mode");
+        return new NewFileModePatchEntryHeader(line, mode);
+    }
+
+    private static CopyFromPatchEntryHeader ParseCopyFromLine(TextLine line, Match match)
+    {
+        var path = match.Groups["Path"].Value;
+        return new CopyFromPatchEntryHeader(line, path);
+    }
+
+    private static CopyToPatchEntryHeader ParseCopyToLine(TextLine line, Match match)
+    {
+        var path = match.Groups["Path"].Value;
+        return new CopyToPatchEntryHeader(line, path);
+    }
+
+    private static RenameFromPatchEntryHeader ParseRenameFromLine(TextLine line, Match match)
+    {
+        var path = match.Groups["Path"].Value;
+        return new RenameFromPatchEntryHeader(line, path);
+    }
+
+    private static RenameToPatchEntryHeader ParseRenameToLine(TextLine line, Match match)
+    {
+        var path = match.Groups["Path"].Value;
+        return new RenameToPatchEntryHeader(line, path);
+    }
+
+    private static SimilarityIndexPatchEntryHeader ParseSimilarityIndexLine(TextLine line, Match match)
+    {
+        var percentage = ParsePercentage(line, match, "Number");
+        return new SimilarityIndexPatchEntryHeader(line, percentage);
+    }
+
+    private static DissimilarityIndexPatchEntryHeader ParseDissimilarityIndexLine(TextLine line, Match match)
+    {
+        var percentage = ParsePercentage(line, match, "Number");
+        return new DissimilarityIndexPatchEntryHeader(line, percentage);
+    }
+
+    private static IndexPatchEntryHeader ParseIndexLine(TextLine line, Match match)
+    {
+        var hash1 = match.Groups["Hash1"].Value;
+        var hash2 = match.Groups["Hash1"].Value;
+        var mode = ParseOptionalMode(line, match, "Mode");
+        return new IndexPatchEntryHeader(line, hash1, hash2, mode);
+    }
+
+    private static PatchHunkHeader ParseHunkHeaderLine(TextLine line, Match match)
+    {
+        var oldLine = ParseInt32(line, match, "OldStart");
+        var oldCount = ParseInt32(line, match, "OldLength", 1);
+        var newLine = ParseInt32(line, match, "NewStart");
+        var newCount = ParseInt32(line, match, "NewLength", 1);
+        var function = match.Groups["Function"].Value;
+
+        var header = new PatchHunkHeader(
+            line,
+            oldLine,
+            oldCount,
+            newLine,
+            newCount,
+            function
+        );
+
+        return header;
+    }
+
+    private static PatchHunkLine ParseContextLine(TextLine line, Match match)
+    {
+        return new PatchHunkLine(PatchNodeKind.ContextLine, line);
+    }
+
+    private static PatchHunkLine ParseAddedLine(TextLine line, Match match)
+    {
+        return new PatchHunkLine(PatchNodeKind.AddedLine, line);
+    }
+
+    private static PatchHunkLine ParseDeletedLine(TextLine line, Match match)
+    {
+        return new PatchHunkLine(PatchNodeKind.DeletedLine, line);
+    }
+
+    private static PatchHunkLine ParseNoNewLine(TextLine line, Match match)
+    {
+        return new PatchHunkLine(PatchNodeKind.NoNewLine, line);
+    }
+
+    private static int ParseInt32(TextLine line, Match match, string groupName, int? defaultValue = null)
+    {
+        var group = match.Groups[groupName];
+        var textSpan = group.ValueSpan;
+
+        if (textSpan.Length == 0 && defaultValue is not null)
+            return defaultValue.Value;
+
+        if (!int.TryParse(textSpan, out var value))
+        {
+            var lineNumber = line.Text.GetLineIndex(line.Start) + 1;
+            var column = group.Index + 1;
+            throw PatchError.ExpectedInt32(lineNumber, column, textSpan);
+        }
+
+        return value;
+    }
+
+    private static int ParsePercentage(TextLine line, Match match, string groupName)
+    {
+        var number = ParseInt32(line, match, groupName);
+
+        if (number is <= 0 or > 100)
+        {
+            var lineNumber = line.Text.GetLineIndex(line.Start) + 1;
+            var column = match.Groups[groupName].Index + 1;
+            throw PatchError.ExpectedPercentage(lineNumber, column, number);
+        }
+
+        return number;
+    }
+
+    private static int? ParseOptionalMode(TextLine line, Match match, string groupName)
+    {
+        var group = match.Groups[groupName];
+        return group.Success ? ParseMode(line, match, groupName) : null;
+    }
+
+    private static int ParseMode(TextLine line, Match match, string groupName)
+    {
+        var group = match.Groups[groupName];
+        var text = group.Value;
+
+        int value;
+        try
+        {
+            value = Convert.ToInt32(text, 8);
+        }
+        catch (FormatException)
+        {
+            var lineNumber = line.Text.GetLineIndex(line.Start) + 1;
+            var column = group.Index + 1;
+            throw PatchError.ExpectedMode(lineNumber, column, text);
+        }
+
+        return value;
+    }
+}

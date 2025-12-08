@@ -74,7 +74,7 @@ internal sealed class PatchingService
                 lines = Enumerable.Range(start, length);
             }
 
-            var patch = Patching.ComputePatch(document, lines, direction);
+            var patch = Patches.Patching.ComputePatch(document, lines, direction);
             _gitService.ApplyPatch(patch, direction);
         }
     }
