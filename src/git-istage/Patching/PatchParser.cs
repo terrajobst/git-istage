@@ -1,4 +1,5 @@
 ﻿using System.Diagnostics;
+using System.Text;
 using GitIStage.Patching.Headers;
 using GitIStage.Patching.Text;
 
@@ -10,8 +11,55 @@ internal sealed partial class PatchParser
     {
         ThrowIfNullOrEmpty(text);
 
-        _text = SourceText.From(text);
+        _text = ReplaceDiffCcEntries(text);
         _lines = ParseLines(_text);
+
+        static SourceText ReplaceDiffCcEntries(string text)
+        {
+            const string diffGitHeader = "diff --git ";
+            const string diffCcHeader = "diff --cc ";
+            
+            var sourceText = SourceText.From(text);
+            var textSpan = text.AsSpan();
+            var sb = (StringBuilder?)null;
+            var skipUntilNextEntry = false;
+        
+            foreach (var line in sourceText.Lines)
+            {
+                var lineSpan = textSpan.Slice(line.Start, line.Length);
+
+                if (lineSpan.StartsWith(diffCcHeader, StringComparison.Ordinal))
+                {
+                    if (sb is null)
+                    {
+                        sb = new StringBuilder();
+                        sb.Append(text, 0, line.Start);
+                    }
+
+                    var path = lineSpan.Slice(diffCcHeader.Length);
+                    var lineBreak = textSpan.Slice(line.End, line.LengthIncludingLineBreak - line.Length);
+                    sb.Append($"diff --git a/{path} b/{path}{lineBreak}");
+                    sb.Append($"!needs merge{lineBreak}");
+
+                    skipUntilNextEntry = true;
+                }
+                else
+                {
+                    if (skipUntilNextEntry && lineSpan.StartsWith(diffGitHeader, StringComparison.Ordinal))
+                        skipUntilNextEntry = false;
+
+                    if (!skipUntilNextEntry)
+                        sb?.Append(textSpan.Slice(line.Start, line.SpanIncludingLineBreak.Length));
+                }
+            }
+
+            if (sb is not null)
+            {
+                sourceText = SourceText.From(sb.ToString());
+            }
+
+            return sourceText;
+        }
     }
 
     private readonly SourceText _text;
@@ -81,32 +129,21 @@ internal sealed partial class PatchParser
             throw PatchError.ExpectedDiffGitHeader(CurrentLineNumber);
 
         var headers = new List<PatchEntryHeader>();
+
+        do
+        {
+            var header = ParseHeader();
+            headers.Add(header);
+        } while (CurrentLineKind is not LineKind.DiffGitHeader and
+                                    not LineKind.HunkHeader and
+                                    not LineKind.EndOfFile);
+        
         var hunks = new List<PatchHunk>();
 
-        while (CurrentLineKind != LineKind.EndOfFile)
+        while (CurrentLineKind is LineKind.HunkHeader)
         {
-            if (CurrentLineKind == LineKind.HunkHeader)
-            {
-                // The entry condition in this method is that we start off with a 'diff --git' header,
-                // which we already parsed below.
-                Debug.Assert(headers.Count > 0);
-
-                var hunk = ParseHunk();
-                hunks.Add(hunk);
-            }
-            else
-            {
-                // If it's not a hunk header, we treat the line as an entry header.
-                // And if it's not a known header, we'll parse it as an unknown header.
-                //
-                // However, either only valid if we haven't seen any hunks yet.
-
-                if (hunks.Count > 0)
-                    throw PatchError.ExpectedHunkHeader(CurrentLineNumber);
-
-                var header = ParseHeader();
-                headers.Add(header);
-            }
+            var hunk = ParseHunk();
+            hunks.Add(hunk);
         }
 
         // NOTE: It's valid to have headers only, e.g. when changing modes or renaming files.

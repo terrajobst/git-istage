@@ -84,7 +84,7 @@ public class PatchingTests
 
         parse.Should()
             .Throw<FormatException>()
-            .Which.Message.Should().Be("Invalid patch. Expected hunk header in line 7.");
+            .Which.Message.Should().Be("Invalid patch. Expected 'diff --git' in line 7.");
     }
 
     [Fact]
@@ -722,6 +722,62 @@ public class PatchingTests
                    """;
 
         AssertPatchHasSingleEntryWithHunkLine(text, PatchNodeKind.NoNewLine);
+    }
+
+    [Fact]
+    public void Patch_Diff_Cc_IsParsedAsConflict()
+    {
+        var text = """
+                   diff --git a/before.txt b/before.txt
+                   index 27ac6d3..7576e3e 100644
+                   --- a/before.txt
+                   +++ b/before.txt
+                   @@ -1,0 +1,1 @@
+                   +This is an important
+                   diff --cc conflicted.txt
+                   index 14eb246,98d39d3..0000000
+                   --- a/conflicted.txt
+                   +++ b/conflicted.txt
+                   @@@ -2,7 -2,7 +2,11 @@@ Additio
+                   
+                     # Lorem
+                   
+                   ++<<<<<<< HEAD
+                    +Change in Main
+                   ++=======
+                   + Change in Test
+                   ++>>>>>>> de5c834 (Change in branch Test)
+                   
+                     Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
+                     aliquip ex ea commodo consequat.
+                   diff --git a/after.txt b/after.txt
+                   index 27ac6d3..7576e3e 100644
+                   --- a/after.txt
+                   +++ b/after.txt
+                   @@ -1,0 +1,1 @@
+                   +This is an important
+                   """;
+
+        var expectedText = """
+                           diff --git a/before.txt b/before.txt
+                           index 27ac6d3..7576e3e 100644
+                           --- a/before.txt
+                           +++ b/before.txt
+                           @@ -1,0 +1,1 @@
+                           +This is an important
+                           diff --git a/conflicted.txt b/conflicted.txt
+                           !needs merge
+                           diff --git a/after.txt b/after.txt
+                           index 27ac6d3..7576e3e 100644
+                           --- a/after.txt
+                           +++ b/after.txt
+                           @@ -1,0 +1,1 @@
+                           +This is an important
+                           """;
+
+        var actualText = Patch.Parse(text).ToString();
+        
+        actualText.Should().Be(expectedText);
     }
 
     private static PatchEntry AssertPatchHasSingleEntry(string text)
