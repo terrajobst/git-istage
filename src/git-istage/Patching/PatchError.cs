@@ -7,11 +7,6 @@ internal static class PatchError
         return new FormatException($"Invalid patch. Expected 'diff --git' in line {lineNumber}.");
     }
 
-    public static FormatException ExpectedHunkHeader(int lineNumber)
-    {
-        return new FormatException($"Invalid patch. Expected hunk header in line {lineNumber}.");
-    }
-
     public static FormatException ExpectedLine(int lineNumber, string lineName)
     {
         return new FormatException($"Invalid patch. Expected {lineName} in line {lineNumber}");
