@@ -13,17 +13,26 @@ is progressively more expensive the larger the repo becomes.
 
 I've tried to optimize the calls to LibGit2Sharp as well Git a bit more but
 ultimately we still need to ask Git for a new patch that describes the current
-state and that's unfortunately more and more expensive.
+state and that's unfortunately more and more expensive. Options:
 
-It seems the only sensible alternative is to make `git istage` understand
-patches such that we can compute the new patch when staging a line without the
-need to ask Git for it. This would mean that the cost of staging is reduced to
-computing the line/hunk based patch and applying it, which tends to be fast
-enough. We could optimize this further by not blocking the UI on the application
-of the patch, which we don't need assuming we can compute the new patch. At this
-point, the UI should always feel snappy, even in larger repos.
+* **Incremental Patches**. One option we have is making the patches more
+inremental: rather than asking Git for a patch that desribes the entire working
+directory, we could just ask for the new patch of the file whose line(s) we
+just staged. That should be cheaper as it shouldn't be function of the repo
+size but rather of the size of the file.
 
-Ideally, we'd eliminate the need for LibGit2Sharp:
+* **Computing patches ourselves**. Another option is making `git istage`
+understand patches such that we can compute the new patch when staging a line
+without the need to ask Git for it. This would mean that the cost of staging is
+reduced to computing the line/hunk based patch and applying it, which tends to
+be fast enough. We could optimize this further by not blocking the UI on the
+application of the patch, which we don't need assuming we can compute the new
+patch. At this point, the UI should always feel snappy, even in larger repos.
+
+
+## LibGit2Sharp
+
+Ideally, we'd also eliminate the need for LibGit2Sharp:
 
 * We only use it to compute the patch, but since it can't apply any patches, we
   need to shell out to Git for that anyway. We also shell out for committing and
@@ -33,3 +42,4 @@ Ideally, we'd eliminate the need for LibGit2Sharp:
   get a patch for untracked files, which we want for our workflow.
 * We could probably use `git status --untracked-files=all` and simply create an
   artificial patch.
+
