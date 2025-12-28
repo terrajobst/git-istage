@@ -1,5 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using GitIStage.Patches;
 using LibGit2Sharp;
 
@@ -45,6 +46,14 @@ internal sealed class GitService : IDisposable
         try
         {
             ExecuteGit(command, capture: true, updateRepo: false);
+        }
+        catch (GitCommandFailedException ex)
+        {
+            var messageBuilder = new StringBuilder(ex.Message);
+            messageBuilder.AppendLine();
+            messageBuilder.AppendLine("Patch:");
+            messageBuilder.Append(patch);
+            throw new GitCommandFailedException(messageBuilder.ToString());
         }
         finally
         {
