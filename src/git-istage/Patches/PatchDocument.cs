@@ -88,7 +88,7 @@ internal sealed class PatchDocument : Document
                 hunkOffset = hunkEnd + 1;
             }
 
-            var entry = new PatchEntry(entryOffset, entryLength, change, hunks);
+            var entry = new PatchEntry(entryOffset, entryLength, change.OldPath, (int)change.OldMode, change.Path, (int)change.Mode, hunks);
             entries.Add(entry);
         }
 

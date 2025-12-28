@@ -1,14 +1,21 @@
-using LibGit2Sharp;
-
 namespace GitIStage.Patches;
 
 internal sealed class PatchEntry
 {
-    public PatchEntry(int offset, int length, PatchEntryChanges changes, IReadOnlyList<PatchHunk> hunks)
+    public PatchEntry(int offset,
+                      int length,
+                      string oldPath,
+                      int oldMode,
+                      string newPath,
+                      int newMode,
+                      IReadOnlyList<PatchHunk> hunks)
     {
         Offset = offset;
         Length = length;
-        Changes = changes;
+        OldPath = oldPath;
+        OldMode = oldMode;
+        NewPath = newPath;
+        NewMode = newMode;
         Hunks = hunks;
     }
 
@@ -16,9 +23,15 @@ internal sealed class PatchEntry
 
     public int Length { get; }
 
-    public PatchEntryChanges Changes { get; }
-
     public IReadOnlyList<PatchHunk> Hunks { get; }
+
+    public string NewPath { get; }
+
+    public int NewMode { get; }
+
+    public string OldPath { get; }
+
+    public int OldMode { get; }
 
     public PatchHunk? FindHunk(int lineIndex)
     {

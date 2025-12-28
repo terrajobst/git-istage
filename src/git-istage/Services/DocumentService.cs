@@ -100,7 +100,7 @@ internal sealed class DocumentService
 
             if (_document is PatchDocument patchDocument && patchDocument.IsStaged == _viewStage)
             {
-                paths = patchDocument.Entries.Select(e => e.Changes.Path).ToArray();
+                paths = patchDocument.Entries.Select(e => e.NewPath).ToArray();
                 if (!paths.Any())
                     paths = null;
             }

@@ -57,10 +57,10 @@ internal static class Patching
 
                 // Add header
 
-                var changes = entry.Changes;
+                var changes = entry;
                 var oldPath = changes.OldPath.Replace(@"\", "/");
-                var oldExists = oldLength != 0 || changes.OldMode != Mode.Nonexistent;
-                var path = changes.Path.Replace(@"\", "/");
+                var oldExists = oldLength != 0 || changes.OldMode != 0;
+                var path = changes.NewPath.Replace(@"\", "/");
 
                 if (oldExists)
                 {
@@ -68,7 +68,7 @@ internal static class Patching
                 }
                 else
                 {
-                    newPatch.Append($"new file mode {changes.Mode}\n");
+                    newPatch.Append($"new file mode {Convert.ToString(changes.NewMode, 8)}\n");
                     newPatch.Append("--- /dev/null\n");
                 }
 
