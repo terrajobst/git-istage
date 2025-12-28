@@ -1,5 +1,7 @@
 ﻿using System.Text;
-using LibGit2Sharp;
+using GitIStage.Patching;
+
+using Patch = GitIStage.Patching.Patch;
 
 namespace GitIStage.UI;
 
@@ -7,13 +9,13 @@ internal sealed class FileDocument : Document
 {
     private readonly int _indexOfFirstFile;
     private readonly string[] _lines;
-    private readonly IReadOnlyList<TreeEntryChanges> _changes;
+    private readonly Patch _patch;
 
-    private FileDocument(int indexOfFirstFile, string[] lines, IReadOnlyList<TreeEntryChanges> changes, int width)
+    private FileDocument(int indexOfFirstFile, string[] lines, Patch patch, int width)
     {
         _indexOfFirstFile = indexOfFirstFile;
         _lines = lines;
-        _changes = changes;
+        _patch = patch;
         Width = width;
     }
 
@@ -21,9 +23,7 @@ internal sealed class FileDocument : Document
 
     public override int Width { get; }
 
-    public override int EntryCount => _changes.Count;
-
-    public IReadOnlyList<TreeEntryChanges> Changes => _changes;
+    public override int EntryCount => _patch.Entries.Length;
 
     public override string GetLine(int index)
     {
@@ -38,32 +38,34 @@ internal sealed class FileDocument : Document
     public override int FindEntryIndex(int lineIndex)
     {
         var changeIndex = lineIndex - _indexOfFirstFile;
-        return Math.Min(Math.Max(changeIndex, -1), _changes.Count - 1);
+        return Math.Min(Math.Max(changeIndex, -1), _patch.Entries.Length - 1);
     }
 
-    public TreeEntryChanges? GetChange(int index)
+    public PatchEntry? GetEntry(int index)
     {
         var changeIndex = index - _indexOfFirstFile;
-        if (changeIndex < 0 || changeIndex >= _changes.Count)
+        if (changeIndex < 0 || changeIndex >= _patch.Entries.Length)
             return null;
 
-        return _changes[changeIndex];
+        return _patch.Entries[changeIndex];
     }
 
-    public static FileDocument Create(IReadOnlyList<TreeEntryChanges> changes, bool viewStage)
+    public static FileDocument Create(string? patchText, bool viewStage)
     {
+        var patch = Patch.Parse(patchText ?? string.Empty);
+
         var builder = new StringBuilder();
-        if (changes.Any())
+        if (patch.Entries.Any())
         {
             builder.AppendLine();
             builder.AppendLine(viewStage ? "Changes to be committed:" : "Changes not staged for commit:");
 
             var indent = new string(' ', 8);
 
-            foreach (var c in changes)
+            foreach (var entry in patch.Entries)
             {
-                var path = c.Path;
-                var change = (c.Status.ToString().ToLower() + ":").PadRight(12);
+                var path = entry.ChangeKind == PatchEntryChangeKind.Deleted ? entry.OldPath : entry.NewPath;
+                var change = (entry.ChangeKind.ToString().ToLower() + ":").PadRight(12);
 
                 builder.AppendLine();
                 builder.Append(indent);
@@ -81,6 +83,6 @@ internal sealed class FileDocument : Document
                          .DefaultIfEmpty(0)
                          .Max();
 
-        return new FileDocument(indexOfFirstFile, lines, changes, width);
+        return new FileDocument(indexOfFirstFile, lines, patch, width);
     }
 }

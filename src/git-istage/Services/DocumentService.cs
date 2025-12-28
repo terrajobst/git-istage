@@ -82,36 +82,19 @@ internal sealed class DocumentService
     {
         var tipTree = _gitService.Repository.Head.Tip?.Tree;
 
+        var compareOptions = new CompareOptions();
+        compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;
+
+        var patch = _viewStage
+            ? _gitService.Repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, null, null, compareOptions)
+            : _gitService.Repository.Diff.Compare<Patch>(null, true, null, compareOptions);
+
         if (_viewFiles)
         {
-            var changes = _viewStage
-                ? _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index)
-                : _gitService.Repository.Diff.Compare<TreeChanges>(null, true);
-
-            var filteredChanges = changes
-                .Where(p => p.Mode != Mode.SymbolicLink && p.OldMode != Mode.SymbolicLink)
-                .ToArray();
-
-            _document = FileDocument.Create(filteredChanges, _viewStage);
+            _document = FileDocument.Create(patch, _viewStage);
         }
         else
         {
-            IEnumerable<string>? paths = null;
-
-            if (_document is PatchDocument patchDocument && patchDocument.IsStaged == _viewStage)
-            {
-                paths = patchDocument.Entries.Select(e => e.NewPath).ToArray();
-                if (!paths.Any())
-                    paths = null;
-            }
-
-            var compareOptions = new CompareOptions();
-            compareOptions.ContextLines = _fullFileDiff ? int.MaxValue : _contextLines;
-
-            var patch = _viewStage
-                ? _gitService.Repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
-                : _gitService.Repository.Diff.Compare<Patch>(paths, true, null, compareOptions);
-
             _document = PatchDocument.Create(patch, _viewStage);
         }
 

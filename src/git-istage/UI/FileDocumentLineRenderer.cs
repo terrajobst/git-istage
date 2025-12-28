@@ -1,4 +1,4 @@
-﻿using LibGit2Sharp;
+﻿using GitIStage.Patching;
 
 namespace GitIStage.UI;
 
@@ -6,10 +6,10 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
 {
     public new static FileDocumentLineRenderer Default { get; } = new();
 
-    private static TreeEntryChanges? GetChanges(View view, int lineIndex)
+    private static PatchEntry? GetChanges(View view, int lineIndex)
     {
         var document = view.Document as FileDocument;
-        return document?.GetChange(lineIndex);
+        return document?.GetEntry(lineIndex);
     }
 
     private static ConsoleColor? GetForegroundColor(View view, int lineIndex)
@@ -18,21 +18,15 @@ internal sealed class FileDocumentLineRenderer : ViewLineRenderer
         if (changes is null)
             return null;
 
-        switch (changes.Status)
+        switch (changes.ChangeKind)
         {
-            case ChangeKind.Added:
-            case ChangeKind.Renamed:
+            case PatchEntryChangeKind.Added:
+            case PatchEntryChangeKind.Copied:
                 return ConsoleColor.DarkGreen;
-            case ChangeKind.Deleted:
-            case ChangeKind.Modified:
-            case ChangeKind.Conflicted:
+            case PatchEntryChangeKind.Renamed:
+            case PatchEntryChangeKind.Deleted:
+            case PatchEntryChangeKind.Modified:
                 return ConsoleColor.DarkRed;
-            case ChangeKind.Unmodified:
-            case ChangeKind.Copied:
-            case ChangeKind.Ignored:
-            case ChangeKind.Untracked:
-            case ChangeKind.TypeChanged:
-            case ChangeKind.Unreadable:
             default:
                 return null;
         }
