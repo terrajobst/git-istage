@@ -27,4 +27,24 @@ public abstract class PatchNode
     }
 
     public abstract IEnumerable<PatchNode> Children { get; }
+
+    public IEnumerable<PatchLine> GetLines()
+    {
+        var queue = new Queue<PatchNode>();
+        queue.Enqueue(this);
+
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            if (current is PatchLine line)
+            {
+                yield return line;
+            }
+            else
+            {
+                foreach (var child in current.Children)
+                    queue.Enqueue(child);
+            }
+        }
+    }
 }
