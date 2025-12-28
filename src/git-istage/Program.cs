@@ -104,7 +104,7 @@ internal static class ExceptionBuilder
 
     public static Exception GitCommandFailed(string command, IReadOnlyList<string> commandLog)
     {
-        var message = $"Git command failed: {command}{Environment.NewLine}{string.Join(Environment.NewLine, commandLog)}";
+        var message = $"Git command failed: git {command}{Environment.NewLine}{string.Join(Environment.NewLine, commandLog)}";
         return new GitCommandFailedException(message);
     }
 }
