@@ -23,5 +23,7 @@ public sealed class TextLine
     public int LengthIncludingLineBreak { get; }
     public TextSpan Span => new TextSpan(Start, Length);
     public TextSpan SpanIncludingLineBreak => new TextSpan(Start, LengthIncludingLineBreak);
+    public TextSpan LineBreakSpan => TextSpan.FromBounds(Span.End, SpanIncludingLineBreak.End); 
+    
     public override string ToString() => Text.ToString(Span);
 }

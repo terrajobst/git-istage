@@ -1,3 +1,4 @@
+using GitIStage.Patching;
 using GitIStage.UI;
 
 namespace GitIStage.Patches;
@@ -9,7 +10,7 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
     private static PatchLine? GetLine(View view, int lineIndex)
     {
         var document = view.Document as PatchDocument;
-        return document?.Lines[lineIndex];
+        return document?.Patch.Lines[lineIndex];
     }
 
     private static ConsoleColor? GetForegroundColor(View view, int lineIndex)
@@ -20,17 +21,30 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
 
         switch (line.Kind)
         {
-            case PatchLineKind.DiffLine:
+            case PatchNodeKind.DiffGitHeader:
                 return ConsoleColor.Yellow;
-            case PatchLineKind.Header:
+            case PatchNodeKind.OldPathHeader:
+            case PatchNodeKind.NewPathHeader:
+            case PatchNodeKind.OldModeHeader:
+            case PatchNodeKind.NewModeHeader:
+            case PatchNodeKind.DeletedFileModeHeader:
+            case PatchNodeKind.NewFileModeHeader:
+            case PatchNodeKind.CopyFromHeader:
+            case PatchNodeKind.CopyToHeader:
+            case PatchNodeKind.RenameFromHeader:
+            case PatchNodeKind.RenameToHeader:
+            case PatchNodeKind.SimilarityIndexHeader:
+            case PatchNodeKind.DissimilarityIndexHeader:
+            case PatchNodeKind.IndexHeader:
+            case PatchNodeKind.UnknownHeader:
                 return ConsoleColor.White;
-            case PatchLineKind.Hunk:
+            case PatchNodeKind.HunkHeader:
                 return ConsoleColor.DarkCyan;
-            case PatchLineKind.Context:
+            case PatchNodeKind.ContextLine:
                 goto default;
-            case PatchLineKind.Addition:
+            case PatchNodeKind.AddedLine:
                 return ConsoleColor.DarkGreen;
-            case PatchLineKind.Removal:
+            case PatchNodeKind.DeletedLine:
                 return ConsoleColor.DarkRed;
             default:
                 return null;
@@ -48,12 +62,12 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
         var isSelected = view.SelectedLine == lineIndex;
         if (isSelected)
         {
-            return kind.IsAdditionOrRemoval()
+            return kind is PatchNodeKind.AddedLine or PatchNodeKind.DeletedLine
                 ? ConsoleColor.Gray
                 : ConsoleColor.DarkGray;
         }
 
-        return kind == PatchLineKind.DiffLine ? ConsoleColor.DarkBlue : null;
+        return kind == PatchNodeKind.DiffGitHeader ? ConsoleColor.DarkBlue : null;
     }
 
     public override void Render(View view, int lineIndex)
@@ -65,6 +79,6 @@ internal sealed class PatchDocumentLineRenderer : ViewLineRenderer
         var foregroundColor = GetForegroundColor(view, lineIndex);
         var backgroundColor = GetBackgroundColor(view, lineIndex);
 
-        RenderLine(view, lineIndex, line.Text, foregroundColor, backgroundColor);
+        RenderLine(view, lineIndex, line.Text.ToString(), foregroundColor, backgroundColor);
     }
 }

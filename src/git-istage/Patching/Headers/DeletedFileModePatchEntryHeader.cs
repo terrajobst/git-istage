@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class DeletedFileModePatchEntryHeader : PatchEntryHeader
 {
-    internal DeletedFileModePatchEntryHeader(TextLine line, int mode)
-        : base(line)
+    internal DeletedFileModePatchEntryHeader(Patch root, TextLine line, int mode)
+        : base(root, line)
     {
         Mode = mode;
     }

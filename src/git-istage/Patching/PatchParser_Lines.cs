@@ -86,7 +86,7 @@ internal sealed partial class PatchParser
         }
     }
 
-    private static readonly ImmutableArray<(Regex Regex, Func<TextLine, Match, PatchLine> Parse)> LineParsers = [
+    private static readonly ImmutableArray<(Regex Regex, Func<Patch, TextLine, Match, PatchLine> Parse)> LineParsers = [
         (DiffGitRegex(), ParseDiffGitLine),
         (OldPathRegex(), ParseOldPathLine),
         (NewPathRegex(), ParseNewPathLine),
@@ -108,12 +108,12 @@ internal sealed partial class PatchParser
         (NoNewLineRegex(), ParseNoNewLine),
     ];
 
-    private static List<PatchLine> ParseLines(SourceText text)
+    private static ImmutableArray<PatchLine> ParseLines(Patch patch, SourceText text)
     {
         Debug.Assert(text.Length > 0);
 
         var fullText = text.ToString();
-        var lines = new List<PatchLine>(text.Lines.Length);
+        var lines = ImmutableArray.CreateBuilder<PatchLine>(text.Lines.Length);
 
         foreach (var textLine in text.Lines)
         {
@@ -126,7 +126,7 @@ internal sealed partial class PatchParser
                 var match = matcher.Regex.Match(fullText, start, length);
                 if (match.Success)
                 {
-                    var line = matcher.Parse(textLine, match);
+                    var line = matcher.Parse(patch, textLine, match);
                     lines.Add(line);
                     matchFound = true;
                     break;
@@ -135,102 +135,102 @@ internal sealed partial class PatchParser
 
             if (!matchFound)
             {
-                var item = new UnknownPatchEntryHeader(textLine);
+                var item = new UnknownPatchEntryHeader(patch, textLine);
                 lines.Add(item);
             }
         }
 
-        return lines;
+        return lines.MoveToImmutable();
     }
 
-    private static DiffGitPatchEntryHeader ParseDiffGitLine(TextLine line, Match match)
+    private static DiffGitPatchEntryHeader ParseDiffGitLine(Patch patch, TextLine line, Match match)
     {
         var oldPath = match.Groups["OldPath"].Value;
         var newPath = match.Groups["NewPath"].Value;
-        return new DiffGitPatchEntryHeader(line, oldPath, newPath);
+        return new DiffGitPatchEntryHeader(patch, line, oldPath, newPath);
     }
 
-    private static OldPathPatchEntryHeader ParseOldPathLine(TextLine line, Match match)
+    private static OldPathPatchEntryHeader ParseOldPathLine(Patch patch, TextLine line, Match match)
     {
         var path = match.Groups["Path"].Value;
-        return new OldPathPatchEntryHeader(line, path);
+        return new OldPathPatchEntryHeader(patch, line, path);
     }
 
-    private static NewPathPatchEntryHeader ParseNewPathLine(TextLine line, Match match)
+    private static NewPathPatchEntryHeader ParseNewPathLine(Patch patch, TextLine line, Match match)
     {
         var path = match.Groups["Path"].Value;
-        return new NewPathPatchEntryHeader(line, path);
+        return new NewPathPatchEntryHeader(patch, line, path);
     }
 
-    private static OldModePatchEntryHeader ParseOldModeLine(TextLine line, Match match)
+    private static OldModePatchEntryHeader ParseOldModeLine(Patch patch, TextLine line, Match match)
     {
         var mode = ParseMode(line, match, "Mode");
-        return new OldModePatchEntryHeader(line, mode);
+        return new OldModePatchEntryHeader(patch, line, mode);
     }
 
-    private static NewModePatchEntryHeader ParseNewModeLine(TextLine line, Match match)
+    private static NewModePatchEntryHeader ParseNewModeLine(Patch patch, TextLine line, Match match)
     {
         var mode = ParseMode(line, match, "Mode");
-        return new NewModePatchEntryHeader(line, mode);
+        return new NewModePatchEntryHeader(patch, line, mode);
     }
 
-    private static DeletedFileModePatchEntryHeader ParseDeletedFileModeLine(TextLine line, Match match)
+    private static DeletedFileModePatchEntryHeader ParseDeletedFileModeLine(Patch patch, TextLine line, Match match)
     {
         var mode = ParseMode(line, match, "Mode");
-        return new DeletedFileModePatchEntryHeader(line, mode);
+        return new DeletedFileModePatchEntryHeader(patch, line, mode);
     }
 
-    private static NewFileModePatchEntryHeader ParseNewFileModeLine(TextLine line, Match match)
+    private static NewFileModePatchEntryHeader ParseNewFileModeLine(Patch patch, TextLine line, Match match)
     {
         var mode = ParseMode(line, match, "Mode");
-        return new NewFileModePatchEntryHeader(line, mode);
+        return new NewFileModePatchEntryHeader(patch, line, mode);
     }
 
-    private static CopyFromPatchEntryHeader ParseCopyFromLine(TextLine line, Match match)
+    private static CopyFromPatchEntryHeader ParseCopyFromLine(Patch patch, TextLine line, Match match)
     {
         var path = match.Groups["Path"].Value;
-        return new CopyFromPatchEntryHeader(line, path);
+        return new CopyFromPatchEntryHeader(patch, line, path);
     }
 
-    private static CopyToPatchEntryHeader ParseCopyToLine(TextLine line, Match match)
+    private static CopyToPatchEntryHeader ParseCopyToLine(Patch patch, TextLine line, Match match)
     {
         var path = match.Groups["Path"].Value;
-        return new CopyToPatchEntryHeader(line, path);
+        return new CopyToPatchEntryHeader(patch, line, path);
     }
 
-    private static RenameFromPatchEntryHeader ParseRenameFromLine(TextLine line, Match match)
+    private static RenameFromPatchEntryHeader ParseRenameFromLine(Patch patch, TextLine line, Match match)
     {
         var path = match.Groups["Path"].Value;
-        return new RenameFromPatchEntryHeader(line, path);
+        return new RenameFromPatchEntryHeader(patch, line, path);
     }
 
-    private static RenameToPatchEntryHeader ParseRenameToLine(TextLine line, Match match)
+    private static RenameToPatchEntryHeader ParseRenameToLine(Patch patch, TextLine line, Match match)
     {
         var path = match.Groups["Path"].Value;
-        return new RenameToPatchEntryHeader(line, path);
+        return new RenameToPatchEntryHeader(patch, line, path);
     }
 
-    private static SimilarityIndexPatchEntryHeader ParseSimilarityIndexLine(TextLine line, Match match)
+    private static SimilarityIndexPatchEntryHeader ParseSimilarityIndexLine(Patch patch, TextLine line, Match match)
     {
         var percentage = ParsePercentage(line, match, "Number");
-        return new SimilarityIndexPatchEntryHeader(line, percentage);
+        return new SimilarityIndexPatchEntryHeader(patch, line, percentage);
     }
 
-    private static DissimilarityIndexPatchEntryHeader ParseDissimilarityIndexLine(TextLine line, Match match)
+    private static DissimilarityIndexPatchEntryHeader ParseDissimilarityIndexLine(Patch patch, TextLine line, Match match)
     {
         var percentage = ParsePercentage(line, match, "Number");
-        return new DissimilarityIndexPatchEntryHeader(line, percentage);
+        return new DissimilarityIndexPatchEntryHeader(patch, line, percentage);
     }
 
-    private static IndexPatchEntryHeader ParseIndexLine(TextLine line, Match match)
+    private static IndexPatchEntryHeader ParseIndexLine(Patch patch, TextLine line, Match match)
     {
         var hash1 = match.Groups["Hash1"].Value;
         var hash2 = match.Groups["Hash1"].Value;
         var mode = ParseOptionalMode(line, match, "Mode");
-        return new IndexPatchEntryHeader(line, hash1, hash2, mode);
+        return new IndexPatchEntryHeader(patch, line, hash1, hash2, mode);
     }
 
-    private static PatchHunkHeader ParseHunkHeaderLine(TextLine line, Match match)
+    private static PatchHunkHeader ParseHunkHeaderLine(Patch patch, TextLine line, Match match)
     {
         var oldLine = ParseInt32(line, match, "OldStart");
         var oldCount = ParseInt32(line, match, "OldLength", 1);
@@ -239,6 +239,7 @@ internal sealed partial class PatchParser
         var function = match.Groups["Function"].Value;
 
         var header = new PatchHunkHeader(
+            patch,
             line,
             oldLine,
             oldCount,
@@ -250,24 +251,24 @@ internal sealed partial class PatchParser
         return header;
     }
 
-    private static PatchHunkLine ParseContextLine(TextLine line, Match match)
+    private static PatchHunkLine ParseContextLine(Patch patch, TextLine line, Match match)
     {
-        return new PatchHunkLine(PatchNodeKind.ContextLine, line);
+        return new PatchHunkLine(patch, PatchNodeKind.ContextLine, line);
     }
 
-    private static PatchHunkLine ParseAddedLine(TextLine line, Match match)
+    private static PatchHunkLine ParseAddedLine(Patch patch, TextLine line, Match match)
     {
-        return new PatchHunkLine(PatchNodeKind.AddedLine, line);
+        return new PatchHunkLine(patch, PatchNodeKind.AddedLine, line);
     }
 
-    private static PatchHunkLine ParseDeletedLine(TextLine line, Match match)
+    private static PatchHunkLine ParseDeletedLine(Patch patch, TextLine line, Match match)
     {
-        return new PatchHunkLine(PatchNodeKind.DeletedLine, line);
+        return new PatchHunkLine(patch, PatchNodeKind.DeletedLine, line);
     }
 
-    private static PatchHunkLine ParseNoNewLine(TextLine line, Match match)
+    private static PatchHunkLine ParseNoNewLine(Patch patch, TextLine line, Match match)
     {
-        return new PatchHunkLine(PatchNodeKind.NoNewLine, line);
+        return new PatchHunkLine(patch, PatchNodeKind.NoNewLine, line);
     }
 
     private static int ParseInt32(TextLine line, Match match, string groupName, int? defaultValue = null)

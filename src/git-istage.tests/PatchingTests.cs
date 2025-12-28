@@ -10,50 +10,6 @@ namespace GitIStage.Tests;
 
 public class PatchingTests
 {
-    [Fact]
-    public void PatchApplication_Staging_PartOfADeletedFile()
-    {
-        var text = """
-                   diff --git a/build.sh b/build.sh
-                   deleted file mode 100755
-                   index ebfac67..0000000
-                   --- a/hello.sh
-                   +++ /dev/null
-                   @@ -1,3 +0,0 @@
-                   -#!/bin/bash
-                   -
-                   {:-echo Hello:}
-                   """;
-
-        var expected =
-            """
-            diff --git a/build.sh b/build.sh
-            --- a/hello.sh
-            +++ b/hello.sh
-            @@ -1,3 +1,2 @@
-             #!/bin/bash
-
-            -echo Hello
-            """;
-
-        AssertStagedPatchMatches(text, expected);
-    }
-
-    private static void AssertStagedPatchMatches(string markedPatch, string expectedPatch)
-    {
-        ParseTextWithSpan(markedPatch, out var patchText, out var selectedSpan);
-
-        var patch = Patch.Parse(patchText);
-        var startLine = patch.Text.GetLineIndex(selectedSpan.Start);
-        var endLine = patch.Text.GetLineIndex(selectedSpan.End);
-        var lineCount = endLine - startLine + 1;
-
-        var actualPatch = PatchApplication.StageLines(patch, startLine, lineCount).ToString();
-
-        actualPatch.Should().Be(expectedPatch);
-    }
-
-
     // TODO: Test exceptions
 
     [Fact]

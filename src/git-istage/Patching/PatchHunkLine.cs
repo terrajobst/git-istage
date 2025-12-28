@@ -4,8 +4,8 @@ namespace GitIStage.Patching;
 
 public sealed class PatchHunkLine : PatchLine
 {
-    internal PatchHunkLine(PatchNodeKind kind, TextLine textLine)
-        : base(textLine)
+    internal PatchHunkLine(Patch patch, PatchNodeKind kind, TextLine textLine)
+        : base(patch, textLine)
     {
         Kind = kind;
     }

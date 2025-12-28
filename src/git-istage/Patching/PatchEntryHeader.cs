@@ -4,8 +4,8 @@ namespace GitIStage.Patching;
 
 public abstract class PatchEntryHeader : PatchLine
 {
-    private protected PatchEntryHeader(TextLine textLine)
-        : base(textLine)
+    private protected PatchEntryHeader(Patch root, TextLine textLine)
+        : base(root, textLine)
     {
     }
 }

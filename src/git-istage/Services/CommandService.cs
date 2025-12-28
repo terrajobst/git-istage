@@ -349,7 +349,7 @@ internal sealed class CommandService
             return;
 
         var document = (PatchDocument)_documentService.Document;
-        _uiService.View.SelectedLine = document.FindPreviousChangeBlock(i);
+        _uiService.View.SelectedLine = document.Patch.FindPreviousChangeBlock(i);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
@@ -362,7 +362,7 @@ internal sealed class CommandService
             return;
 
         var document = (PatchDocument)_documentService.Document;
-        _uiService.View.SelectedLine = document.FindNextChangeBlock(i);
+        _uiService.View.SelectedLine = document.Patch.FindNextChangeBlock(i);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 

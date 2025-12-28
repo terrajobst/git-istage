@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class DissimilarityIndexPatchEntryHeader : PatchEntryHeader
 {
-    internal DissimilarityIndexPatchEntryHeader(TextLine line, int percentage)
-        : base(line)
+    internal DissimilarityIndexPatchEntryHeader(Patch root, TextLine line, int percentage)
+        : base(root, line)
     {
         Percentage = percentage;
     }

@@ -80,8 +80,8 @@ internal sealed class FileDocument : Document
                     : builder.ToString().Split(Environment.NewLine);
 
         var width = lines.Select(l => l.Length)
-                         .DefaultIfEmpty(0)
-                         .Max();
+                            .DefaultIfEmpty(0)
+                            .Max();
 
         return new FileDocument(indexOfFirstFile, lines, patch, width);
     }

@@ -1,4 +1,5 @@
 ﻿using System.Text.RegularExpressions;
+using GitIStage.Patching;
 using GitIStage.UI;
 using LibGit2Sharp;
 
@@ -191,9 +192,9 @@ public abstract class RepositoryTests : IDisposable
 
     internal void AssertPatch(string expectedPatch, PatchDocument actualPatch)
     {
-        var actualPatchLines = actualPatch.Lines
-                                          .Where(l => l.Kind.IsAdditionOrRemoval())
-                                          .Select(l => l.Text);
+        var actualPatchLines = actualPatch.Patch.Lines
+                                          .Where(l => l.Kind.IsAddedOrDeletedLine())
+                                          .Select(l => l.Text.ToString());
 
         var expectedPatchLines = expectedPatch.ReplaceLineEndings("\n")
             .Split('\n');
@@ -203,7 +204,7 @@ public abstract class RepositoryTests : IDisposable
 
     internal void AssertPatchEmpty(PatchDocument patch)
     {
-        Assert.Empty(patch.Lines);
+        Assert.Empty(patch.Patch.Lines);
     }
 
     internal static void AssertFiles(string expectedChangesText, FileDocument document)

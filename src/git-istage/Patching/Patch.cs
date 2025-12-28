@@ -1,92 +1,43 @@
-﻿using System.Collections.Immutable;
+﻿using System.Collections.Frozen;
+using System.Collections.Immutable;
 using GitIStage.Patching.Text;
 
 namespace GitIStage.Patching;
 
-// TODO: Let's replace Patches with this API
-//
-// PatchDocument  It probably should just hold onto the patch. We probably want to expose some kind of enum on the
-//                patch entry to know whether it's a full deletion or not.
-//
-// FileDocument   Should probably also just hold onto the patch. We should be able to compute the change type from
-//                the patch entry (ADD, REMOVED, UPDATED).
-//
-// These are the change kinds from LibGit2Sharp:
-//
-//     Unmodified           Not sure if this can happen
-//     Added
-//     Deleted
-//     Modified
-//     Renamed
-//     Copied
-//     Ignored              Not sure if this can happen
-//     Untracked            Not sure if this can happen
-//     TypeChanged          ? Is this when mode is being changed?
-//     Unreadable           ?
-//     Conflicted           We should figure out how git diff reports this
-//
-//     What happens when a file is both copied/renamed and modified?
-//
-//         [Flags]
-//         public enum PatchEntryChanges
-//         {
-//             None,
-//         
-//             // Modification
-//         
-//             Added       = 0b00_0001,
-//             Deleted     = 0b00_0010,
-//             Modified    = 0b00_0100,
-//             ModeChanged = 0b00_1000,
-//         
-//             // Path
-//         
-//             Copied      = 0b01_0000,
-//             Renamed     = 0b10_0000,
-//         }
-//
-// Or maybe we model this as nullable structs, like so:
-//
-//        - Each entry has a path. If deleted, that's OldPath, otherwise NewPath
-//
-//         class PatchEntry
-//         
-//             Path: string
-//         
-//             Change { Added, Deleted, Modified }
-//         
-//             PathChange?
-//                 Kind: { Copied, Renamed }
-//                 OldPath: string
-//                 NewPath: string
-//         
-//             ModeChange?
-//                 OldMode: int
-//                 NewMode: int
-//
-// We should consider handling conflicts, such that we refuse to stage anything from that file, or least the portion
-// inside of conflict markers.
-//
-// In general, Index can't contain conflicts, only working copy can.
-
 public sealed class Patch : PatchNode
 {
-    public static Patch Empty { get; } = new(SourceText.Empty, []);
+    private FrozenDictionary<PatchNode, PatchNode?>? _parentByNode;
 
-    internal Patch(SourceText text, IEnumerable<PatchEntry> entries)
+    public static Patch Empty { get; } = new(string.Empty);
+
+    private Patch(string text)
     {
-        ThrowIfNull(text);
-        ThrowIfNull(entries);
+        if (string.IsNullOrEmpty(text))
+        {
+            Text = SourceText.Empty;
+            Lines = [];
+            Entries = [];
+        }
+        else
+        {
+            var parser = new PatchParser(this, text);
+            var entries = parser.ParseEntries();
 
-        Text = text;
-        Entries = [..entries];
+            Text = parser.Text;
+            Lines = parser.Lines;
+            Entries = [.. entries];
+        }
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.Patch;
 
+    public override Patch Root => this;
+
     public override TextSpan Span => new TextSpan(0, Text.Length);
 
     public SourceText Text { get; }
+
+    public ImmutableArray<PatchLine> Lines { get; }
 
     public ImmutableArray<PatchEntry> Entries { get; }
 
@@ -99,9 +50,36 @@ public sealed class Patch : PatchNode
         if (text.Length == 0)
             return Empty;
 
-        var parser = new PatchParser(text);
-        return parser.ParsePatch();
+        return new Patch(text);
     }
 
     public override string ToString() => Text.ToString();
+
+    internal PatchNode? GetParent(PatchNode node)
+    {
+        if (_parentByNode is null)
+        {
+            var parentByNode = ComputeParentByNode();
+            Interlocked.CompareExchange(ref _parentByNode, parentByNode, null);
+        }
+
+        _parentByNode.TryGetValue(node, out var parent);
+        return parent;
+    }
+
+    private FrozenDictionary<PatchNode, PatchNode?> ComputeParentByNode()
+    {
+        var parentByNode = new Dictionary<PatchNode, PatchNode?>();
+        Walk(this, parentByNode);
+        return parentByNode.ToFrozenDictionary();
+
+        static void Walk(PatchNode parent, Dictionary<PatchNode, PatchNode?> parentByNode)
+        {
+            foreach (var child in parent.Children)
+            {
+                parentByNode.Add(child, parent);
+                Walk(child, parentByNode);
+            }
+        }
+    }
 }

@@ -4,11 +4,12 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class IndexPatchEntryHeader : PatchEntryHeader
 {
-    internal IndexPatchEntryHeader(TextLine line,
+    internal IndexPatchEntryHeader(Patch root,
+                                   TextLine line,
                                    string hash1,
                                    string hash2,
                                    int? mode)
-        : base(line)
+        : base(root, line)
     {
         Hash1 = hash1;
         Hash2 = hash2;

@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class OldPathPatchEntryHeader : PatchEntryHeader
 {
-    internal OldPathPatchEntryHeader(TextLine line, string path)
-        : base(line)
+    internal OldPathPatchEntryHeader(Patch root, TextLine line, string path)
+        : base(root, line)
     {
         ThrowIfNull(path);
 

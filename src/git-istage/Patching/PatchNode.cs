@@ -5,6 +5,10 @@ namespace GitIStage.Patching;
 
 public abstract class PatchNode
 {
+    public abstract Patch Root { get; }
+
+    public PatchNode? Parent => Root.GetParent(this);
+
     public abstract PatchNodeKind Kind { get; }
 
     public virtual TextSpan Span
@@ -28,7 +32,19 @@ public abstract class PatchNode
 
     public abstract IEnumerable<PatchNode> Children { get; }
 
-    public IEnumerable<PatchLine> GetLines()
+    public IEnumerable<PatchNode> Ancestors() => AncestorsAndSelf().Skip(1);
+
+    public IEnumerable<PatchNode> AncestorsAndSelf()
+    {
+        var current = this;
+        while (current is not null)
+        {
+            yield return current;
+            current = current.Parent;
+        }
+    }
+
+    public IEnumerable<PatchNode> DescendantsAndSelf()
     {
         var queue = new Queue<PatchNode>();
         queue.Enqueue(this);
@@ -36,15 +52,13 @@ public abstract class PatchNode
         while (queue.Count > 0)
         {
             var current = queue.Dequeue();
-            if (current is PatchLine line)
-            {
-                yield return line;
-            }
-            else
-            {
-                foreach (var child in current.Children)
-                    queue.Enqueue(child);
-            }
+            yield return current;
+            foreach (var child in current.Children)
+                queue.Enqueue(child);
         }
     }
+
+    public IEnumerable<PatchNode> Descendants() => DescendantsAndSelf().Skip(1);
+
+    public IEnumerable<PatchLine> GetLines() => DescendantsAndSelf().OfType<PatchLine>();
 }

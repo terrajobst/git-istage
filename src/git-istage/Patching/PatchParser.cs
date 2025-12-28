@@ -1,5 +1,7 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Immutable;
+using System.Diagnostics;
 using System.Text;
+
 using GitIStage.Patching.Headers;
 using GitIStage.Patching.Text;
 
@@ -7,12 +9,16 @@ namespace GitIStage.Patching;
 
 internal sealed partial class PatchParser
 {
-    public PatchParser(string text)
+    private int _currentLineIndex;
+
+    public PatchParser(Patch root, string text)
     {
+        ThrowIfNull(root);
         ThrowIfNullOrEmpty(text);
 
-        _text = ReplaceDiffCcEntries(text);
-        _lines = ParseLines(_text);
+        Root = root;
+        Text = ReplaceDiffCcEntries(text);
+        Lines = ParseLines(root, Text);
 
         static SourceText ReplaceDiffCcEntries(string text)
         {
@@ -62,9 +68,11 @@ internal sealed partial class PatchParser
         }
     }
 
-    private readonly SourceText _text;
-    private readonly List<PatchLine> _lines;
-    private int _currentLineIndex;
+    public Patch Root { get; }
+
+    public SourceText Text { get; }
+
+    public ImmutableArray<PatchLine> Lines { get; }
 
     private int CurrentLineNumber => _currentLineIndex + 1;
 
@@ -72,10 +80,10 @@ internal sealed partial class PatchParser
     {
         get
         {
-            if (_currentLineIndex >= _lines.Count)
+            if (_currentLineIndex >= Lines.Length)
                 return LineKind.EndOfFile;
 
-            return ToLineKind(_lines[_currentLineIndex].Kind);
+            return ToLineKind(Lines[_currentLineIndex].Kind);
         }
     }
 
@@ -83,10 +91,10 @@ internal sealed partial class PatchParser
     {
         get
         {
-            if (_currentLineIndex >= _lines.Count)
+            if (_currentLineIndex >= Lines.Length)
                 return null;
 
-            return _lines[_currentLineIndex];
+            return Lines[_currentLineIndex];
         }
     }
 
@@ -106,9 +114,9 @@ internal sealed partial class PatchParser
         throw PatchError.ExpectedLine(CurrentLineNumber, errorNameForT);
     }
 
-    public Patch ParsePatch()
+    public List<PatchEntry> ParseEntries()
     {
-        Debug.Assert(_lines.Count > 0);
+        Debug.Assert(Lines.Length > 0);
 
         var entries = new List<PatchEntry>();
 
@@ -119,8 +127,7 @@ internal sealed partial class PatchParser
         }
 
         Debug.Assert(CurrentLineKind == LineKind.EndOfFile);
-
-        return new Patch(_text, entries);
+        return entries;
     }
 
     private PatchEntry ParseEntry()
@@ -189,7 +196,7 @@ internal sealed partial class PatchParser
                     ? indexHeader.Mode.Value
                     : 0;
 
-        return new PatchEntry(headers, hunks, oldPath, oldMode, newPath, newMode);
+        return new PatchEntry(Root, headers, hunks, oldPath, oldMode, newPath, newMode);
     }
 
     private PatchEntryHeader ParseHeader()
@@ -211,7 +218,7 @@ internal sealed partial class PatchParser
             lines.Add(line);
         }
 
-        return new PatchHunk(header, lines);
+        return new PatchHunk(Root, header, lines);
     }
 
     private PatchHunkHeader ParseHunkHeader()

@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class SimilarityIndexPatchEntryHeader : PatchEntryHeader
 {
-    internal SimilarityIndexPatchEntryHeader(TextLine line, int percentage)
-        : base(line)
+    internal SimilarityIndexPatchEntryHeader(Patch root, TextLine line, int percentage)
+        : base(root, line)
     {
         Percentage = percentage;
     }

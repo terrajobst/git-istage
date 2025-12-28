@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class UnknownPatchEntryHeader : PatchEntryHeader
 {
-    internal UnknownPatchEntryHeader(TextLine line)
-        : base(line)
+    internal UnknownPatchEntryHeader(Patch root, TextLine line)
+        : base(root, line)
     {
     }
 

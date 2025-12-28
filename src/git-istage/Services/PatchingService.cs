@@ -60,8 +60,8 @@ internal sealed class PatchingService
         else
         {
             var document = (PatchDocument)_documentService.Document;
-            var line = document.Lines[selectedLine];
-            if (!line.Kind.IsAdditionOrRemoval())
+            var line = document.Patch.Lines[selectedLine];
+            if (!line.Kind.IsAddedOrDeletedLine())
                 return;
 
             IEnumerable<int> lines;
@@ -71,13 +71,13 @@ internal sealed class PatchingService
             }
             else
             {
-                var start = document.FindStartOfChangeBlock(selectedLine);
-                var end = document.FindEndOfChangeBlock(selectedLine);
+                var start = document.Patch.FindStartOfChangeBlock(selectedLine);
+                var end = document.Patch.FindEndOfChangeBlock(selectedLine);
                 var length = end - start + 1;
                 lines = Enumerable.Range(start, length);
             }
 
-            var patch = Patches.Patching.ComputePatch(document, lines, direction);
+            var patch = document.Patch.SelectForApplication(lines, direction);
             _gitService.ApplyPatch(patch, direction);
         }
     }

@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class CopyToPatchEntryHeader : PatchEntryHeader
 {
-    internal CopyToPatchEntryHeader(TextLine line, string path)
-        : base(line)
+    internal CopyToPatchEntryHeader(Patch root, TextLine line, string path)
+        : base(root, line)
     {
         Path = path;
     }

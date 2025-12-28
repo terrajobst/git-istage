@@ -122,7 +122,7 @@ internal sealed class UIService
         else
         {
             var document = (PatchDocument)_documentService.Document;
-            var entry = document.Lines.Any() ? document.FindEntry(_view.SelectedLine) : null;
+            var entry = document.Patch.Lines.Any() ? document.FindEntry(_view.SelectedLine) : null;
             var emptyMarker = _documentService.ViewStage ? "*nothing to commit*" : "*clean*";
             var path = entry is null ? emptyMarker : entry.NewPath;
             _header.Text = $" {mode} | {path}";

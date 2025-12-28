@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class DiffGitPatchEntryHeader : PatchEntryHeader
 {
-    internal DiffGitPatchEntryHeader(TextLine line, string oldPath, string newPath)
-        : base(line)
+    internal DiffGitPatchEntryHeader(Patch root, TextLine line, string oldPath, string newPath)
+        : base(root, line)
     {
         ThrowIfNull(oldPath);
         ThrowIfNull(newPath);

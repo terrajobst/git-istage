@@ -4,13 +4,14 @@ namespace GitIStage.Patching;
 
 public sealed class PatchHunkHeader : PatchLine
 {
-    internal PatchHunkHeader(TextLine textLine,
+    internal PatchHunkHeader(Patch root,
+                             TextLine textLine,
                              int oldLine,
                              int oldCount,
                              int newLine,
                              int newCount,
                              string function)
-        : base(textLine)
+        : base(root, textLine)
     {
         ThrowIfNegative(oldLine);
         ThrowIfNegative(oldCount);

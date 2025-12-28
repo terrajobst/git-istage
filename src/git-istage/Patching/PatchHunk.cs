@@ -5,12 +5,15 @@ namespace GitIStage.Patching;
 
 public sealed class PatchHunk : PatchNode
 {
-    internal PatchHunk(PatchHunkHeader header,
+    internal PatchHunk(Patch root,
+                       PatchHunkHeader header,
                        IEnumerable<PatchHunkLine> lines)
     {
+        ThrowIfNull(root);
         ThrowIfNull(header);
         ThrowIfNull(lines);
 
+        Root = root;
         Header = header;
         Lines = [..lines];
 
@@ -21,6 +24,8 @@ public sealed class PatchHunk : PatchNode
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.Hunk;
+
+    public override Patch Root { get; }
 
     public override TextSpan Span { get; }
 

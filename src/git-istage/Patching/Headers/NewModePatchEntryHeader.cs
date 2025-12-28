@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class NewModePatchEntryHeader : PatchEntryHeader
 {
-    internal NewModePatchEntryHeader(TextLine line, int mode)
-        : base(line)
+    internal NewModePatchEntryHeader(Patch root, TextLine line, int mode)
+        : base(root, line)
     {
         Mode = mode;
     }

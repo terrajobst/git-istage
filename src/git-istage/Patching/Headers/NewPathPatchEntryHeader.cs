@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class NewPathPatchEntryHeader : PatchEntryHeader
 {
-    internal NewPathPatchEntryHeader(TextLine line, string path)
-        : base(line)
+    internal NewPathPatchEntryHeader(Patch root, TextLine line, string path)
+        : base(root, line)
     {
         ThrowIfNull(path);
 

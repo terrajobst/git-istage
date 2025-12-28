@@ -17,18 +17,21 @@ namespace GitIStage.Patching;
 
 public sealed class PatchEntry : PatchNode
 {
-    internal PatchEntry(IEnumerable<PatchEntryHeader> headers,
+    internal PatchEntry(Patch root,
+                        IEnumerable<PatchEntryHeader> headers,
                         IEnumerable<PatchHunk> hunks,
                         string oldPath,
                         int oldMode,
                         string newPath,
                         int newMode)
     {
+        ThrowIfNull(root);
         ThrowIfNull(headers);
         ThrowIfNull(hunks);
         ThrowIfNull(oldPath);
         ThrowIfNull(newPath);
 
+        Root = root;
         Headers = [..headers];
         Hunks = [..hunks];
         OldPath = oldPath;
@@ -61,6 +64,8 @@ public sealed class PatchEntry : PatchNode
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.Entry;
+
+    public override Patch Root { get; }
 
     public override TextSpan Span { get; }
 

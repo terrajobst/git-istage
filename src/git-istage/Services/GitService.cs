@@ -4,6 +4,8 @@ using System.Text;
 using GitIStage.Patches;
 using LibGit2Sharp;
 
+using Patch = GitIStage.Patching.Patch;
+
 namespace GitIStage.Services;
 
 internal sealed class GitService : IDisposable
@@ -34,7 +36,7 @@ internal sealed class GitService : IDisposable
         RepositoryChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    public void ApplyPatch(string patch, PatchDirection direction)
+    public void ApplyPatch(Patch patch, PatchDirection direction)
     {
         var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
         var patchFilePath = Path.GetTempFileName();
@@ -42,7 +44,7 @@ internal sealed class GitService : IDisposable
         var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
         var command = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
 
-        File.WriteAllText(patchFilePath, patch);
+        File.WriteAllText(patchFilePath, patch.ToString());
         try
         {
             ExecuteGit(command, capture: true, updateRepo: false);

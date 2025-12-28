@@ -4,8 +4,8 @@ namespace GitIStage.Patching.Headers;
 
 public sealed class RenameFromPatchEntryHeader : PatchEntryHeader
 {
-    internal RenameFromPatchEntryHeader(TextLine line, string path)
-        : base(line)
+    internal RenameFromPatchEntryHeader(Patch root, TextLine line, string path)
+        : base(root, line)
     {
         Path = path;
     }
