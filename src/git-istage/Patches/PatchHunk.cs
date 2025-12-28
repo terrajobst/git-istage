@@ -1,5 +1,6 @@
 namespace GitIStage.Patches;
 
+// TODO: Delete this in favor of the new patches
 internal sealed class PatchHunk
 {
     public PatchHunk(int offset, int length, int oldStart, int oldLength, int newStart, int newLength)

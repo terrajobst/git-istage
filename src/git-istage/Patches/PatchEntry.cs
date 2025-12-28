@@ -1,5 +1,6 @@
 namespace GitIStage.Patches;
 
+// TODO: Delete this in favor of the new patches
 internal sealed class PatchEntry
 {
     public PatchEntry(int offset,

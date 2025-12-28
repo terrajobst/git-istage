@@ -1,5 +1,6 @@
 namespace GitIStage.Patches;
 
+// TODO: Delete this in favor of the new patches
 internal sealed class PatchLine
 {
     public PatchLine(PatchLineKind kind, string text, string lineBreak)

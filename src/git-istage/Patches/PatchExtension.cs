@@ -1,5 +1,6 @@
 namespace GitIStage.Patches;
 
+
 internal static class PatchExtension
 {
     public static bool IsAdditionOrRemoval(this PatchLineKind kind)
@@ -8,6 +9,7 @@ internal static class PatchExtension
                        PatchLineKind.Removal;
     }
 
+    // TODO: Use document.Patch instead
     public static int FindPreviousChangeBlock(this PatchDocument document, int lineIndex)
     {
         var start = lineIndex;
@@ -26,6 +28,7 @@ internal static class PatchExtension
         return start;
     }
 
+    // TODO: Use document.Patch instead
     public static int FindNextChangeBlock(this PatchDocument document, int lineIndex)
     {
         var end = lineIndex;
@@ -44,6 +47,7 @@ internal static class PatchExtension
         return end;
     }
 
+    // TODO: Use document.Patch instead
     public static int FindStartOfChangeBlock(this PatchDocument document, int lineIndex)
     {
         var start = lineIndex;
@@ -53,6 +57,7 @@ internal static class PatchExtension
         return start;
     }
 
+    // TODO: Use document.Patch instead
     public static int FindEndOfChangeBlock(this PatchDocument document, int lineIndex)
     {
         var end = lineIndex;

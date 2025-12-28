@@ -5,6 +5,7 @@ namespace GitIStage.Patches;
 
 internal static class Patching
 {
+    // TODO: Use document.Patch instead
     public static string ComputePatch(PatchDocument document, IEnumerable<int> lineIndexes, PatchDirection direction)
     {
         var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
