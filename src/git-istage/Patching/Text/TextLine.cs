@@ -16,6 +16,7 @@ public sealed class TextLine
     }
 
     public SourceText Text { get; }
+    public int LineIndex => Text.GetLineIndex(Span.Start);
     public int Start { get; }
     public int Length { get; }
     public int End => Start + Length;

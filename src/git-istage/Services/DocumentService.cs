@@ -112,7 +112,7 @@ internal sealed class DocumentService
                 ? _gitService.Repository.Diff.Compare<Patch>(tipTree, DiffTargets.Index, paths, null, compareOptions)
                 : _gitService.Repository.Diff.Compare<Patch>(paths, true, null, compareOptions);
 
-            _document = PatchDocument.Parse(patch, _viewStage);
+            _document = PatchDocument.Create(patch, _viewStage);
         }
 
         Changed?.Invoke(this, EventArgs.Empty);
