@@ -8,6 +8,11 @@ using Patch = GitIStage.Patching.Patch;
 
 namespace GitIStage.Services;
 
+// TODO: ExecuteGit() should be private. We should have first class methods for all Git operations.
+//       This allows us to raise an event that includes the information of changed files. The
+//       DocumentService can use that to update the patch intelligently, rather than asking for a
+//       full patch each time.
+// TODO: UpdateRepository() should be private.
 internal sealed class GitService : IDisposable
 {
     private readonly GitEnvironment _environment;

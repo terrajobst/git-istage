@@ -3,6 +3,14 @@ using GitIStage.UI;
 
 namespace GitIStage.Patches;
 
+// TODO: We should rethink PatchDocument and FileDocument.
+//       It seems both should have their text stored in SourceText. Rendering shouldn't create new strings
+//       but should simply use ReadOnlySpan<char> when calling Console.Write().
+//       Also, we should treat colorization separate and have an API that allows us to return TextSpan with
+//       color information.
+//
+//            Document.FormatLine(int lineIndex): IEnumerable<FormattedSpan>
+//            FormattedSpan ::= (TextSpan, Foreground: ConsoleColor, Background: ConsoleColor?)
 internal sealed class PatchDocument : Document
 {
     private PatchDocument(Patch patch, bool isStaged)
