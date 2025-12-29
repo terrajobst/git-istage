@@ -1,5 +1,4 @@
 using System.Text;
-using GitIStage.Patching;
 
 namespace GitIStage.Patches;
 
@@ -9,60 +8,6 @@ internal static class PatchExtensions
     {
         return kind is PatchNodeKind.AddedLine or
                        PatchNodeKind.DeletedLine;
-    }
-
-    public static int FindPreviousChangeBlock(this Patch patch, int lineIndex)
-    {
-        var start = lineIndex;
-
-        // Skip current block
-        while (start >= 0 && patch.Lines[start].Kind.IsAddedOrDeletedLine())
-            start--;
-
-        // Find next block
-        while (start >= 0 && !patch.Lines[start].Kind.IsAddedOrDeletedLine())
-            start--;
-
-        if (start < 0)
-            return FindStartOfChangeBlock(patch, lineIndex);
-
-        return start;
-    }
-
-    public static int FindNextChangeBlock(this Patch patch, int lineIndex)
-    {
-        var end = lineIndex;
-
-        // Skip current block
-        while (end < patch.Lines.Length && patch.Lines[end].Kind.IsAddedOrDeletedLine())
-            end++;
-
-        // Find next block
-        while (end < patch.Lines.Length && !patch.Lines[end].Kind.IsAddedOrDeletedLine())
-            end++;
-
-        if (end >= patch.Lines.Length)
-            return FindEndOfChangeBlock(patch, lineIndex);
-
-        return end;
-    }
-
-    public static int FindStartOfChangeBlock(this Patch patch, int lineIndex)
-    {
-        var start = lineIndex;
-        while (start > 0 && patch.Lines[start - 1].Kind.IsAddedOrDeletedLine())
-            start--;
-
-        return start;
-    }
-
-    public static int FindEndOfChangeBlock(this Patch patch, int lineIndex)
-    {
-        var end = lineIndex;
-        while (end < patch.Lines.Length - 1 && patch.Lines[end + 1].Kind.IsAddedOrDeletedLine())
-            end++;
-
-        return end;
     }
 
     public static Patch SelectForApplication(this Patch patch, IEnumerable<int> lineIndexes, PatchDirection direction)

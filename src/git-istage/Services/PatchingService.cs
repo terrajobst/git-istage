@@ -1,5 +1,4 @@
 ﻿using GitIStage.Patches;
-using GitIStage.Patching;
 using GitIStage.UI;
 
 namespace GitIStage.Services;
@@ -71,10 +70,10 @@ internal sealed class PatchingService
             }
             else
             {
-                var start = document.Patch.FindStartOfChangeBlock(selectedLine);
-                var end = document.Patch.FindEndOfChangeBlock(selectedLine);
-                var length = end - start + 1;
-                lines = Enumerable.Range(start, length);
+                var hunk = document.Patch.Lines[selectedLine].AncestorsAndSelf().OfType<PatchHunk>().First();
+                var startLine = hunk.Lines.First().TextLine.LineIndex;
+                var lineCount = hunk.Lines.Length;
+                lines = Enumerable.Range(startLine, lineCount);
             }
 
             var patch = document.Patch.SelectForApplication(lines, direction);

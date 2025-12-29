@@ -1,7 +1,7 @@
 ﻿using System.Text;
-using GitIStage.Patching;
+using GitIStage.Patches;
 using GitIStage.Text;
-using Patch = GitIStage.Patching.Patch;
+using Patch = GitIStage.Patches.Patch;
 
 namespace GitIStage.UI;
 
@@ -23,22 +23,11 @@ internal sealed class FileDocument : Document
 
     public override int Width { get; }
 
-    public override int EntryCount => _patch.Entries.Length;
+    public Patch Patch => _patch;
 
     public override string GetLine(int index)
     {
         return _lines[index];
-    }
-
-    public override int GetLineIndex(int index)
-    {
-        return _indexOfFirstFile + index;
-    }
-
-    public override int FindEntryIndex(int lineIndex)
-    {
-        var changeIndex = lineIndex - _indexOfFirstFile;
-        return Math.Min(Math.Max(changeIndex, -1), _patch.Entries.Length - 1);
     }
 
     public PatchEntry? GetEntry(int index)
@@ -50,6 +39,12 @@ internal sealed class FileDocument : Document
         return _patch.Entries[changeIndex];
     }
 
+    public int GetLineIndex(PatchEntry entry)
+    {
+        var entryIndex = _patch.Entries.IndexOf(entry);
+        return _indexOfFirstFile + entryIndex;
+    }
+
     public override IEnumerable<StyledSpan> GetLineStyles(int index)
     {
         var entry = GetEntry(index);
@@ -57,7 +52,7 @@ internal sealed class FileDocument : Document
         {
             var line = GetLine(index);
             var foreground = GetForegroundColor(entry);
-            
+
             // Change
             yield return new StyledSpan(new TextSpan(8, 12), foreground, null);
 

@@ -1,5 +1,4 @@
-﻿using GitIStage.Patches;
-using GitIStage.UI;
+﻿using GitIStage.UI;
 using LibGit2Sharp;
 
 namespace GitIStage.Services;

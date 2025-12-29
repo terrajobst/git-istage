@@ -317,8 +317,11 @@ internal sealed class CommandService
 
         var document = _documentService.Document;
         var nextIndex = document.FindPreviousEntryIndex(i);
-        _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-        _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+        if (nextIndex >= 0)
+        {
+            _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
+            _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+        }
     }
 
     [CommandHandler("Go to the next file.", "RightArrow")]
@@ -331,38 +334,34 @@ internal sealed class CommandService
 
         var document = _documentService.Document;
         var nextIndex = document.FindNextEntryIndex(i);
-
-        if (nextIndex < document.EntryCount)
+        if (nextIndex >= 0)
+        {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-        else
-            _uiService.View.SelectedLine = _uiService.View.DocumentHeight - 1;
-
-        _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+            _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+        }
     }
 
     [CommandHandler("Go to previous change block.", "Oem4")]
     private void GoPreviousHunk()
     {
-        if (_uiService.HelpShowing || _documentService.ViewFiles) return;
+        if (_uiService.HelpShowing) return;
         var i = _uiService.View.SelectedLine;
         if (i < 0)
             return;
 
-        var document = (PatchDocument)_documentService.Document;
-        _uiService.View.SelectedLine = document.Patch.FindPreviousChangeBlock(i);
+        _uiService.View.SelectedLine = _documentService.Document.FindPreviousChangeBlock(i);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
     [CommandHandler("Go to next change block.", "Oem6")]
     private void GoNextHunk()
     {
-        if (_uiService.HelpShowing || _documentService.ViewFiles) return;
+        if (_uiService.HelpShowing) return;
         var i = _uiService.View.SelectedLine;
         if (i < 0)
             return;
 
-        var document = (PatchDocument)_documentService.Document;
-        _uiService.View.SelectedLine = document.Patch.FindNextChangeBlock(i);
+        _uiService.View.SelectedLine = _documentService.Document.FindNextChangeBlock(i);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 

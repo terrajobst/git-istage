@@ -2,7 +2,7 @@
 using System.Collections.Immutable;
 using GitIStage.Text;
 
-namespace GitIStage.Patching;
+namespace GitIStage.Patches;
 
 public sealed class Patch : PatchNode
 {

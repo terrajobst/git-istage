@@ -48,20 +48,8 @@ internal sealed class HelpDocument : Document
 
     public override int Width { get; }
 
-    public override int EntryCount => _lines.Length;
-
     public override string GetLine(int index)
     {
         return _lines[index];
-    }
-
-    public override int GetLineIndex(int index)
-    {
-        return index;
-    }
-
-    public override int FindEntryIndex(int lineIndex)
-    {
-        return lineIndex;
     }
 }

@@ -1,4 +1,6 @@
-﻿namespace GitIStage.Tests;
+﻿using GitIStage.UI;
+
+namespace GitIStage.Tests;
 
 public class PatchLevelTests : RepositoryTests
 {

@@ -1,10 +1,10 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text.RegularExpressions;
-using GitIStage.Patching.Headers;
+using GitIStage.Patches.Headers;
 using GitIStage.Text;
 
-namespace GitIStage.Patching;
+namespace GitIStage.Patches;
 
 internal sealed partial class PatchParser
 {

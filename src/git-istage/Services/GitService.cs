@@ -4,7 +4,7 @@ using System.Text;
 using GitIStage.Patches;
 using LibGit2Sharp;
 
-using Patch = GitIStage.Patching.Patch;
+using Patch = GitIStage.Patches.Patch;
 
 namespace GitIStage.Services;
 

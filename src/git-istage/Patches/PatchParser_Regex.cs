@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace GitIStage.Patching;
+namespace GitIStage.Patches;
 
 internal sealed partial class PatchParser
 {

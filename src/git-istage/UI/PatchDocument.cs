@@ -1,8 +1,7 @@
-using GitIStage.Patching;
+using GitIStage.Patches;
 using GitIStage.Text;
-using GitIStage.UI;
 
-namespace GitIStage.Patches;
+namespace GitIStage.UI;
 
 // TODO: We should rethink PatchDocument and FileDocument.
 //       It seems both should have their text stored in SourceText. Rendering shouldn't create new strings
@@ -15,7 +14,7 @@ internal sealed class PatchDocument : Document
 
         Patch = patch;
         IsStaged = isStaged;
-        
+
         // TODO: This is super inefficient.
         Width = patch.Lines.Select(l => l.Text.ToString())
                            .DefaultIfEmpty(string.Empty)
@@ -30,39 +29,10 @@ internal sealed class PatchDocument : Document
 
     public override int Width { get; }
 
-    public override int EntryCount => Patch.Entries.Length;
-
     public override string GetLine(int index)
     {
         var span = Patch.Lines[index].Span;
         return Patch.Text.ToString(span);
-    }
-
-    public override int GetLineIndex(int index)
-    {
-        return Patch.Text.GetLineIndex(Patch.Entries[index].Span.Start);
-    }
-
-    public PatchEntry? FindEntry(int lineIndex)
-    {
-        var index = FindEntryIndex(lineIndex);
-        return index < 0 ? null : Patch.Entries[index];
-    }
-
-    public override int FindEntryIndex(int lineIndex)
-    {
-        var lineSpan = Patch.Text.Lines[lineIndex].Span;
-        
-        // TODO: binary search would be more appropriate
-
-        for (var i = 0; i < Patch.Entries.Length; i++)
-        {
-            var e = Patch.Entries[i];
-            if (e.Span.OverlapsWith(lineSpan))
-                return i;
-        }
-
-        return -1;
     }
 
     public override IEnumerable<StyledSpan> GetLineStyles(int index)
@@ -70,10 +40,10 @@ internal sealed class PatchDocument : Document
         var line = Patch.Lines[index];
         var foreground = GetForegroundColor(line);
         var background = GetBackgroundColor(line);
-        
+
         // NOTE: We're expected return spans that start at this line.
         var span = new TextSpan(0, line.Span.Length);
-        
+
         return [new StyledSpan(span, foreground, background)];
     }
 
@@ -117,7 +87,7 @@ internal sealed class PatchDocument : Document
             ? ConsoleColor.DarkCyan
             : null;
     }
-    
+
     public static PatchDocument Create(string? patchText, bool isStaged)
     {
         var patch = Patch.Parse(patchText ?? string.Empty);

@@ -1,6 +1,6 @@
 ﻿using GitIStage.Text;
 
-namespace GitIStage.Patching;
+namespace GitIStage.Patches;
 
 public abstract class PatchLine : PatchNode
 {

@@ -1,4 +1,4 @@
-namespace GitIStage.Patching;
+namespace GitIStage.Patches;
 
 internal static class PatchError
 {

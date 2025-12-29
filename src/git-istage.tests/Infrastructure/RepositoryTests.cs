@@ -245,6 +245,6 @@ public abstract class RepositoryTests : IDisposable
 
     internal void AssertFilesEmpty(FileDocument document)
     {
-        document.EntryCount.Should().Be(0);
+        document.Patch.Entries.Should().BeEmpty();
     }
 }

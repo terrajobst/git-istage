@@ -1,7 +1,7 @@
 ﻿using System.Collections.Immutable;
 using GitIStage.Text;
 
-namespace GitIStage.Patching;
+namespace GitIStage.Patches;
 
 // TODO: We should consider making mode an enum.
 //

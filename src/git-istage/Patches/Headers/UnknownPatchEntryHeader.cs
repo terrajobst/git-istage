@@ -1,6 +1,6 @@
 ﻿using GitIStage.Text;
 
-namespace GitIStage.Patching.Headers;
+namespace GitIStage.Patches.Headers;
 
 public sealed class UnknownPatchEntryHeader : PatchEntryHeader
 {
