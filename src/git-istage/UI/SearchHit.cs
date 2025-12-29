@@ -1,3 +1,5 @@
+using GitIStage.Text;
+
 namespace GitIStage.UI;
 
 internal sealed class SearchHit
@@ -12,4 +14,5 @@ internal sealed class SearchHit
     public int LineIndex { get; }
     public int Start { get; }
     public int Length { get; }
+    public TextSpan Span => new TextSpan(Start, Length);
 }

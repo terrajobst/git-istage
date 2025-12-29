@@ -1,6 +1,6 @@
 ﻿using System.Collections.Immutable;
 
-namespace GitIStage.Patching.Text;
+namespace GitIStage.Text;
 
 public sealed class SourceText
 {
@@ -116,6 +116,10 @@ public sealed class SourceText
 
         return lower - 1;
     }
+
+    public ReadOnlySpan<char> AsSpan() => _text.AsSpan();
+
+    public ReadOnlySpan<char> AsSpan(TextSpan span) => _text.AsSpan(span);
 
     public override string ToString() => _text;
 

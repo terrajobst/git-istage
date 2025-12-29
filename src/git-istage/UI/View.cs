@@ -1,8 +1,9 @@
+using GitIStage.Text;
+
 namespace GitIStage.UI;
 
 internal sealed class View
 {
-    private ViewLineRenderer _lineRenderer = ViewLineRenderer.Default;
     private Document _document = Document.Empty;
     private int _topLine;
     private int _leftChar;
@@ -17,16 +18,6 @@ internal sealed class View
         Bottom = bottom;
         Right = right;
         Initialize();
-    }
-
-    public ViewLineRenderer LineRenderer
-    {
-        get => _lineRenderer;
-        set
-        {
-            _lineRenderer = value;
-            Initialize();
-        }
     }
 
     public Document Document
@@ -146,13 +137,108 @@ internal sealed class View
         }
     }
 
+    // TODO: We need to properly support tabs. Right now the spans will count them as a single
+    //       character which might mess up formatting.
+    // TODO: We need to support rendering whitespace (tabs, spaces, line breaks,
+    //       non-visible characters)
     private void RenderLine(int lineIndex)
     {
         var isVisible = TopLine <= lineIndex && lineIndex <= BottomLine;
         if (!isVisible)
             return;
 
-        _lineRenderer.Render(this, lineIndex);
+        var line = Document.GetLine(lineIndex);
+        var lineSpan = new TextSpan(0, line.Length);
+        var clippedLineSpan = ClipSpan(lineSpan);
+
+        var visualLine = lineIndex - TopLine + Top;
+        var styledSpans = Document.GetLineStyles(lineIndex);
+        var isSelected = SelectedLine == lineIndex;
+        
+        Vt100.SetCursorPosition(Left, visualLine);
+
+        var lineBackground = (ConsoleColor?)null;
+
+        if (isSelected)
+            lineBackground = ConsoleColor.DarkBlue;
+
+        Vt100.SetForegroundColor();
+        Vt100.SetBackgroundColor(lineBackground);
+
+        var p = clippedLineSpan.Start;
+        foreach (var styledSpan in styledSpans)
+        {
+            var clippedSpan = ClipSpan(styledSpan);
+            if (clippedSpan.Span.Length == 0)
+                continue;
+
+            if (clippedSpan.Span.Start > p)
+            {
+                var missingSpan = TextSpan.FromBounds(p, clippedSpan.Span.Start);
+                Console.Write(line.AsSpan(missingSpan));
+            }
+
+            Vt100.SetForegroundColor(clippedSpan.Foreground);
+            Vt100.SetBackgroundColor(lineBackground ?? clippedSpan.Background);
+            Console.Write(line.AsSpan(clippedSpan.Span));
+            
+            p = clippedSpan.Span.End;
+        }
+
+        if (p < clippedLineSpan.End)
+        {
+            Vt100.SetForegroundColor();
+            Vt100.SetBackgroundColor(lineBackground);
+
+            var remainderSpan = TextSpan.FromBounds(p, clippedLineSpan.End);
+            Console.Write(line.AsSpan(remainderSpan));
+        }
+
+        Vt100.EraseRestOfCurrentLine();
+
+        RenderSearchResults(lineIndex);
+    }
+
+    private int GetVisualLine(int lineIndex)
+    {
+        return lineIndex - TopLine + Top;
+    }
+
+    private void RenderSearchResults(int lineIndex)
+    {
+        var line = Document.GetLine(lineIndex);
+        var visualLine = GetVisualLine(lineIndex);
+        
+        if (SearchResults is not null)
+        {
+            foreach (var hit in SearchResults.Hits)
+            {
+                if (hit.LineIndex == lineIndex)
+                {
+                    var clippedSpan = ClipSpan(hit.Span);
+                    if (clippedSpan.Length > 0)
+                    {
+                        Vt100.SetCursorPosition(clippedSpan.Start - LeftChar, visualLine);
+                        Vt100.NegativeColors();
+                        Console.Write(line.Substring(clippedSpan.Start, clippedSpan.Length));
+                        Vt100.PositiveColors();
+                    }
+                }
+            }
+        }
+    }
+
+    private TextSpan ClipSpan(TextSpan span)
+    {
+        var clippedStart = int.Clamp(span.Start, LeftChar, LeftChar + Width - 1);
+        var clippedEnd = int.Clamp(span.End, LeftChar, LeftChar + Width - 1);
+        return TextSpan.FromBounds(clippedStart, clippedEnd);
+    }
+
+    private StyledSpan ClipSpan(StyledSpan styledSpan)
+    {
+        var clippedSpan = ClipSpan(styledSpan.Span);
+        return new StyledSpan(clippedSpan, styledSpan.Foreground, styledSpan.Background);
     }
 
     private static void RenderNonExistingLine(int visualLine)

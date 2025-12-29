@@ -1,8 +1,7 @@
 ﻿using System.Diagnostics;
 using GitIStage.Patching;
 using GitIStage.Patching.Headers;
-using GitIStage.Patching.Text;
-
+using GitIStage.Text;
 using PatchEntry = GitIStage.Patching.PatchEntry;
 using PatchHunk = GitIStage.Patching.PatchHunk;
 

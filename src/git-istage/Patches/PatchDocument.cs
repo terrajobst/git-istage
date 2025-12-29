@@ -1,4 +1,5 @@
 using GitIStage.Patching;
+using GitIStage.Text;
 using GitIStage.UI;
 
 namespace GitIStage.Patches;
@@ -6,11 +7,6 @@ namespace GitIStage.Patches;
 // TODO: We should rethink PatchDocument and FileDocument.
 //       It seems both should have their text stored in SourceText. Rendering shouldn't create new strings
 //       but should simply use ReadOnlySpan<char> when calling Console.Write().
-//       Also, we should treat colorization separate and have an API that allows us to return TextSpan with
-//       color information.
-//
-//            Document.FormatLine(int lineIndex): IEnumerable<FormattedSpan>
-//            FormattedSpan ::= (TextSpan, Foreground: ConsoleColor, Background: ConsoleColor?)
 internal sealed class PatchDocument : Document
 {
     private PatchDocument(Patch patch, bool isStaged)
@@ -38,7 +34,8 @@ internal sealed class PatchDocument : Document
 
     public override string GetLine(int index)
     {
-        return Patch.Text.Lines[index].ToString();
+        var span = Patch.Lines[index].Span;
+        return Patch.Text.ToString(span);
     }
 
     public override int GetLineIndex(int index)
@@ -68,6 +65,59 @@ internal sealed class PatchDocument : Document
         return -1;
     }
 
+    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    {
+        var line = Patch.Lines[index];
+        var foreground = GetForegroundColor(line);
+        var background = GetBackgroundColor(line);
+        
+        // NOTE: We're expected return spans that start at this line.
+        var span = new TextSpan(0, line.Span.Length);
+        
+        return [new StyledSpan(span, foreground, background)];
+    }
+
+    private static ConsoleColor? GetForegroundColor(PatchLine line)
+    {
+        switch (line.Kind)
+        {
+            case PatchNodeKind.DiffGitHeader:
+                return ConsoleColor.White;
+            case PatchNodeKind.OldPathHeader:
+            case PatchNodeKind.NewPathHeader:
+            case PatchNodeKind.OldModeHeader:
+            case PatchNodeKind.NewModeHeader:
+            case PatchNodeKind.DeletedFileModeHeader:
+            case PatchNodeKind.NewFileModeHeader:
+            case PatchNodeKind.CopyFromHeader:
+            case PatchNodeKind.CopyToHeader:
+            case PatchNodeKind.RenameFromHeader:
+            case PatchNodeKind.RenameToHeader:
+            case PatchNodeKind.SimilarityIndexHeader:
+            case PatchNodeKind.DissimilarityIndexHeader:
+            case PatchNodeKind.IndexHeader:
+            case PatchNodeKind.UnknownHeader:
+                return ConsoleColor.White;
+            case PatchNodeKind.HunkHeader:
+                return ConsoleColor.DarkCyan;
+            case PatchNodeKind.ContextLine:
+                goto default;
+            case PatchNodeKind.AddedLine:
+                return ConsoleColor.DarkGreen;
+            case PatchNodeKind.DeletedLine:
+                return ConsoleColor.DarkRed;
+            default:
+                return null;
+        }
+    }
+
+    private static ConsoleColor? GetBackgroundColor(PatchLine line)
+    {
+        return line.Kind == PatchNodeKind.DiffGitHeader
+            ? ConsoleColor.DarkCyan
+            : null;
+    }
+    
     public static PatchDocument Create(string? patchText, bool isStaged)
     {
         var patch = Patch.Parse(patchText ?? string.Empty);

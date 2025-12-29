@@ -3,7 +3,7 @@ using System.Diagnostics;
 using System.Text;
 
 using GitIStage.Patching.Headers;
-using GitIStage.Patching.Text;
+using GitIStage.Text;
 
 namespace GitIStage.Patching;
 
@@ -32,7 +32,7 @@ internal sealed partial class PatchParser
         
             foreach (var line in sourceText.Lines)
             {
-                var lineSpan = textSpan.Slice(line.Start, line.Length);
+                var lineSpan = textSpan.Slice(line.Span);
 
                 if (lineSpan.StartsWith(diffCcHeader, StringComparison.Ordinal))
                 {
@@ -43,7 +43,7 @@ internal sealed partial class PatchParser
                     }
 
                     var path = lineSpan.Slice(diffCcHeader.Length);
-                    var lineBreak = textSpan.Slice(line.End, line.LengthIncludingLineBreak - line.Length);
+                    var lineBreak = textSpan.Slice(line.SpanLineBreak);
                     sb.Append($"diff --git a/{path} b/{path}{lineBreak}");
                     sb.Append($"!needs merge{lineBreak}");
 
@@ -55,7 +55,7 @@ internal sealed partial class PatchParser
                         skipUntilNextEntry = false;
 
                     if (!skipUntilNextEntry)
-                        sb?.Append(textSpan.Slice(line.Start, line.SpanIncludingLineBreak.Length));
+                        sb?.Append(textSpan.Slice(line.SpanIncludingLineBreak));
                 }
             }
 

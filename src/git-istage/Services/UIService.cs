@@ -95,11 +95,6 @@ internal sealed class UIService
 
     private void UpdateRepositoryState()
     {
-        if (_documentService.ViewFiles)
-            _view.LineRenderer = FileDocumentLineRenderer.Default;
-        else
-            _view.LineRenderer = PatchDocumentLineRenderer.Default;
-
         _view.Document = _documentService.Document;
         UpdateHeader();
         UpdateFooter();
@@ -251,7 +246,6 @@ internal sealed class UIService
         _selectedLineBeforeHelpWasShown = _view.SelectedLine;
         _topLineBeforeHelpWasShown = _view.TopLine;
 
-        _view.LineRenderer = ViewLineRenderer.Default;
         _view.Document = new HelpDocument(commands);
 
         _helpShowing = true;

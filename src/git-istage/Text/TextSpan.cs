@@ -1,6 +1,6 @@
-﻿namespace GitIStage.Patching.Text;
+﻿namespace GitIStage.Text;
 
-public readonly struct TextSpan
+public readonly struct TextSpan : IEquatable<TextSpan>
 {
     public TextSpan(int start, int length)
     {
@@ -38,5 +38,30 @@ public readonly struct TextSpan
         return Start <= position && position < End;
     }
 
+    public bool Equals(TextSpan other)
+    {
+        return Start == other.Start && Length == other.Length;
+    }
+
+    public override bool Equals(object? obj)
+    {
+        return obj is TextSpan other && Equals(other);
+    }
+
+    public override int GetHashCode()
+    {
+        return HashCode.Combine(Start, Length);
+    }
+
+    public static bool operator ==(TextSpan left, TextSpan right)
+    {
+        return left.Equals(right);
+    }
+
+    public static bool operator !=(TextSpan left, TextSpan right)
+    {
+        return !left.Equals(right);
+    }
+    
     public override string ToString() => $"{Start}..{End}";
 }

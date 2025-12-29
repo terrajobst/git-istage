@@ -2,7 +2,7 @@
 using System.Diagnostics;
 using System.Text.RegularExpressions;
 using GitIStage.Patching.Headers;
-using GitIStage.Patching.Text;
+using GitIStage.Text;
 
 namespace GitIStage.Patching;
 

@@ -1,5 +1,4 @@
 ﻿using System.Text.RegularExpressions;
-using GitIStage.Patching;
 using GitIStage.UI;
 using LibGit2Sharp;
 

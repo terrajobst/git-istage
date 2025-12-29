@@ -1,4 +1,4 @@
-﻿using GitIStage.Patching.Text;
+﻿using GitIStage.Text;
 
 namespace GitIStage.Patching;
 
@@ -19,9 +19,9 @@ public abstract class PatchLine : PatchNode
 
     public TextLine TextLine { get; }
 
-    public ReadOnlySpan<char> Text => Root.Text.ToString().AsSpan(TextLine.Start, TextLine.Length);
+    public ReadOnlySpan<char> Text => Root.Text.AsSpan(TextLine.Span);
 
-    public ReadOnlySpan<char> LineBreak => Root.Text.ToString().AsSpan(TextLine.LineBreakSpan.Start, TextLine.LineBreakSpan.Length);
+    public ReadOnlySpan<char> LineBreak => Root.Text.AsSpan(TextLine.SpanLineBreak);
 
     public override IEnumerable<PatchNode> Children => [];
 }

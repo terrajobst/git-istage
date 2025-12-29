@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Patching.Text;
+﻿namespace GitIStage.Text;
 
 public sealed class TextLine
 {
@@ -16,14 +16,22 @@ public sealed class TextLine
     }
 
     public SourceText Text { get; }
+    
     public int LineIndex => Text.GetLineIndex(Span.Start);
+    
     public int Start { get; }
+    
     public int Length { get; }
+    
     public int End => Start + Length;
+    
     public int LengthIncludingLineBreak { get; }
+    
     public TextSpan Span => new TextSpan(Start, Length);
+    
     public TextSpan SpanIncludingLineBreak => new TextSpan(Start, LengthIncludingLineBreak);
-    public TextSpan LineBreakSpan => TextSpan.FromBounds(Span.End, SpanIncludingLineBreak.End); 
+
+    public TextSpan SpanLineBreak => TextSpan.FromBounds(Span.End, SpanIncludingLineBreak.End); 
     
     public override string ToString() => Text.ToString(Span);
 }

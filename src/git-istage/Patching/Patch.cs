@@ -1,6 +1,6 @@
 ﻿using System.Collections.Frozen;
 using System.Collections.Immutable;
-using GitIStage.Patching.Text;
+using GitIStage.Text;
 
 namespace GitIStage.Patching;
 

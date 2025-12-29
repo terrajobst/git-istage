@@ -1,6 +1,6 @@
 ﻿using System.Text;
 using GitIStage.Patching;
-
+using GitIStage.Text;
 using Patch = GitIStage.Patching.Patch;
 
 namespace GitIStage.UI;
@@ -48,6 +48,38 @@ internal sealed class FileDocument : Document
             return null;
 
         return _patch.Entries[changeIndex];
+    }
+
+    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    {
+        var entry = GetEntry(index);
+        if (entry is not null)
+        {
+            var line = GetLine(index);
+            var foreground = GetForegroundColor(entry);
+            
+            // Change
+            yield return new StyledSpan(new TextSpan(8, 12), foreground, null);
+
+            // Path
+            yield return new StyledSpan(TextSpan.FromBounds(20, line.Length), ConsoleColor.DarkCyan, null);
+        }
+    }
+
+    private static ConsoleColor? GetForegroundColor(PatchEntry changes)
+    {
+        switch (changes.ChangeKind)
+        {
+            case PatchEntryChangeKind.Added:
+            case PatchEntryChangeKind.Copied:
+                return ConsoleColor.DarkGreen;
+            case PatchEntryChangeKind.Renamed:
+            case PatchEntryChangeKind.Deleted:
+            case PatchEntryChangeKind.Modified:
+                return ConsoleColor.DarkRed;
+            default:
+                return null;
+        }
     }
 
     public static FileDocument Create(string? patchText, bool viewStage)

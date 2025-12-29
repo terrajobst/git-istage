@@ -1,3 +1,5 @@
+using GitIStage.Text;
+
 namespace GitIStage.UI;
 
 internal abstract class Document
@@ -12,6 +14,8 @@ internal abstract class Document
     public abstract int GetLineIndex(int index);
     public abstract int FindEntryIndex(int lineIndex);
 
+    public virtual IEnumerable<StyledSpan> GetLineStyles(int index) => [];
+    
     private sealed class EmptyDocument : Document
     {
         public override int Height => 0;

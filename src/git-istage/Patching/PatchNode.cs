@@ -1,5 +1,5 @@
 ﻿using System.Diagnostics;
-using GitIStage.Patching.Text;
+using GitIStage.Text;
 
 namespace GitIStage.Patching;
 
