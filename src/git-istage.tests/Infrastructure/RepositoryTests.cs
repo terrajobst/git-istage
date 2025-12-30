@@ -220,8 +220,8 @@ public abstract class RepositoryTests : IDisposable
             if (colon < 0)
                 continue;
 
-            var changeText = line.Substring(0, colon).Trim();
-            var path = line.Substring(colon + 1).Trim();
+            var changeText = line.Slice(0, colon).Trim();
+            var path = line.Slice(colon + 1).Trim();
 
             if (changeText.Length == 0 || path.Length == 0)
                 continue;

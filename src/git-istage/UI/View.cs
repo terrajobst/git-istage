@@ -175,12 +175,12 @@ internal sealed class View
             if (clippedSpan.Span.Start > p)
             {
                 var missingSpan = TextSpan.FromBounds(p, clippedSpan.Span.Start);
-                Console.Write(line.AsSpan(missingSpan));
+                Console.Write(line.Slice(missingSpan));
             }
 
             Vt100.SetForegroundColor(clippedSpan.Foreground);
             Vt100.SetBackgroundColor(lineBackground ?? clippedSpan.Background);
-            Console.Write(line.AsSpan(clippedSpan.Span));
+            Console.Write(line.Slice(clippedSpan.Span));
             
             p = clippedSpan.Span.End;
         }
@@ -191,7 +191,7 @@ internal sealed class View
             Vt100.SetBackgroundColor(lineBackground);
 
             var remainderSpan = TextSpan.FromBounds(p, clippedLineSpan.End);
-            Console.Write(line.AsSpan(remainderSpan));
+            Console.Write(line.Slice(remainderSpan));
         }
 
         Vt100.EraseRestOfCurrentLine();
@@ -220,7 +220,7 @@ internal sealed class View
                     {
                         Vt100.SetCursorPosition(clippedSpan.Start - LeftChar, visualLine);
                         Vt100.NegativeColors();
-                        Console.Write(line.Substring(clippedSpan.Start, clippedSpan.Length));
+                        Console.Write(line.Slice(clippedSpan));
                         Vt100.PositiveColors();
                     }
                 }

@@ -25,7 +25,7 @@ internal sealed class FileDocument : Document
 
     public Patch Patch => _patch;
 
-    public override string GetLine(int index)
+    public override ReadOnlySpan<char> GetLine(int index)
     {
         return _lines[index];
     }
@@ -51,13 +51,14 @@ internal sealed class FileDocument : Document
         if (entry is not null)
         {
             var line = GetLine(index);
+            var lineLength = line.Length;
             var foreground = GetForegroundColor(entry);
 
             // Change
             yield return new StyledSpan(new TextSpan(8, 12), foreground, null);
 
             // Path
-            yield return new StyledSpan(TextSpan.FromBounds(20, line.Length), ConsoleColor.DarkCyan, null);
+            yield return new StyledSpan(TextSpan.FromBounds(20, lineLength), ConsoleColor.DarkCyan, null);
         }
     }
 

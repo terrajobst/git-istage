@@ -29,7 +29,7 @@ internal sealed class PatchDocument : Document
 
     public override int Width { get; }
 
-    public override string GetLine(int index)
+    public override ReadOnlySpan<char> GetLine(int index)
     {
         var span = Patch.Lines[index].Span;
         return Patch.Text.ToString(span);

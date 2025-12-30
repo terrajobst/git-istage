@@ -10,16 +10,17 @@ internal abstract class Document
 
     public abstract int Width { get; }
 
-    public abstract string GetLine(int index);
+    public abstract ReadOnlySpan<char> GetLine(int index);
 
     public virtual IEnumerable<StyledSpan> GetLineStyles(int index) => [];
     
     private sealed class EmptyDocument : Document
     {
         public override int Height => 0;
+
         public override int Width => 0;
 
-        public override string GetLine(int index)
+        public override ReadOnlySpan<char> GetLine(int index)
         {
             throw new ArgumentOutOfRangeException(nameof(index));
         }

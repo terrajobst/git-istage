@@ -3,6 +3,9 @@ using GitIStage.Patches;
 
 namespace GitIStage.UI;
 
+// TODO: OK, this simplified the Document base type, but it feels like we want some help from the document
+//       here. Maybe the way to do this is by having an interface, like IPatchNavigable or something plus
+//       some extension methods on Patch.
 internal static class DocumentExtensions
 {
     // Navigate between files
