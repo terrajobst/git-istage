@@ -8,27 +8,16 @@ namespace GitIStage.UI;
 internal sealed class FileDocument : Document
 {
     private readonly int _indexOfFirstFile;
-    private readonly string[] _lines;
     private readonly Patch _patch;
 
-    private FileDocument(int indexOfFirstFile, string[] lines, Patch patch, int width)
+    private FileDocument(SourceText sourceText, int indexOfFirstFile, Patch patch)
+        : base(sourceText)
     {
         _indexOfFirstFile = indexOfFirstFile;
-        _lines = lines;
         _patch = patch;
-        Width = width;
     }
-
-    public override int Height => _lines.Length;
-
-    public override int Width { get; }
 
     public Patch Patch => _patch;
-
-    public override ReadOnlySpan<char> GetLine(int index)
-    {
-        return _lines[index];
-    }
 
     public PatchEntry? GetEntry(int index)
     {
@@ -103,14 +92,8 @@ internal sealed class FileDocument : Document
         }
 
         const int indexOfFirstFile = 3;
-        var lines = builder.Length == 0
-                    ? Array.Empty<string>()
-                    : builder.ToString().Split(Environment.NewLine);
+        var sourceText = SourceText.From(builder.ToString());
 
-        var width = lines.Select(l => l.Length)
-                            .DefaultIfEmpty(0)
-                            .Max();
-
-        return new FileDocument(indexOfFirstFile, lines, patch, width);
+        return new FileDocument(sourceText, indexOfFirstFile, patch);
     }
 }

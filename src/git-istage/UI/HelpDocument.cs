@@ -1,13 +1,18 @@
 using System.Text;
 using GitIStage.Commands;
+using GitIStage.Text;
 
 namespace GitIStage.UI;
 
 internal sealed class HelpDocument : Document
 {
-    private readonly string[] _lines;
 
-    public HelpDocument(IReadOnlyCollection<ConsoleCommand> commands)
+    private HelpDocument(SourceText sourceText)
+        : base(sourceText)
+    {
+    }
+
+    public static HelpDocument Create(IReadOnlyCollection<ConsoleCommand> commands)
     {
         var rows = commands.SelectMany(c => c.KeyBindings, (c, k) => (Command: c, KeyBinding: k))
                            .Select(t => (KeyBinding: t.KeyBinding.ToString(), t.Command.Name, t.Command.Description))
@@ -21,12 +26,10 @@ internal sealed class HelpDocument : Document
                                 .DefaultIfEmpty(0)
                                 .Max();
 
-        var lines = new List<string>();
         var sb = new StringBuilder();
 
         foreach (var (keyBinding, name, description) in rows)
         {
-            sb.Clear();
             sb.Append(keyBinding);
             sb.Append(' ', maxKeyBindingLength - keyBinding.Length);
             sb.Append(" | ");
@@ -34,22 +37,10 @@ internal sealed class HelpDocument : Document
             sb.Append(' ', maxNameLength - name.Length);
             sb.Append(" | ");
             sb.Append(description);
-            lines.Add(sb.ToString());
+            sb.AppendLine();
         }
 
-        _lines = lines.ToArray();
-
-        Width = _lines.Select(l => l.Length)
-                      .DefaultIfEmpty(0)
-                      .Max();
-    }
-
-    public override int Height => _lines.Length;
-
-    public override int Width { get; }
-
-    public override ReadOnlySpan<char> GetLine(int index)
-    {
-        return _lines[index];
+        var sourceText = SourceText.From(sb.ToString());
+        return new HelpDocument(sourceText);
     }
 }

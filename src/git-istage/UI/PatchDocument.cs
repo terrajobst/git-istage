@@ -1,39 +1,23 @@
+using System.Diagnostics;
 using GitIStage.Patches;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
 
-// TODO: We should rethink PatchDocument and FileDocument.
-//       It seems both should have their text stored in SourceText. Rendering shouldn't create new strings
-//       but should simply use ReadOnlySpan<char> when calling Console.Write().
 internal sealed class PatchDocument : Document
 {
     private PatchDocument(Patch patch, bool isStaged)
+        : base(patch.Text)
     {
         ThrowIfNull(patch);
 
         Patch = patch;
         IsStaged = isStaged;
-
-        // TODO: This is super inefficient.
-        Width = patch.Lines.Select(l => l.Text.ToString())
-                           .DefaultIfEmpty(string.Empty)
-                           .Max(t => t.LengthVisual());
     }
 
     public Patch Patch { get; }
 
     public bool IsStaged { get; }
-
-    public override int Height => Patch.Lines.Length;
-
-    public override int Width { get; }
-
-    public override ReadOnlySpan<char> GetLine(int index)
-    {
-        var span = Patch.Lines[index].Span;
-        return Patch.Text.ToString(span);
-    }
 
     public override IEnumerable<StyledSpan> GetLineStyles(int index)
     {

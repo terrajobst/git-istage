@@ -31,6 +31,9 @@ public sealed class SourceText
         ThrowIfNull(sourceText);
         ThrowIfNull(text);
 
+        if (text.Length == 0)
+            return ImmutableArray<TextLine>.Empty;
+
         var result = ImmutableArray.CreateBuilder<TextLine>();
 
         var position = 0;

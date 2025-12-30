@@ -6,23 +6,31 @@ internal abstract class Document
 {
     public static readonly Document Empty = new EmptyDocument();
 
-    public abstract int Height { get; }
+    protected Document(SourceText sourceText)
+    {
+        ThrowIfNull(sourceText);
 
-    public abstract int Width { get; }
+        SourceText = sourceText;
 
-    public abstract ReadOnlySpan<char> GetLine(int index);
+        // TODO: This is super inefficient.
+        Width = sourceText.Lines.Select(l => l.Text.ToString())
+            .DefaultIfEmpty(string.Empty)
+            .Max(t => t.LengthVisual());
+    }
+
+    public SourceText SourceText { get; }
+    
+    public int Height => SourceText.Lines.Length;
+
+    public int Width { get; }
+
+    public ReadOnlySpan<char> GetLine(int index)
+    {
+        var lineSpan = SourceText.Lines[index].Span;
+        return SourceText.AsSpan().Slice(lineSpan);
+    }
 
     public virtual IEnumerable<StyledSpan> GetLineStyles(int index) => [];
-    
-    private sealed class EmptyDocument : Document
-    {
-        public override int Height => 0;
 
-        public override int Width => 0;
-
-        public override ReadOnlySpan<char> GetLine(int index)
-        {
-            throw new ArgumentOutOfRangeException(nameof(index));
-        }
-    }
+    private sealed class EmptyDocument() : Document(SourceText.Empty);
 }

@@ -144,7 +144,7 @@ internal sealed class UIService
         var workingModified = workingChanges.Modified.Count();
         var workingDeleted = workingChanges.Deleted.Count();
 
-        var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits.ToString()}" : "";
+        var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits}" : "";
 
         _footer.Text = $" [{_gitService.Repository.Head.FriendlyName} +{stageAdded} ~{stageModified} -{stageDeleted} | +{workingAdded} ~{workingModified} -{workingDeleted}]    {lineNumberText} ";
     }
@@ -247,7 +247,7 @@ internal sealed class UIService
         _selectedLineBeforeHelpWasShown = _view.SelectedLine;
         _topLineBeforeHelpWasShown = _view.TopLine;
 
-        _view.Document = new HelpDocument(commands);
+        _view.Document = HelpDocument.Create(commands);
 
         _helpShowing = true;
 
