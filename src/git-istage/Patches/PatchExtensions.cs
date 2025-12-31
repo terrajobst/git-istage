@@ -65,9 +65,9 @@ internal static class PatchExtensions
                 newPatch.Append(entry.Headers[0].LineBreak);
 
                 var changes = entry;
-                var oldPath = changes.OldPath.Replace(@"\", "/");
+                var oldPath = changes.OldPath;
                 var oldExists = oldLength != 0 || changes.OldMode != 0;
-                var path = changes.NewPath.Replace(@"\", "/");
+                var newPath = changes.NewPath;
 
                 if (oldExists)
                 {
@@ -79,7 +79,7 @@ internal static class PatchExtensions
                     newPatch.Append("--- /dev/null\n");
                 }
 
-                newPatch.Append($"+++ b/{path}\n");
+                newPatch.Append($"+++ b/{newPath}\n");
 
                 // Write hunk header
 
