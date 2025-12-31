@@ -34,24 +34,24 @@ internal sealed class PatchingService
                         var path = change.ChangeKind == PatchEntryChangeKind.Deleted
                                     ? change.OldPath
                                     : change.NewPath;
-                        _gitService.ExecuteGit($"add \"{path}\"");
+                        _gitService.Add(path);
                     }
                     else if (direction == PatchDirection.Unstage)
                     {
                         if (change.ChangeKind == PatchEntryChangeKind.Deleted)
-                            _gitService.ExecuteGit($"restore --staged \"{change.OldPath}\"");
+                            _gitService.RestoreStaged(change.OldPath);
                         else
-                            _gitService.ExecuteGit($"reset \"{change.NewPath}\"");
+                            _gitService.Reset(change.NewPath);
                     }
                     else if (direction == PatchDirection.Reset)
                     {
                         if (change.ChangeKind == PatchEntryChangeKind.Added)
                         {
-                            _gitService.ExecuteGit($"add \"{change.NewPath}\"");
-                            _gitService.ExecuteGit($"rm -f \"{change.NewPath}\"");
+                            _gitService.Add(change.NewPath);
+                            _gitService.RemoveForce(change.NewPath);
                         }
                         else
-                            _gitService.ExecuteGit($"checkout \"{change.OldPath}\"");
+                            _gitService.Checkout(change.OldPath);
                     }
                 }
             }

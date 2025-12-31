@@ -147,4 +147,23 @@ internal static class PatchExtensions
             return line.AncestorsAndSelf().OfType<PatchHunk>().FirstOrDefault();
         }
     }
+
+    public static (int Added, int Modified, int Deleted) GetStats(this Patch patch)
+    {
+        var added = 0;
+        var modified = 0;
+        var deleted = 0;
+
+        foreach (var entry in patch.Entries)
+        {
+            if (entry.ChangeKind == PatchEntryChangeKind.Added)
+                added++;
+            else if (entry.ChangeKind == PatchEntryChangeKind.Deleted)
+                deleted++;
+            else
+                modified++;
+        }
+
+        return (added, modified, deleted);
+    }
 }

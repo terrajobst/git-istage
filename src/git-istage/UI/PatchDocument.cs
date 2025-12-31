@@ -6,18 +6,15 @@ namespace GitIStage.UI;
 
 internal sealed class PatchDocument : Document
 {
-    private PatchDocument(Patch patch, bool isStaged)
+    private PatchDocument(Patch patch)
         : base(patch.Text)
     {
         ThrowIfNull(patch);
 
         Patch = patch;
-        IsStaged = isStaged;
     }
 
     public Patch Patch { get; }
-
-    public bool IsStaged { get; }
 
     public override IEnumerable<StyledSpan> GetLineStyles(int index)
     {
@@ -72,9 +69,8 @@ internal sealed class PatchDocument : Document
             : null;
     }
 
-    public static PatchDocument Create(string? patchText, bool isStaged)
+    public static PatchDocument Create(Patch patch)
     {
-        var patch = Patch.Parse(patchText ?? string.Empty);
-        return new PatchDocument(patch, isStaged);
+        return new PatchDocument(patch);
     }
 }

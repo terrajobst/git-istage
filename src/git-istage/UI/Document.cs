@@ -11,11 +11,10 @@ internal abstract class Document
         ThrowIfNull(sourceText);
 
         SourceText = sourceText;
-
-        // TODO: This is super inefficient.
-        Width = sourceText.Lines.Select(l => l.Text.ToString())
-            .DefaultIfEmpty(string.Empty)
-            .Max(t => t.LengthVisual());
+        Width = sourceText.Lines
+            .Select(l => l.Text.AsSpan(l.Span).LengthVisual())
+            .DefaultIfEmpty(0)
+            .Max();
     }
 
     public SourceText SourceText { get; }

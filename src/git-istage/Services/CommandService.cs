@@ -113,19 +113,17 @@ internal sealed class CommandService
         if (!_gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index).Any())
             return;
 
-        var amendSwitch = amend ? "--amend " : string.Empty;
-
+        // TODO: Ensure this still works
         _uiService.Hide();
-        _gitService.ExecuteGit($"commit -v {amendSwitch}", capture: false, updateRepo: false);
+        _gitService.Commit(amend);
         _uiService.Show();
-        _gitService.UpdateRepository();
     }
 
     [CommandHandler("Stashes changes from the working copy, but leaves the stage as-is.", "Alt+S")]
     private void Stash()
     {
         if (_uiService.HelpShowing) return;
-        _gitService.ExecuteGit("stash -u -k");
+        _gitService.StashUntrackedKeepIndex();
     }
 
     [CommandHandler("Toggle between working copy changes and staged changes.", "T")]

@@ -133,16 +133,8 @@ internal sealed class UIService
             return;
         }
 
-        var tipTree = _gitService.Repository.Head.Tip?.Tree;
-        var stageChanges = _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index);
-        var stageAdded = stageChanges.Added.Count();
-        var stageModified = stageChanges.Modified.Count();
-        var stageDeleted = stageChanges.Deleted.Count();
-
-        var workingChanges = _gitService.Repository.Diff.Compare<TreeChanges>(null, true);
-        var workingAdded = workingChanges.Added.Count();
-        var workingModified = workingChanges.Modified.Count();
-        var workingDeleted = workingChanges.Deleted.Count();
+        var (stageAdded, stageModified, stageDeleted) = _documentService.IndexPatch.GetStats();
+        var (workingAdded, workingModified, workingDeleted) = _documentService.WorkingCopyPatch.GetStats();
 
         var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits}" : "";
 

@@ -129,6 +129,8 @@ public abstract class RepositoryTests : IDisposable
 
     private void EnsureDocumentIsUpToDate()
     {
+        _documentService.RecomputePatch();
+
         if (!_wroteToWorkingDirectory)
             return;
 

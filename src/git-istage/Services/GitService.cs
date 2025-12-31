@@ -8,11 +8,6 @@ using Patch = GitIStage.Patches.Patch;
 
 namespace GitIStage.Services;
 
-// TODO: ExecuteGit() should be private. We should have first class methods for all Git operations.
-//       This allows us to raise an event that includes the information of changed files. The
-//       DocumentService can use that to update the patch intelligently, rather than asking for a
-//       full patch each time.
-// TODO: UpdateRepository() should be private.
 internal sealed class GitService : IDisposable
 {
     private readonly GitEnvironment _environment;
@@ -21,7 +16,15 @@ internal sealed class GitService : IDisposable
     public GitService(GitEnvironment environment)
     {
         _environment = environment;
-        UpdateRepository();
+        InitializeRepo();
+    }
+
+    [MemberNotNull(nameof(_repository))]
+    private void InitializeRepo()
+    {
+        // NOTE: We're re-creating the repo because when we shell out to Git the repository state will be stale.
+        _repository?.Dispose();
+        _repository = new Repository(_environment.RepositoryPath);
     }
 
     public void Dispose()
@@ -30,16 +33,6 @@ internal sealed class GitService : IDisposable
     }
 
     public Repository Repository => _repository;
-
-    [MemberNotNull(nameof(_repository))]
-    public void UpdateRepository()
-    {
-        // NOTE: We're re-creating the repo because when we shell out to Git the repository state will be stale.
-        _repository?.Dispose();
-        _repository = new Repository(_environment.RepositoryPath);
-
-        RepositoryChanged?.Invoke(this, EventArgs.Empty);
-    }
 
     public void ApplyPatch(Patch patch, PatchDirection direction)
     {
@@ -52,7 +45,7 @@ internal sealed class GitService : IDisposable
         File.WriteAllText(patchFilePath, patch.ToString());
         try
         {
-            ExecuteGit(command, capture: true, updateRepo: false);
+            ExecuteGit(command);
         }
         catch (GitCommandFailedException ex)
         {
@@ -67,10 +60,14 @@ internal sealed class GitService : IDisposable
             File.Delete(patchFilePath);
         }
 
-        UpdateRepository();
+        var paths = patch.Entries.SelectMany(e => new[] { e.OldPath, e.NewPath })
+            .Where(p => !string.IsNullOrEmpty(p))
+            .ToArray();
+
+        RaiseFileChange(paths);
     }
 
-    public void ExecuteGit(string arguments, bool capture = true, bool updateRepo = true)
+    private void ExecuteGit(string arguments, bool capture = true)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -121,10 +118,71 @@ internal sealed class GitService : IDisposable
             if (logContainsErrors)
                 throw ExceptionBuilder.GitCommandFailed(arguments, log);
         }
-
-        if (updateRepo)
-            UpdateRepository();
     }
 
-    public event EventHandler? RepositoryChanged;
+    public void Reset(string path)
+    {
+        ExecuteGit($"reset \"{path}\"");
+        RaiseFileChange(path);
+    }
+
+    public void Add(string path)
+    {
+        ExecuteGit($"add \"{path}\"");
+        RaiseFileChange(path);
+    }
+
+    public void RemoveForce(string path)
+    {
+        ExecuteGit($"rm -f \"{path}\"");
+        RaiseFileChange(path);
+    }
+
+    public void Checkout(string path)
+    {
+        ExecuteGit($"checkout \"{path}\"");
+        RaiseFileChange(path);
+    }
+
+    public void RestoreStaged(string path)
+    {
+        ExecuteGit($"restore --staged \"{path}\"");
+        RaiseFileChange(path);
+    }
+
+    public void StashUntrackedKeepIndex()
+    {
+        ExecuteGit("stash -u -k");
+        RaiseFullReset();
+    }
+
+    public void Commit(bool amend)
+    {
+        var amendSwitch = amend ? "--amend " : string.Empty;
+        ExecuteGit($"commit -v {amendSwitch}", capture: false);
+        RaiseFullReset();
+    }
+
+    private void RaiseFullReset()
+    {
+        Raise(new RepositoryChangedEventArgs());
+    }
+
+    private void RaiseFileChange(string path)
+    {
+        Raise(new RepositoryChangedEventArgs(path));
+    }
+
+    private void RaiseFileChange(IEnumerable<string> paths)
+    {
+        Raise(new RepositoryChangedEventArgs(paths));
+    }
+
+    private void Raise(RepositoryChangedEventArgs e)
+    {
+        InitializeRepo();
+        RepositoryChanged?.Invoke(this, e);
+    }
+
+    public event EventHandler<RepositoryChangedEventArgs>? RepositoryChanged;
 }

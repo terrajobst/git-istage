@@ -67,10 +67,8 @@ internal sealed class FileDocument : Document
         }
     }
 
-    public static FileDocument Create(string? patchText, bool viewStage)
+    public static FileDocument Create(Patch patch, bool viewStage)
     {
-        var patch = Patch.Parse(patchText ?? string.Empty);
-
         var builder = new StringBuilder();
         if (patch.Entries.Any())
         {

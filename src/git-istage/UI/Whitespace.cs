@@ -4,7 +4,7 @@ namespace GitIStage.UI;
 
 internal static class Whitespace
 {
-    public static int LengthVisual(this string text)
+    public static int LengthVisual(this ReadOnlySpan<char> text)
     {
         var result = 0;
         for (var i = 0; i < text.Length; i++)
@@ -12,7 +12,7 @@ internal static class Whitespace
         return result;
     }
 
-    public static int LengthVisual(this string text, int index)
+    public static int LengthVisual(this ReadOnlySpan<char> text, int index)
     {
         if (text[index] != '\t')
             return 1;
