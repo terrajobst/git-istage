@@ -47,8 +47,8 @@ internal sealed class UIService
         if (OperatingSystem.IsWindows())
             Win32Console.Initialize();
 
-        Vt100.SwitchToAlternateBuffer();
         Vt100.HideCursor();
+        Vt100.SwitchToAlternateBuffer();
 
         ResizeScreen();
     }
@@ -58,6 +58,9 @@ internal sealed class UIService
         Vt100.ResetScrollMargins();
         Vt100.SwitchToMainBuffer();
         Vt100.ShowCursor();
+        
+        if (OperatingSystem.IsWindows())
+            Win32Console.Restore();
     }
 
     public void ResizeScreen()

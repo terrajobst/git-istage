@@ -22,6 +22,9 @@ internal static class Win32Console
     private const uint ENABLE_VIRTUAL_TERMINAL_PROCESSING = 0x0004;
 #pragma warning restore IDE1006 // Naming Styles
 
+    private static bool _initialized;
+    private static uint _originalConsoleMode;
+    
     public static void Initialize()
     {
         if (!OperatingSystem.IsWindows())
@@ -29,12 +32,32 @@ internal static class Win32Console
 
         var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
 
-        if (GetConsoleMode(iStdOut, out var outConsoleMode))
+        if (!_initialized)
         {
-            outConsoleMode &= ~ENABLE_WRAP_AT_EOL_OUTPUT;
-            outConsoleMode |= DISABLE_NEWLINE_AUTO_RETURN | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            if (!GetConsoleMode(iStdOut, out _originalConsoleMode))
+                Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
 
-            SetConsoleMode(iStdOut, outConsoleMode);
+            _initialized = true;
         }
+
+        var newConsoleMode = _originalConsoleMode;
+        newConsoleMode &= ~ENABLE_WRAP_AT_EOL_OUTPUT;
+        newConsoleMode |= DISABLE_NEWLINE_AUTO_RETURN | ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+
+        if (!SetConsoleMode(iStdOut, newConsoleMode))
+            Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
+    }
+    
+    public static void Restore()
+    {
+        if (!OperatingSystem.IsWindows())
+            throw new PlatformNotSupportedException();
+
+        if (!_initialized)
+            return;
+
+        var iStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+        if (!SetConsoleMode(iStdOut, _originalConsoleMode))
+            Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
     }
 }
