@@ -113,10 +113,12 @@ internal sealed class CommandService
         if (!_gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index).Any())
             return;
 
-        // TODO: Ensure this still works
-        _uiService.Hide();
-        _gitService.Commit(amend);
-        _uiService.Show();
+        using (_gitService.SuspendEvents())
+        {
+            _uiService.Hide();
+            _gitService.Commit(amend);
+            _uiService.Show();
+        }
     }
 
     [CommandHandler("Stashes changes from the working copy, but leaves the stage as-is.", "Alt+S")]

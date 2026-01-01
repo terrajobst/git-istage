@@ -12,6 +12,7 @@ internal sealed class GitService : IDisposable
 {
     private readonly GitEnvironment _environment;
     private Repository _repository;
+    private int _updateCounter;
 
     public GitService(GitEnvironment environment)
     {
@@ -180,9 +181,43 @@ internal sealed class GitService : IDisposable
 
     private void Raise(RepositoryChangedEventArgs e)
     {
+        if (_updateCounter > 0)
+            return;
+
         InitializeRepo();
         RepositoryChanged?.Invoke(this, e);
     }
 
+    public IDisposable SuspendEvents()
+    {
+        _updateCounter++;
+        return new SuspendedEvents(this);
+    }
+
+    private void RestoreEvents()
+    {
+        _updateCounter--;
+
+        if (_updateCounter == 0)
+            RaiseFullReset();
+    }
+    
     public event EventHandler<RepositoryChangedEventArgs>? RepositoryChanged;
+    
+    private sealed class SuspendedEvents : IDisposable
+    {
+        private readonly GitService _gitService;
+
+        public SuspendedEvents(GitService gitService)
+        {
+            ThrowIfNull(gitService);
+
+            _gitService = gitService;
+        }
+        
+        public void Dispose()
+        {
+            _gitService.RestoreEvents();
+        }
+    }
 }
