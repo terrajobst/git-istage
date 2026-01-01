@@ -1,6 +1,4 @@
-﻿using GitIStage.Text;
-
-namespace GitIStage.Tests;
+﻿namespace GitIStage.Tests;
 
 public class StyledSpanTests
 {

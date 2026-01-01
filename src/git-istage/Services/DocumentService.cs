@@ -1,8 +1,6 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using GitIStage.Patches;
-using GitIStage.Text;
 using GitIStage.UI;
 using LibGit2Sharp;
 
