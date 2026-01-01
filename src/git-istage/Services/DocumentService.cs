@@ -102,44 +102,13 @@ internal sealed class DocumentService
 
     private void UpdatePatch(ImmutableArray<string> affectedPaths)
     {
-        var affectedPathSet = new HashSet<string>(affectedPaths);
-        var patch = GitIStagePatch.Parse(GetPatch(stage: false, affectedPaths));
+        var affectedPathSet = affectedPaths.ToHashSet();
+        var patchForAffectedPaths = GitIStagePatch.Parse(GetPatch(stage: false, affectedPathSet));
+        var result = _workingCopyPatch.Update(affectedPathSet, patchForAffectedPaths);
 
-        var newPatchEntryByPath = patch.Entries.ToDictionary(GetPath);
-        var entries = new List<PatchEntry>();
-
-        foreach (var oldEntry in _workingCopyPatch.Entries)
-        {
-            var path = GetPath(oldEntry);
-            if (newPatchEntryByPath.TryGetValue(path, out var newEntry))
-                entries.Add(newEntry);
-            else if (!affectedPathSet.Contains(path))
-                entries.Add(oldEntry);
-        }
-
-        var sb = new StringBuilder();
-        foreach (var entry in entries)
-            WriteEntry(sb, entry);
-
-        _workingCopyPatch = GitIStagePatch.Parse(sb.ToString());
+        _workingCopyPatch = result;
         _indexPatch = GitIStagePatch.Parse(GetPatch(stage: true));
         UpdateDocument();
-
-        static string GetPath(PatchEntry e)
-        {
-            return string.IsNullOrEmpty(e.NewPath) ? e.OldPath : e.NewPath;
-        }
-
-        static void WriteEntry(StringBuilder sb, PatchEntry e)
-        {
-            var text = e.Root.Text;
-            var firstLine = text.GetLineIndex(e.Span.Start);
-            var lastLine = text.GetLineIndex(e.Span.End);
-            var start = text.Lines[firstLine].Start;
-            var end = text.Lines[lastLine].SpanIncludingLineBreak.End;
-            var span = TextSpan.FromBounds(start, end);
-            sb.Append(text.AsSpan(span));
-        }
     }
 
     private string GetPatch(bool stage, IEnumerable<string>? affectedPaths = null)

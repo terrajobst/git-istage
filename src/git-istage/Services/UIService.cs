@@ -133,8 +133,8 @@ internal sealed class UIService
             return;
         }
 
-        var (stageAdded, stageModified, stageDeleted) = _documentService.IndexPatch.GetStats();
-        var (workingAdded, workingModified, workingDeleted) = _documentService.WorkingCopyPatch.GetStats();
+        var (stageAdded, stageModified, stageDeleted) = _documentService.IndexPatch.GetFileStatistics();
+        var (workingAdded, workingModified, workingDeleted) = _documentService.WorkingCopyPatch.GetFileStatistics();
 
         var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits}" : "";
 

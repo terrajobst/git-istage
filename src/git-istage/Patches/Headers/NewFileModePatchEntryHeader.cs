@@ -4,7 +4,7 @@ namespace GitIStage.Patches.Headers;
 
 public sealed class NewFileModePatchEntryHeader : PatchEntryHeader
 {
-    internal NewFileModePatchEntryHeader(Patch root, TextLine line, int mode)
+    internal NewFileModePatchEntryHeader(Patch root, TextLine line, PatchEntryMode mode)
         : base(root, line)
     {
         Mode = mode;
@@ -12,5 +12,5 @@ public sealed class NewFileModePatchEntryHeader : PatchEntryHeader
 
     public override PatchNodeKind Kind => PatchNodeKind.NewFileModeHeader;
 
-    public int Mode { get; }
+    public PatchEntryMode Mode { get; }
 }

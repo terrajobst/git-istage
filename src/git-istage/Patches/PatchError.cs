@@ -26,4 +26,10 @@ internal static class PatchError
     {
         return new FormatException($"Invalid patch. Expected mode at {lineNumber}:{column} but found '{text}'");
     }
+
+    public static Exception InvalidModeValue(int lineNumber, int column, int value)
+    {
+        var hex = Convert.ToString(value, 8);
+        return new FormatException($"Invalid patch. Expected mode at {lineNumber}:{column} but found '{hex}' which isn't a valid mode");
+    }
 }

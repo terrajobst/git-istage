@@ -303,13 +303,13 @@ internal sealed partial class PatchParser
         return number;
     }
 
-    private static int? ParseOptionalMode(TextLine line, Match match, string groupName)
+    private static PatchEntryMode ParseOptionalMode(TextLine line, Match match, string groupName)
     {
         var group = match.Groups[groupName];
-        return group.Success ? ParseMode(line, match, groupName) : null;
+        return group.Success ? ParseMode(line, match, groupName) : PatchEntryMode.Nonexistent;
     }
 
-    private static int ParseMode(TextLine line, Match match, string groupName)
+    private static PatchEntryMode ParseMode(TextLine line, Match match, string groupName)
     {
         var group = match.Groups[groupName];
         var text = group.Value;
@@ -326,6 +326,28 @@ internal sealed partial class PatchParser
             throw PatchError.ExpectedMode(lineNumber, column, text);
         }
 
-        return value;
+        switch (value)
+        {
+            case 0x0000:
+                return PatchEntryMode.Nonexistent;
+            case 0x4000:
+                return PatchEntryMode.Directory;
+            case 0x81A4:
+                return PatchEntryMode.RegularNonExecutableFile;
+            case 0x81B4:
+                return PatchEntryMode.RegularNonExecutableGroupWriteableFile;
+            case 0x81ED:
+                return PatchEntryMode.RegularExecutableFile;
+            case 0xA000:
+                return PatchEntryMode.SymbolicLink;
+            case 0xE000:
+                return PatchEntryMode.Gitlink;
+            default:
+            {
+                var lineNumber = line.Text.GetLineIndex(line.Start) + 1;
+                var column = group.Index + 1;
+                throw PatchError.InvalidModeValue(lineNumber, column, value);
+            }
+        }
     }
 }

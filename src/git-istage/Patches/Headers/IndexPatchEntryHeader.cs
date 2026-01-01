@@ -8,7 +8,7 @@ public sealed class IndexPatchEntryHeader : PatchEntryHeader
                                    TextLine line,
                                    string hash1,
                                    string hash2,
-                                   int? mode)
+                                   PatchEntryMode mode)
         : base(root, line)
     {
         Hash1 = hash1;
@@ -22,5 +22,5 @@ public sealed class IndexPatchEntryHeader : PatchEntryHeader
 
     public string Hash2 { get; }
     
-    public int? Mode { get; }
+    public PatchEntryMode Mode { get; }
 }

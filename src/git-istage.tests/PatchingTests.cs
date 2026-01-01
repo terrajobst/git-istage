@@ -86,7 +86,7 @@ public class PatchingTests
 
         var header = AssertPatchHasSingleEntryWithHeader<IndexPatchEntryHeader>(text);
 
-        header.Mode.Should().Be(Convert.ToInt32("100644", 8));
+        header.Mode.Should().Be(PatchEntryMode.RegularNonExecutableFile);
     }
 
     [Fact]
@@ -132,7 +132,7 @@ public class PatchingTests
                    """;
 
         var header = AssertPatchHasSingleEntryWithHeader<OldModePatchEntryHeader>(text);
-        header.Mode.Should().Be(Convert.ToInt32("100755", 8));
+        header.Mode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -145,7 +145,7 @@ public class PatchingTests
                    """;
 
         var header = AssertPatchHasSingleEntryWithHeader<NewModePatchEntryHeader>(text);
-        header.Mode.Should().Be(Convert.ToInt32("100644", 8));
+        header.Mode.Should().Be(PatchEntryMode.RegularNonExecutableFile);
     }
 
     [Fact]
@@ -164,7 +164,7 @@ public class PatchingTests
                    """;
 
         var header = AssertPatchHasSingleEntryWithHeader<DeletedFileModePatchEntryHeader>(text);
-        header.Mode.Should().Be(Convert.ToInt32("100755", 8));
+        header.Mode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -183,7 +183,7 @@ public class PatchingTests
                    """;
 
         var header = AssertPatchHasSingleEntryWithHeader<NewFileModePatchEntryHeader>(text);
-        header.Mode.Should().Be(Convert.ToInt32("100755", 8));
+        header.Mode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -364,7 +364,7 @@ public class PatchingTests
                    """;
 
         var entry = AssertPatchHasSingleEntry(text);
-        entry.OldMode.Should().Be(Convert.ToInt32("100755", 8));
+        entry.OldMode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -416,7 +416,7 @@ public class PatchingTests
                    """;
 
         var entry = AssertPatchHasSingleEntry(text);
-        entry.OldMode.Should().Be(Convert.ToInt32("100755", 8));
+        entry.OldMode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -434,7 +434,7 @@ public class PatchingTests
                    """;
 
         var entry = AssertPatchHasSingleEntry(text);
-        entry.NewMode.Should().Be(Convert.ToInt32("100755", 8));
+        entry.NewMode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -467,7 +467,7 @@ public class PatchingTests
                    """;
 
         var entry = AssertPatchHasSingleEntry(text);
-        entry.NewMode.Should().Be(Convert.ToInt32("100755", 8));
+        entry.NewMode.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -780,9 +780,6 @@ public class PatchingTests
         ParseTextWithSpan(textWithMarkedSpan, out var text, out var markedSpan);
 
         var patch = Patch.Parse(text);
-
-        var markedLineIndex = patch.Text.GetLineIndex(markedSpan.Start);
-        var headerIndex = markedLineIndex;
 
         patch.Entries.Should().HaveCount(1);
 

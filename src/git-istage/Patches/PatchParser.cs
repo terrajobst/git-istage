@@ -179,21 +179,15 @@ internal sealed partial class PatchParser
                             ? newPathHeader.Path
                             : diffGitHeader.NewPath;
 
-        var oldMode = oldModeHeader is not null
-            ? oldModeHeader.Mode
-            : deletedFileModeHeader is not null
-                ? deletedFileModeHeader.Mode
-                : indexHeader?.Mode is not null
-                    ? indexHeader.Mode.Value
-                    : 0;
+        var oldMode = oldModeHeader?.Mode
+                      ?? deletedFileModeHeader?.Mode
+                      ?? indexHeader?.Mode
+                      ?? PatchEntryMode.Nonexistent;
 
-        var newMode = newModeHeader is not null
-            ? newModeHeader.Mode
-            : newFileModeHeader is not null
-                ? newFileModeHeader.Mode
-                : indexHeader?.Mode is not null
-                    ? indexHeader.Mode.Value
-                    : 0;
+        var newMode = newModeHeader?.Mode
+                      ?? newFileModeHeader?.Mode
+                      ?? indexHeader?.Mode
+                      ?? PatchEntryMode.Nonexistent;
 
         return new PatchEntry(Root, headers, hunks, oldPath, oldMode, newPath, newMode);
     }

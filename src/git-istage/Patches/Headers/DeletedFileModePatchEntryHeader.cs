@@ -4,7 +4,7 @@ namespace GitIStage.Patches.Headers;
 
 public sealed class DeletedFileModePatchEntryHeader : PatchEntryHeader
 {
-    internal DeletedFileModePatchEntryHeader(Patch root, TextLine line, int mode)
+    internal DeletedFileModePatchEntryHeader(Patch root, TextLine line, PatchEntryMode mode)
         : base(root, line)
     {
         Mode = mode;
@@ -12,5 +12,5 @@ public sealed class DeletedFileModePatchEntryHeader : PatchEntryHeader
 
     public override PatchNodeKind Kind => PatchNodeKind.DeletedFileModeHeader;
 
-    public int Mode { get; }
+    public PatchEntryMode Mode { get; }
 }

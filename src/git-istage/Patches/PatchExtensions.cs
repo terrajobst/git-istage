@@ -1,4 +1,5 @@
 using System.Text;
+using GitIStage.Text;
 
 namespace GitIStage.Patches;
 
@@ -8,6 +9,11 @@ internal static class PatchExtensions
     {
         return kind is PatchNodeKind.AddedLine or
                        PatchNodeKind.DeletedLine;
+    }
+
+    public static string ToOctalString(this PatchEntryMode mode)
+    {
+        return Convert.ToString((int)mode, 8);
     }
 
     public static Patch SelectForApplication(this Patch patch, IEnumerable<int> lineIndexes, PatchDirection direction)
@@ -25,10 +31,10 @@ internal static class PatchExtensions
             var hunkLines = entryLine.Select(i => (LineIndex: i, Hunk: FindHunk(entry, i)!))
                                      .GroupBy(t => t.Hunk, t => t.LineIndex);
 
-            foreach (var hunkLine in hunkLines)
+            foreach (var hunkLineGroup in hunkLines)
             {
-                var hunk = hunkLine.Key;
-                var lineSet = new HashSet<int>(hunkLine);
+                var hunk = hunkLineGroup.Key;
+                var lineSet = new HashSet<int>(hunkLineGroup);
 
                 // Get current hunk information
 
@@ -60,14 +66,21 @@ internal static class PatchExtensions
 
                 var newLength = oldLength + delta;
 
+                // Check if we're staging a deletion
+
+                var allLinesSelected = hunk.Lines.Select(l => l.TextLine.LineIndex)
+                                                 .All(i => lineSet.Contains(i));
+
                 // Add header
                 newPatch.Append(entry.Headers[0].Text);
                 newPatch.Append(entry.Headers[0].LineBreak);
 
                 var changes = entry;
+
                 var oldPath = changes.OldPath;
                 var oldExists = oldLength != 0 || changes.OldMode != 0;
-                var newPath = changes.NewPath;
+                var isDeletion = changes.NewMode == 0;
+                var newPath = isDeletion ? changes.OldPath : changes.NewPath;
 
                 if (oldExists)
                 {
@@ -75,11 +88,19 @@ internal static class PatchExtensions
                 }
                 else
                 {
-                    newPatch.Append($"new file mode {Convert.ToString(changes.NewMode, 8)}\n");
+                    newPatch.Append($"new file mode {changes.NewMode.ToOctalString()}\n");
                     newPatch.Append("--- /dev/null\n");
                 }
 
-                newPatch.Append($"+++ b/{newPath}\n");
+                if (!isDeletion || !allLinesSelected)
+                {
+                    newPatch.Append($"+++ b/{newPath}\n");
+                }
+                else
+                {
+                    newPatch.Append($"deleted file mode {changes.OldMode.ToOctalString()}\n");
+                    newPatch.Append("+++ /dev/null\n");
+                }
 
                 // Write hunk header
 
@@ -148,7 +169,7 @@ internal static class PatchExtensions
         }
     }
 
-    public static (int Added, int Modified, int Deleted) GetStats(this Patch patch)
+    public static (int Added, int Modified, int Deleted) GetFileStatistics(this Patch patch)
     {
         var added = 0;
         var modified = 0;
@@ -165,5 +186,44 @@ internal static class PatchExtensions
         }
 
         return (added, modified, deleted);
+    }
+
+    // TODO: I think we'll want some unit tests for this method
+    public static Patch Update(this Patch patch, HashSet<string> affectedPaths, Patch patchForAffectedPaths)
+    {
+        var partialPatchEntryByPath = patchForAffectedPaths.Entries.ToDictionary(GetPath);
+        var entries = new List<PatchEntry>();
+
+        foreach (var oldEntry in patch.Entries)
+        {
+            var path = GetPath(oldEntry);
+            if (partialPatchEntryByPath.TryGetValue(path, out var newEntry))
+                entries.Add(newEntry);
+            else if (!affectedPaths.Contains(path))
+                entries.Add(oldEntry);
+        }
+
+        var sb = new StringBuilder();
+        foreach (var entry in entries)
+            WriteEntry(sb, entry);
+
+        var result = Patch.Parse(sb.ToString());
+        return result;
+
+        static string GetPath(PatchEntry e)
+        {
+            return string.IsNullOrEmpty(e.NewPath) ? e.OldPath : e.NewPath;
+        }
+
+        static void WriteEntry(StringBuilder sb, PatchEntry e)
+        {
+            var text = e.Root.Text;
+            var firstLine = text.GetLineIndex(e.Span.Start);
+            var lastLine = text.GetLineIndex(e.Span.End);
+            var entryStart = text.Lines[firstLine].Start;
+            var entryEnd = text.Lines[lastLine].SpanIncludingLineBreak.End;
+            var span = TextSpan.FromBounds(entryStart, entryEnd);
+            sb.Append(text.AsSpan(span));
+        }
     }
 }

@@ -3,27 +3,15 @@ using GitIStage.Text;
 
 namespace GitIStage.Patches;
 
-// TODO: We should consider making mode an enum.
-//
-// From: http://stackoverflow.com/a/8347325/335418:
-//
-// Mode (Octal)   Meaning
-// 040000         Directory
-// 100644         Regular non-executable file
-// 100664         Regular non-executable group-writeable file
-// 100755         Regular executable file
-// 120000         Symbolic link
-// 160000         Gitlink
-
 public sealed class PatchEntry : PatchNode
 {
     internal PatchEntry(Patch root,
                         IEnumerable<PatchEntryHeader> headers,
                         IEnumerable<PatchHunk> hunks,
                         string oldPath,
-                        int oldMode,
+                        PatchEntryMode oldMode,
                         string newPath,
-                        int newMode)
+                        PatchEntryMode newMode)
     {
         ThrowIfNull(root);
         ThrowIfNull(headers);
@@ -79,9 +67,9 @@ public sealed class PatchEntry : PatchNode
 
     public string OldPath { get; }
 
-    public int OldMode { get; }
+    public PatchEntryMode OldMode { get; }
 
     public string NewPath { get; }
 
-    public int NewMode { get; }
+    public PatchEntryMode NewMode { get; }
 }
