@@ -66,7 +66,7 @@ internal sealed class PatchingService
             IEnumerable<int> lines;
             if (!entireHunk)
             {
-                lines = new[] { selectedLine };
+                lines = [selectedLine];
             }
             else
             {

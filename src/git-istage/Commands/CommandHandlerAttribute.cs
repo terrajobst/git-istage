@@ -16,7 +16,7 @@ internal sealed class CommandHandlerAttribute : Attribute
     public IReadOnlyList<ConsoleKeyBinding> GetKeyBindings()
     {
         return KeyBindings is null
-            ? Array.Empty<ConsoleKeyBinding>()
+            ? []
             : KeyBindings.Select(ConsoleKeyBinding.Parse).ToArray();
     }
 }
