@@ -1,69 +1,90 @@
 ﻿using System.Collections.Immutable;
-using GitIStage.Text;
+using GitIStage.Patches.EntryHeaders;
 
 namespace GitIStage.Patches;
 
 public sealed class PatchEntry : PatchNode
 {
     internal PatchEntry(Patch root,
-                        IEnumerable<PatchEntryHeader> headers,
-                        IEnumerable<PatchHunk> hunks,
-                        string oldPath,
-                        PatchEntryMode oldMode,
-                        string newPath,
-                        PatchEntryMode newMode)
+                        PatchEntryHeader header,
+                        ImmutableArray<PatchEntryAdditionalHeader> additionalHeaders,
+                        ImmutableArray<PatchHunk> hunks)
     {
         ThrowIfNull(root);
-        ThrowIfNull(headers);
-        ThrowIfNull(hunks);
-        ThrowIfNull(oldPath);
-        ThrowIfNull(newPath);
+        ThrowIfNull(header);
 
         Root = root;
-        Headers = [..headers];
-        Hunks = [..hunks];
-        OldPath = oldPath;
-        OldMode = oldMode;
-        NewPath = newPath;
-        NewMode = newMode;
+        Header = header;
+        AdditionalHeaders = additionalHeaders;
+        Hunks = hunks;
+        OldPath = header.OldPath.Value;
+        NewPath = header.NewPath.Value;
 
-        var everything = (PatchNode[])[..Headers, ..Hunks];
-        var start = everything.Min(n => n.Span.Start);
-        var end = everything.Max(n => n.Span.End);
-        Span = TextSpan.FromBounds(start, end);
+        foreach (var additionalHeader in additionalHeaders)
+        {
+            switch (additionalHeader.Kind)
+            {
+                case PatchNodeKind.NewPathHeader:
+                    var nph = (NewPathHeader)additionalHeader;
+                    NewPath = nph.Path.Value;
+                    break;
+                case PatchNodeKind.OldPathHeader:
+                    var oph = (OldPathHeader)additionalHeader;
+                    OldPath = oph.Path.Value;
+                    break;
+                case PatchNodeKind.IndexHeader:
+                    var ih = (IndexHeader)additionalHeader;
+                    if (ih.Mode is not null)
+                        OldMode = NewMode = ih.Mode.Value;
+                    break;
+                case PatchNodeKind.NewModeHeader:
+                    var nmh = (NewModeHeader)additionalHeader;
+                    NewMode = nmh.Mode.Value;
+                    Change = PatchEntryChange.ModeChanged;
+                    break;
+                case PatchNodeKind.OldModeHeader:
+                    var omh = (OldModeHeader)additionalHeader;
+                    OldMode = omh.Mode.Value;
+                    Change = PatchEntryChange.ModeChanged;
+                    break;
+                case PatchNodeKind.NewFileModeHeader:
+                    var nfmh = (NewFileModeHeader)additionalHeader;
+                    OldMode = PatchEntryMode.Nonexistent;
+                    NewMode = nfmh.Mode.Value;
+                    Change = PatchEntryChange.Added;
+                    break;
+                case PatchNodeKind.DeletedFileModeHeader:
+                    var dfmh = (DeletedFileModeHeader)additionalHeader;
+                    OldMode =  dfmh.Mode.Value;
+                    NewMode = PatchEntryMode.Nonexistent;
+                    Change = PatchEntryChange.Deleted;
+                    break;
+                case PatchNodeKind.CopyFromHeader:
+                case PatchNodeKind.CopyToHeader:
+                    Change = PatchEntryChange.Copied;
+                    break;
+                case PatchNodeKind.RenameFromHeader:
+                case PatchNodeKind.RenameToHeader:
+                    Change = PatchEntryChange.Renamed;
+                    break;
+            }
+        }
 
-        var isCopied = Headers.Any(h => h.Kind == PatchNodeKind.CopyToHeader);
-        var isRenamed = Headers.Any(h => h.Kind == PatchNodeKind.RenameToHeader);
-        var isAdded = Headers.Any(h => h.Kind == PatchNodeKind.NewFileModeHeader);
-        var isDeleted = Headers.Any(h => h.Kind == PatchNodeKind.DeletedFileModeHeader);
-        var isModified = Hunks.Any();
-
-        ChangeKind = isAdded
-            ? PatchEntryChangeKind.Added
-            : isDeleted
-                ? PatchEntryChangeKind.Deleted
-                : isModified
-                    ? PatchEntryChangeKind.Modified
-                    : isCopied
-                        ? PatchEntryChangeKind.Copied
-                        : isRenamed
-                            ? PatchEntryChangeKind.Renamed
-                            : PatchEntryChangeKind.ModeChanged;
+        if (Hunks.Any())
+            Change = PatchEntryChange.Modified;
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.Entry;
 
     public override Patch Root { get; }
 
-    public override TextSpan Span { get; }
+    public PatchEntryHeader Header { get; }
 
-    public PatchEntryChangeKind ChangeKind { get; }
+    public ImmutableArray<PatchEntryAdditionalHeader> AdditionalHeaders { get; }
 
-    public ImmutableArray<PatchEntryHeader> Headers { get; }
+    public ImmutableArray<PatchHunk> Hunks { get; }
 
-    public ImmutableArray<PatchHunk> Hunks { get; set; }
-
-    public override IEnumerable<PatchNode> Children => [..Headers, ..Hunks];
+    public PatchEntryChange Change { get; }
 
     public string OldPath { get; }
 
@@ -72,4 +93,6 @@ public sealed class PatchEntry : PatchNode
     public string NewPath { get; }
 
     public PatchEntryMode NewMode { get; }
+    
+    public override IEnumerable<PatchNode> Children() => [Header, ..AdditionalHeaders, ..Hunks];
 }

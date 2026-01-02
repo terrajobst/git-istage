@@ -1,14 +1,9 @@
-﻿using GitIStage.Text;
+﻿namespace GitIStage.Patches;
 
-namespace GitIStage.Patches;
-
-public sealed class PatchHunkLine : PatchLine
+public abstract class PatchHunkLine : PatchLine
 {
-    internal PatchHunkLine(Patch patch, PatchNodeKind kind, TextLine textLine)
-        : base(patch, textLine)
+    private protected PatchHunkLine(Patch root)
+        : base(root)
     {
-        Kind = kind;
     }
-
-    public override PatchNodeKind Kind { get; }
 }

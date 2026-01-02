@@ -1,6 +1,6 @@
 ﻿namespace GitIStage.Patches;
 
-public enum PatchEntryChangeKind
+public enum PatchEntryChange
 {
     Added,
     Deleted,

@@ -11,11 +11,83 @@ internal static class PatchExtensions
                        PatchNodeKind.DeletedLine;
     }
 
+    public static string? GetTokenText(this PatchNodeKind kind)
+    {
+        return kind switch
+        {
+            PatchNodeKind.DiffKeyword => "diff",
+            PatchNodeKind.GitKeyword => "git",
+            PatchNodeKind.IndexKeyword => "index",
+            PatchNodeKind.NewKeyword => "new",
+            PatchNodeKind.FileKeyword => "file",
+            PatchNodeKind.ModeKeyword => "mode",
+            PatchNodeKind.DeletedKeyword => "deleted",
+            PatchNodeKind.OldKeyword => "old",
+            PatchNodeKind.CopyKeyword => "copy",
+            PatchNodeKind.FromKeyword => "from",
+            PatchNodeKind.ToKeyword => "to",
+            PatchNodeKind.RenameKeyword => "rename",
+            PatchNodeKind.SimilarityKeyword => "similarity",
+            PatchNodeKind.DissimilarityKeyword => "dissimilarity",
+            PatchNodeKind.PercentageToken => "%",
+            PatchNodeKind.MinusMinusToken => "--",
+            PatchNodeKind.MinusMinusMinusToken => "---",
+            PatchNodeKind.PlusPlusPlusToken => "+++",
+            PatchNodeKind.DotDotToken => "..",
+            PatchNodeKind.AtAtToken => "@@",
+            PatchNodeKind.MinusToken => "-",
+            PatchNodeKind.PlusToken => "+",
+            PatchNodeKind.SpaceToken => " ",
+            PatchNodeKind.BackslashToken => "\\",
+            _ => null
+        };
+    }
+
+    public static bool IsKeyword(this PatchNodeKind kind)
+    {
+        return kind switch
+        {
+            PatchNodeKind.DiffKeyword or
+            PatchNodeKind.GitKeyword or
+            PatchNodeKind.IndexKeyword or
+            PatchNodeKind.NewKeyword or
+            PatchNodeKind.FileKeyword or
+            PatchNodeKind.ModeKeyword or
+            PatchNodeKind.DeletedKeyword or
+            PatchNodeKind.OldKeyword or
+            PatchNodeKind.CopyKeyword or
+            PatchNodeKind.FromKeyword or
+            PatchNodeKind.ToKeyword or
+            PatchNodeKind.RenameKeyword or
+            PatchNodeKind.SimilarityKeyword or
+            PatchNodeKind.DissimilarityKeyword => true,
+            _ => false
+        };
+    }
+
+    public static bool IsOperator(this PatchNodeKind kind)
+    {
+        return kind switch
+        {
+            PatchNodeKind.MinusMinusToken or
+            PatchNodeKind.MinusMinusMinusToken or
+            PatchNodeKind.PlusPlusPlusToken or
+            PatchNodeKind.DotDotToken or
+            PatchNodeKind.AtAtToken or
+            PatchNodeKind.MinusToken or
+            PatchNodeKind.PlusToken or
+            PatchNodeKind.SpaceToken or
+            PatchNodeKind.BackslashToken => true,
+            _ => false
+        };
+    }
+
     public static string ToOctalString(this PatchEntryMode mode)
     {
         return Convert.ToString((int)mode, 8);
     }
 
+    // TODO: Handle the NoFinalLineBreak correctly
     public static Patch SelectForApplication(this Patch patch, IEnumerable<int> lineIndexes, PatchDirection direction)
     {
         var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
@@ -38,8 +110,8 @@ internal static class PatchExtensions
 
                 // Get current hunk information
 
-                var oldStart = hunk.Header.OldLine;
-                var newStart = hunk.Header.NewLine;
+                var oldStart = hunk.OldRange.LineNumber;
+                var newStart = hunk.NewRange.LineNumber;
 
                 // Compute the new hunk size
 
@@ -72,8 +144,8 @@ internal static class PatchExtensions
                                                  .All(i => lineSet.Contains(i));
 
                 // Add header
-                newPatch.Append(entry.Headers[0].Text);
-                newPatch.Append(entry.Headers[0].LineBreak);
+                newPatch.Append(entry.Header.Text);
+                newPatch.Append(entry.Header.LineBreak);
 
                 var changes = entry;
 
@@ -132,7 +204,7 @@ internal static class PatchExtensions
 
                     if (lineSet.Contains(i) ||
                         kind == PatchNodeKind.ContextLine ||
-                        previousIncluded && kind == PatchNodeKind.NoNewLine)
+                        previousIncluded && kind == PatchNodeKind.NoFinalLineBreakLine)
                     {
                         newPatch.Append(line.Text);
                         newPatch.Append(line.LineBreak);
@@ -177,9 +249,9 @@ internal static class PatchExtensions
 
         foreach (var entry in patch.Entries)
         {
-            if (entry.ChangeKind == PatchEntryChangeKind.Added)
+            if (entry.Change == PatchEntryChange.Added)
                 added++;
-            else if (entry.ChangeKind == PatchEntryChangeKind.Deleted)
+            else if (entry.Change == PatchEntryChange.Deleted)
                 deleted++;
             else
                 modified++;

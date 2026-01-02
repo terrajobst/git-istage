@@ -5,36 +5,52 @@ namespace GitIStage.Patches;
 public sealed class PatchHunkHeader : PatchLine
 {
     internal PatchHunkHeader(Patch root,
-                             TextLine textLine,
-                             int oldLine,
-                             int oldCount,
-                             int newLine,
-                             int newCount,
-                             string function)
-        : base(root, textLine)
+                             PatchToken atAt1,
+                             PatchToken dashToken,
+                             PatchToken<LineRange> oldRange,
+                             PatchToken plusToken,
+                             PatchToken<LineRange> newRange,
+                             PatchToken atAt2,
+                             PatchToken<string>? function)
+        : base(root)
     {
-        ThrowIfNegative(oldLine);
-        ThrowIfNegative(oldCount);
-        ThrowIfNegative(newLine);
-        ThrowIfNegative(newCount);
-        ThrowIfNull(function);
+        ThrowIfNull(oldRange);
+        ThrowIfNull(newRange);
 
-        OldLine = oldLine;
-        OldCount = oldCount;
-        NewLine = newLine;
-        NewCount = newCount;
+        AtAt1 = atAt1;
+        DashToken = dashToken;
+        OldRange = oldRange;
+        PlusToken = plusToken;
+        NewRange = newRange;
+        AtAt2 = atAt2;
         Function = function;
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.HunkHeader;
 
-    public int OldLine { get; }
+    public PatchToken AtAt1 { get; }
 
-    public int OldCount { get; }
+    public PatchToken DashToken { get; }
 
-    public int NewLine { get; }
+    public PatchToken<LineRange> OldRange { get; }
 
-    public int NewCount { get; }
+    public PatchToken PlusToken { get; }
 
-    public string Function { get; set; }
+    public PatchToken<LineRange> NewRange { get; }
+
+    public PatchToken AtAt2 { get; }
+
+    public PatchToken<string>? Function { get; }
+
+    public override IEnumerable<PatchNode> Children()
+    {
+        yield return AtAt1;
+        yield return DashToken;
+        yield return OldRange;
+        yield return PlusToken;
+        yield return NewRange;
+        yield return AtAt2;
+        if (Function is not null)
+            yield return Function;
+    }
 }

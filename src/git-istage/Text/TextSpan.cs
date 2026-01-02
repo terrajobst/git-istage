@@ -17,6 +17,9 @@ public readonly struct TextSpan : IEquatable<TextSpan>
 
     public static TextSpan FromBounds(int start, int end)
     {
+        ThrowIfNegative(start);
+        ThrowIfLessThan(end, start);
+
         var length = end - start;
         return new TextSpan(start, length);
     }
@@ -35,6 +38,8 @@ public readonly struct TextSpan : IEquatable<TextSpan>
 
     public bool Contains(int position)
     {
+        ThrowIfNegative(position);
+
         return Start <= position && position < End;
     }
 

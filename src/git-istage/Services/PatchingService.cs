@@ -26,30 +26,30 @@ internal sealed class PatchingService
                 var changes = indices.Select(fileDocument.GetEntry).Where(e => e is not null).Select(e => e!);
                 foreach (var change in changes)
                 {
-                    var canBeHandled = change.ChangeKind is PatchEntryChangeKind.Added or
-                        PatchEntryChangeKind.Renamed or
-                        PatchEntryChangeKind.Modified or
-                        PatchEntryChangeKind.Deleted;
+                    var canBeHandled = change.Change is PatchEntryChange.Added or
+                                                        PatchEntryChange.Renamed or
+                                                        PatchEntryChange.Modified or
+                                                        PatchEntryChange.Deleted;
 
                     if (canBeHandled)
                     {
                         if (direction == PatchDirection.Stage)
                         {
-                            var path = change.ChangeKind == PatchEntryChangeKind.Deleted
+                            var path = change.Change == PatchEntryChange.Deleted
                                 ? change.OldPath
                                 : change.NewPath;
                             _gitService.Add(path);
                         }
                         else if (direction == PatchDirection.Unstage)
                         {
-                            if (change.ChangeKind == PatchEntryChangeKind.Deleted)
+                            if (change.Change == PatchEntryChange.Deleted)
                                 _gitService.RestoreStaged(change.OldPath);
                             else
                                 _gitService.Reset(change.NewPath);
                         }
                         else if (direction == PatchDirection.Reset)
                         {
-                            if (change.ChangeKind == PatchEntryChangeKind.Added)
+                            if (change.Change == PatchEntryChange.Added)
                             {
                                 _gitService.Add(change.NewPath);
                                 _gitService.RemoveForce(change.NewPath);

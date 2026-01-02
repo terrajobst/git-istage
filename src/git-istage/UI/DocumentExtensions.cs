@@ -56,7 +56,7 @@ internal static class DocumentExtensions
         if (document is PatchDocument patchDocument)
         {
             var entry = patchDocument.Patch.Entries[entryIndex];
-            return entry.Headers.First().TextLine.LineIndex;
+            return entry.Header.LineIndex;
         }
 
         if (document is FileDocument fileDocument)

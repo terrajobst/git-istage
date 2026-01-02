@@ -7,31 +7,27 @@ public sealed class PatchHunk : PatchNode
 {
     internal PatchHunk(Patch root,
                        PatchHunkHeader header,
-                       IEnumerable<PatchHunkLine> lines)
+                       ImmutableArray<PatchHunkLine> lines)
     {
         ThrowIfNull(root);
         ThrowIfNull(header);
-        ThrowIfNull(lines);
 
         Root = root;
         Header = header;
-        Lines = [..lines];
-
-        var everything = (PatchNode[])[Header, ..Lines];
-        var start = everything.Min(n => n.Span.Start);
-        var end = everything.Max(n => n.Span.End);
-        Span = TextSpan.FromBounds(start, end);
+        Lines = lines;
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.Hunk;
 
     public override Patch Root { get; }
 
-    public override TextSpan Span { get; }
-
     public PatchHunkHeader Header { get; }
 
     public ImmutableArray<PatchHunkLine> Lines { get; }
 
-    public override IEnumerable<PatchNode> Children => [Header, ..Lines];
+    public LineRange OldRange => Header.OldRange.Value;
+
+    public LineRange NewRange => Header.NewRange.Value;
+
+    public override IEnumerable<PatchNode> Children() => [Header, ..Lines];
 }

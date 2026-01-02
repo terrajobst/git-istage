@@ -53,14 +53,14 @@ internal sealed class FileDocument : Document
 
     private static ConsoleColor? GetForegroundColor(PatchEntry changes)
     {
-        switch (changes.ChangeKind)
+        switch (changes.Change)
         {
-            case PatchEntryChangeKind.Added:
-            case PatchEntryChangeKind.Copied:
+            case PatchEntryChange.Added:
+            case PatchEntryChange.Copied:
                 return ConsoleColor.DarkGreen;
-            case PatchEntryChangeKind.Renamed:
-            case PatchEntryChangeKind.Deleted:
-            case PatchEntryChangeKind.Modified:
+            case PatchEntryChange.Renamed:
+            case PatchEntryChange.Deleted:
+            case PatchEntryChange.Modified:
                 return ConsoleColor.DarkRed;
             default:
                 return null;
@@ -79,8 +79,8 @@ internal sealed class FileDocument : Document
 
             foreach (var entry in patch.Entries)
             {
-                var path = entry.ChangeKind == PatchEntryChangeKind.Deleted ? entry.OldPath : entry.NewPath;
-                var change = (entry.ChangeKind.ToString().ToLower() + ":").PadRight(12);
+                var path = entry.Change == PatchEntryChange.Deleted ? entry.OldPath : entry.NewPath;
+                var change = (entry.Change.ToString().ToLower() + ":").PadRight(12);
 
                 builder.AppendLine();
                 builder.Append(indent);

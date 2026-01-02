@@ -1,226 +1,451 @@
 ﻿using System.Collections.Immutable;
-using System.Diagnostics;
-using System.Text;
-using GitIStage.Patches.Headers;
+using GitIStage.Patches.EntryHeaders;
+using GitIStage.Patches.HunkLines;
 using GitIStage.Text;
 
 namespace GitIStage.Patches;
 
-internal sealed partial class PatchParser
+internal sealed class PatchParser
 {
-    private int _currentLineIndex;
+    private readonly PatchTokenizer _tokenizer;
 
-    public PatchParser(Patch root, string text)
+    public PatchParser(Patch root, SourceText text)
     {
         ThrowIfNull(root);
-        ThrowIfNullOrEmpty(text);
+        ThrowIfNull(text);
 
-        Root = root;
-        Text = ReplaceDiffCcEntries(text);
-        Lines = ParseLines(root, Text);
-
-        static SourceText ReplaceDiffCcEntries(string text)
-        {
-            const string diffGitHeader = "diff --git ";
-            const string diffCcHeader = "diff --cc ";
-            
-            var sourceText = SourceText.From(text);
-            var textSpan = text.AsSpan();
-            var sb = (StringBuilder?)null;
-            var skipUntilNextEntry = false;
-        
-            foreach (var line in sourceText.Lines)
-            {
-                var lineSpan = textSpan.Slice(line.Span);
-
-                if (lineSpan.StartsWith(diffCcHeader, StringComparison.Ordinal))
-                {
-                    if (sb is null)
-                    {
-                        sb = new StringBuilder();
-                        sb.Append(text, 0, line.Start);
-                    }
-
-                    var path = lineSpan.Slice(diffCcHeader.Length);
-                    var lineBreak = textSpan.Slice(line.SpanLineBreak);
-                    sb.Append($"diff --git a/{path} b/{path}{lineBreak}");
-                    sb.Append($"!needs merge{lineBreak}");
-
-                    skipUntilNextEntry = true;
-                }
-                else
-                {
-                    if (skipUntilNextEntry && lineSpan.StartsWith(diffGitHeader, StringComparison.Ordinal))
-                        skipUntilNextEntry = false;
-
-                    if (!skipUntilNextEntry)
-                        sb?.Append(textSpan.Slice(line.SpanIncludingLineBreak));
-                }
-            }
-
-            if (sb is not null)
-            {
-                sourceText = SourceText.From(sb.ToString());
-            }
-
-            return sourceText;
-        }
+        _tokenizer = new PatchTokenizer(root, text);
     }
 
-    public Patch Root { get; }
-
-    public SourceText Text { get; }
-
-    public ImmutableArray<PatchLine> Lines { get; }
-
-    private int CurrentLineNumber => _currentLineIndex + 1;
-
-    private LineKind CurrentLineKind
+    public ImmutableArray<PatchEntry> ParseEntries()
     {
-        get
-        {
-            if (_currentLineIndex >= Lines.Length)
-                return LineKind.EndOfFile;
-
-            return ToLineKind(Lines[_currentLineIndex].Kind);
-        }
-    }
-
-    private PatchLine? CurrentLine
-    {
-        get
-        {
-            if (_currentLineIndex >= Lines.Length)
-                return null;
-
-            return Lines[_currentLineIndex];
-        }
-    }
-
-    private void NextLine()
-    {
-        _currentLineIndex++;
-    }
-
-    private T MatchLine<T>(string errorNameForT)
-    {
-        if (CurrentLine is T result)
-        {
-            NextLine();
-            return result;
-        }
-
-        throw PatchError.ExpectedLine(CurrentLineNumber, errorNameForT);
-    }
-
-    public List<PatchEntry> ParseEntries()
-    {
-        Debug.Assert(Lines.Length > 0);
-
         var entries = new List<PatchEntry>();
 
-        while (CurrentLineKind != LineKind.EndOfFile)
+        while (!_tokenizer.IsEndOfFile())
         {
             var entry = ParseEntry();
             entries.Add(entry);
         }
 
-        Debug.Assert(CurrentLineKind == LineKind.EndOfFile);
-        return entries;
+        return entries.ToImmutableArray();
     }
 
     private PatchEntry ParseEntry()
     {
-        if (CurrentLineKind != LineKind.DiffGitHeader)
-            throw PatchError.ExpectedDiffGitHeader(CurrentLineNumber);
+        var header = ParseEntryHeader();
+        var additionalHeaders = ParseEntryAdditionalHeaders();
+        var hunks = ParseHunks();
+        return new PatchEntry(_tokenizer.Root, header, additionalHeaders, hunks);
+    }
 
-        var headers = new List<PatchEntryHeader>();
+    private PatchEntryHeader ParseEntryHeader()
+    {
+        var diffKeyword = _tokenizer.ParseToken(PatchNodeKind.DiffKeyword);
+        _tokenizer.ParseSpace();
+        var dashDashToken = _tokenizer.ParseToken(PatchNodeKind.MinusMinusToken);
+        var gitKeyword = _tokenizer.ParseToken(PatchNodeKind.GitKeyword);
+        _tokenizer.ParseSpace();
+        var aPath = _tokenizer.ParsePathUntil("a/", " b/");
+        _tokenizer.ParseSpace();
+        var bPath = _tokenizer.ParsePath("b/");
+        _tokenizer.ParseEndOfLine();
+        var result = new PatchEntryHeader(_tokenizer.Root, diffKeyword, dashDashToken, gitKeyword, aPath, bPath);
+        _tokenizer.NextLine();
+        return result;
+    }
 
-        do
+    private ImmutableArray<PatchEntryAdditionalHeader> ParseEntryAdditionalHeaders()
+    {
+        var headers = new List<PatchEntryAdditionalHeader>();
+
+        while (true)
         {
-            var header = ParseHeader();
+            var header = ParseEntryAdditionalHeader();
+            if (header is null)
+                break;
+
             headers.Add(header);
-        } while (CurrentLineKind is not LineKind.DiffGitHeader and
-                                    not LineKind.HunkHeader and
-                                    not LineKind.EndOfFile);
-        
+        }
+
+        return headers.ToImmutableArray();
+    }
+
+    private PatchEntryAdditionalHeader? ParseEntryAdditionalHeader()
+    {
+        switch (_tokenizer.GetCurrentChar())
+        {
+            case '+':
+                if (_tokenizer.StartsWith("+++"))
+                    return ParseNewPathHeader();
+                return null;
+            case '-':
+                if (_tokenizer.StartsWith("---"))
+                    return ParseOldPathHeader();
+                return null;
+            case 'c':
+                if (_tokenizer.StartsWith("copy from"))
+                    return ParseCopyFromHeader();
+                if (_tokenizer.StartsWith("copy to"))
+                    return ParseCopyToHeader();
+                return null;
+            case 'd':
+                if (_tokenizer.StartsWith("deleted file"))
+                    return ParseDeletedFileModeHeader();
+                if (_tokenizer.StartsWith("dissimilarity"))
+                    return ParseDissimilarityIndexHeader();
+                return null;
+            case 'i':
+                if (_tokenizer.StartsWith("index"))
+                    return ParseIndexHeader();
+                return null;
+            case 'n':
+                if (_tokenizer.StartsWith("new mode"))
+                    return ParseNewModeHeader();
+                if (_tokenizer.StartsWith("new file mode"))
+                    return ParseNewFileModeHeader();
+                return null;
+            case 'o':
+                if (_tokenizer.StartsWith("old mode"))
+                    return ParseOldModeHeader();
+                return null;
+            case 'r':
+                if (_tokenizer.StartsWith("rename from"))
+                    return ParseRenameFromHeader();
+                if (_tokenizer.StartsWith("rename to"))
+                    return ParseRenameToHeader();
+                return null;
+            case 's':
+                if (_tokenizer.StartsWith("similarity"))
+                    return ParseSimilarityIndexHeader();
+                return null;
+            default:
+                return null;
+        }
+    }
+
+    private OldPathHeader ParseOldPathHeader()
+    {
+        var dashDashDashToken = _tokenizer.ParseToken(PatchNodeKind.MinusMinusMinusToken);
+        _tokenizer.ParseSpace();
+        var path = _tokenizer.ParsePath("a/");
+        _tokenizer.ParseEndOfLine();
+        var result = new OldPathHeader(_tokenizer.Root, dashDashDashToken, path);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private NewPathHeader ParseNewPathHeader()
+    {
+        var plusPlusPlusToken = _tokenizer.ParseToken(PatchNodeKind.PlusPlusPlusToken);
+        _tokenizer.ParseSpace();
+        var path = _tokenizer.ParsePath("b/");
+        _tokenizer.ParseEndOfLine();
+        var result = new NewPathHeader(_tokenizer.Root, plusPlusPlusToken, path);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private IndexHeader ParseIndexHeader()
+    {
+        var indexKeyword = _tokenizer.ParseToken(PatchNodeKind.IndexKeyword);
+        _tokenizer.ParseSpace();
+        var hash1 = _tokenizer.ParseHash();
+        var dotDotToken = _tokenizer.ParseToken(PatchNodeKind.DotDotToken);
+        var hash2 = _tokenizer.ParseHash();
+
+        PatchTokenHandle<PatchEntryMode>? modeToken = null;
+
+        if (!_tokenizer.IsEndOfLine())
+        {
+            _tokenizer.ParseSpace();
+            modeToken = _tokenizer.ParseMode();
+        }
+
+        _tokenizer.ParseEndOfLine();
+
+        var result = new IndexHeader(_tokenizer.Root, indexKeyword, hash1, dotDotToken, hash2, modeToken);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private NewFileModeHeader ParseNewFileModeHeader()
+    {
+        var newKeyword = _tokenizer.ParseToken(PatchNodeKind.NewKeyword);
+        _tokenizer.ParseSpace();
+        var fileKeyword = _tokenizer.ParseToken(PatchNodeKind.FileKeyword);
+        _tokenizer.ParseSpace();
+        var modeKeyword = _tokenizer.ParseToken(PatchNodeKind.ModeKeyword);
+        _tokenizer.ParseSpace();
+        var mode = _tokenizer.ParseMode();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new NewFileModeHeader(_tokenizer.Root, newKeyword, fileKeyword, modeKeyword, mode);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private DeletedFileModeHeader ParseDeletedFileModeHeader()
+    {
+        var deletedKeyword = _tokenizer.ParseToken(PatchNodeKind.DeletedKeyword);
+        _tokenizer.ParseSpace();
+        var fileKeyword = _tokenizer.ParseToken(PatchNodeKind.FileKeyword);
+        _tokenizer.ParseSpace();
+        var modeKeyword = _tokenizer.ParseToken(PatchNodeKind.ModeKeyword);
+        _tokenizer.ParseSpace();
+        var mode = _tokenizer.ParseMode();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new DeletedFileModeHeader(_tokenizer.Root, deletedKeyword, fileKeyword, modeKeyword, mode);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private NewModeHeader ParseNewModeHeader()
+    {
+        var newKeyword = _tokenizer.ParseToken(PatchNodeKind.NewKeyword);
+        _tokenizer.ParseSpace();
+        var modeKeyword = _tokenizer.ParseToken(PatchNodeKind.ModeKeyword);
+        _tokenizer.ParseSpace();
+        var mode = _tokenizer.ParseMode();
+        _tokenizer.ParseEndOfLine();
+
+
+        var result = new NewModeHeader(_tokenizer.Root, newKeyword, modeKeyword, mode);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private OldModeHeader ParseOldModeHeader()
+    {
+        var oldKeyword = _tokenizer.ParseToken(PatchNodeKind.OldKeyword);
+        _tokenizer.ParseSpace();
+        var modeKeyword = _tokenizer.ParseToken(PatchNodeKind.ModeKeyword);
+        _tokenizer.ParseSpace();
+        var mode = _tokenizer.ParseMode();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new OldModeHeader(_tokenizer.Root, oldKeyword, modeKeyword, mode);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private CopyFromHeader ParseCopyFromHeader()
+    {
+        var copyKeyword = _tokenizer.ParseToken(PatchNodeKind.CopyKeyword);
+        _tokenizer.ParseSpace();
+        var fromKeyword = _tokenizer.ParseToken(PatchNodeKind.FromKeyword);
+        _tokenizer.ParseSpace();
+        var path = _tokenizer.ParsePath();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new CopyFromHeader(_tokenizer.Root, copyKeyword, fromKeyword, path);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private CopyToHeader ParseCopyToHeader()
+    {
+        var copyKeyword = _tokenizer.ParseToken(PatchNodeKind.CopyKeyword);
+        _tokenizer.ParseSpace();
+        var toKeyword = _tokenizer.ParseToken(PatchNodeKind.ToKeyword);
+        _tokenizer.ParseSpace();
+        var path = _tokenizer.ParsePath();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new CopyToHeader(_tokenizer.Root, copyKeyword, toKeyword, path);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private RenameFromHeader ParseRenameFromHeader()
+    {
+        var renameKeyword = _tokenizer.ParseToken(PatchNodeKind.RenameKeyword);
+        _tokenizer.ParseSpace();
+        var fromKeyword = _tokenizer.ParseToken(PatchNodeKind.FromKeyword);
+        _tokenizer.ParseSpace();
+        var path = _tokenizer.ParsePath();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new RenameFromHeader(_tokenizer.Root, renameKeyword, fromKeyword, path);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private RenameToHeader ParseRenameToHeader()
+    {
+        var renameKeyword = _tokenizer.ParseToken(PatchNodeKind.RenameKeyword);
+        _tokenizer.ParseSpace();
+        var toKeyword = _tokenizer.ParseToken(PatchNodeKind.ToKeyword);
+        _tokenizer.ParseSpace();
+        var path = _tokenizer.ParsePath();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new RenameToHeader(_tokenizer.Root, renameKeyword, toKeyword, path);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private SimilarityIndexHeader ParseSimilarityIndexHeader()
+    {
+        var similarityKeyword = _tokenizer.ParseToken(PatchNodeKind.SimilarityKeyword);
+        _tokenizer.ParseSpace();
+        var indexKeyword = _tokenizer.ParseToken(PatchNodeKind.IndexKeyword);
+        _tokenizer.ParseSpace();
+        var percentage = _tokenizer.ParsePercentage();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new SimilarityIndexHeader(_tokenizer.Root, similarityKeyword, indexKeyword, percentage);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private DissimilarityIndexHeader ParseDissimilarityIndexHeader()
+    {
+        var dissimilarityKeyword = _tokenizer.ParseToken(PatchNodeKind.DissimilarityKeyword);
+        _tokenizer.ParseSpace();
+        var indexKeyword = _tokenizer.ParseToken(PatchNodeKind.IndexKeyword);
+        _tokenizer.ParseSpace();
+        var percentage = _tokenizer.ParsePercentage();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new DissimilarityIndexHeader(_tokenizer.Root, dissimilarityKeyword, indexKeyword, percentage);
+        _tokenizer.NextLine();
+        return result;
+    }
+    
+    private ImmutableArray<PatchHunk> ParseHunks()
+    {
         var hunks = new List<PatchHunk>();
 
-        while (CurrentLineKind is LineKind.HunkHeader)
+        while (_tokenizer.StartsWith("@@ "))
         {
             var hunk = ParseHunk();
             hunks.Add(hunk);
         }
 
-        // NOTE: It's valid to have headers only, e.g. when changing modes or renaming files.
-
-        var diffGitHeader = headers.OfType<DiffGitPatchEntryHeader>().First();
-
-        var oldPathHeader = headers.OfType<OldPathPatchEntryHeader>().FirstOrDefault();
-        var newPathHeader = headers.OfType<NewPathPatchEntryHeader>().FirstOrDefault();
-
-        var deletedFileModeHeader = headers.OfType<DeletedFileModePatchEntryHeader>().FirstOrDefault();
-        var newFileModeHeader = headers.OfType<NewFileModePatchEntryHeader>().FirstOrDefault();
-
-        var oldModeHeader = headers.OfType<OldModePatchEntryHeader>().FirstOrDefault();
-        var newModeHeader = headers.OfType<NewModePatchEntryHeader>().FirstOrDefault();
-
-        var indexHeader = headers.OfType<IndexPatchEntryHeader>().FirstOrDefault();
-
-        var oldPath = newFileModeHeader is not null
-                        ? ""
-                        : oldPathHeader is not null
-                            ? oldPathHeader.Path
-                            : diffGitHeader.OldPath;
-
-        var newPath = deletedFileModeHeader is not null
-                        ? ""
-                        : newPathHeader is not null
-                            ? newPathHeader.Path
-                            : diffGitHeader.NewPath;
-
-        var oldMode = oldModeHeader?.Mode
-                      ?? deletedFileModeHeader?.Mode
-                      ?? indexHeader?.Mode
-                      ?? PatchEntryMode.Nonexistent;
-
-        var newMode = newModeHeader?.Mode
-                      ?? newFileModeHeader?.Mode
-                      ?? indexHeader?.Mode
-                      ?? PatchEntryMode.Nonexistent;
-
-        return new PatchEntry(Root, headers, hunks, oldPath, oldMode, newPath, newMode);
-    }
-
-    private PatchEntryHeader ParseHeader()
-    {
-        return MatchLine<PatchEntryHeader>("entry header");
+        return hunks.ToImmutableArray();
     }
 
     private PatchHunk ParseHunk()
     {
         var header = ParseHunkHeader();
-        var lines = new List<PatchHunkLine>();
-
-        while (CurrentLineKind is LineKind.ContextLine or
-                                  LineKind.AddedLine or
-                                  LineKind.DeletedLine or
-                                  LineKind.NoNewLine)
-        {
-            var line = ParseHunkLine();
-            lines.Add(line);
-        }
-
-        return new PatchHunk(Root, header, lines);
+        var hunkLines = ParseHunkLines();
+        return new PatchHunk(_tokenizer.Root, header, hunkLines);
     }
 
     private PatchHunkHeader ParseHunkHeader()
     {
-        return MatchLine<PatchHunkHeader>("hunk header");
+        var atAt1 = _tokenizer.ParseToken(PatchNodeKind.AtAtToken);
+        _tokenizer.ParseSpace();
+        var dashToken = _tokenizer.ParseToken(PatchNodeKind.MinusToken);
+        var oldRange = _tokenizer.ParseRange();
+        _tokenizer.ParseSpace();
+        var plusToken = _tokenizer.ParseToken(PatchNodeKind.PlusToken);
+        var newRange = _tokenizer.ParseRange();
+        _tokenizer.ParseSpace();
+        var atAt2 = _tokenizer.ParseToken(PatchNodeKind.AtAtToken);
+
+        PatchTokenHandle<string>? function = null;
+
+        if (!_tokenizer.IsEndOfLine())
+        {
+            _tokenizer.ParseSpace();
+            function = _tokenizer.ParseTextOrEmpty();
+        }
+
+        _tokenizer.ParseEndOfLine();
+
+        var result = new PatchHunkHeader(_tokenizer.Root, atAt1, dashToken, oldRange, plusToken, newRange, atAt2, function);
+        _tokenizer.NextLine();
+        return result;
     }
 
-    private PatchHunkLine ParseHunkLine()
+    private ImmutableArray<PatchHunkLine> ParseHunkLines()
     {
-        return MatchLine<PatchHunkLine>("hunk line");
+        var hunkLines = new List<PatchHunkLine>();
+
+        while (true)
+        {
+            var hunkLine = ParseHunkLine();
+            if (hunkLine is null)
+                break;
+
+            hunkLines.Add(hunkLine);
+        }
+
+        return hunkLines.ToImmutableArray();
+    }
+    
+    private PatchHunkLine? ParseHunkLine()
+    {
+        switch (_tokenizer.GetCurrentChar())
+        {
+            case ' ':
+                return ParseContextLine();
+            case '-':
+                return ParseDeletedLine();
+            case '+':
+                return ParseAddedLine();
+            case '\\':
+                return ParseNoFinalLineBreakLine();
+            default:
+                // We allow an empty line to stand in for an empty context line.
+                // The reason is that trailing whitespaces are often trimmed
+                // which would cause the line to not have any marker.
+                if (!_tokenizer.IsEndOfFile() && _tokenizer.IsEndOfLine() && _tokenizer.CurrentLine is not null)
+                {
+                    var marker = _tokenizer.FabricateToken(PatchNodeKind.SpaceToken);
+                    var text = _tokenizer.FabricateToken<string>(PatchNodeKind.TextToken, "");
+                    _tokenizer.ParseEndOfLine();
+                    var result = new ContextLine(_tokenizer.Root, marker, text);
+                    _tokenizer.NextLine();
+                    return result;
+                }
+                return null;
+        }
+    }
+
+    private AddedLine ParseAddedLine()
+    {
+        var marker = _tokenizer.ParseToken(PatchNodeKind.PlusToken);
+        var text = _tokenizer.ParseTextOrEmpty();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new AddedLine(_tokenizer.Root, marker, text);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private DeletedLine ParseDeletedLine()
+    {
+        var marker = _tokenizer.ParseToken(PatchNodeKind.MinusToken);
+        var text = _tokenizer.ParseTextOrEmpty();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new DeletedLine(_tokenizer.Root, marker, text);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private ContextLine ParseContextLine()
+    {
+        var marker = _tokenizer.ParseToken(PatchNodeKind.SpaceToken);
+        var text = _tokenizer.ParseTextOrEmpty();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new ContextLine(_tokenizer.Root, marker, text);
+        _tokenizer.NextLine();
+        return result;
+    }
+
+    private NoFinalLineBreakLine ParseNoFinalLineBreakLine()
+    {
+        var marker = _tokenizer.ParseToken(PatchNodeKind.BackslashToken);
+        var text = _tokenizer.ParseText();
+        _tokenizer.ParseEndOfLine();
+
+        var result = new NoFinalLineBreakLine(_tokenizer.Root, marker, text);
+        _tokenizer.NextLine();
+        return result;
     }
 }

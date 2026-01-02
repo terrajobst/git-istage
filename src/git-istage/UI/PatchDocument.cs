@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using GitIStage.Patches;
 using GitIStage.Text;
 
@@ -17,41 +18,29 @@ internal sealed class PatchDocument : Document
 
     public override IEnumerable<StyledSpan> GetLineStyles(int index)
     {
-        var line = Patch.Lines[index];
-        var foreground = GetForegroundColor(line);
-        var background = GetBackgroundColor(line);
-
         // NOTE: We're expected return spans that start at this line.
-        var span = new TextSpan(0, line.Span.Length);
 
-        return [new StyledSpan(span, foreground, background)];
+        var line = Patch.Lines[index];
+        var lineForeground = GetLineForegroundColor(line);
+
+        if (lineForeground is not null)
+        {
+            var lineBackground = GetLineBackgroundColor(line);
+            var span = new TextSpan(0, line.Span.Length);
+            return [new StyledSpan(span, lineForeground, lineBackground)];
+        }
+
+        return line.DescendantsAndSelf()
+                   .OfType<PatchToken>()
+                   .Select(GetSpan);
     }
 
-    private static ConsoleColor? GetForegroundColor(PatchLine line)
+    private static ConsoleColor? GetLineForegroundColor(PatchLine line)
     {
         switch (line.Kind)
         {
-            case PatchNodeKind.DiffGitHeader:
+            case PatchNodeKind.EntryHeader:
                 return ConsoleColor.White;
-            case PatchNodeKind.OldPathHeader:
-            case PatchNodeKind.NewPathHeader:
-            case PatchNodeKind.OldModeHeader:
-            case PatchNodeKind.NewModeHeader:
-            case PatchNodeKind.DeletedFileModeHeader:
-            case PatchNodeKind.NewFileModeHeader:
-            case PatchNodeKind.CopyFromHeader:
-            case PatchNodeKind.CopyToHeader:
-            case PatchNodeKind.RenameFromHeader:
-            case PatchNodeKind.RenameToHeader:
-            case PatchNodeKind.SimilarityIndexHeader:
-            case PatchNodeKind.DissimilarityIndexHeader:
-            case PatchNodeKind.IndexHeader:
-            case PatchNodeKind.UnknownHeader:
-                return ConsoleColor.White;
-            case PatchNodeKind.HunkHeader:
-                return ConsoleColor.DarkCyan;
-            case PatchNodeKind.ContextLine:
-                goto default;
             case PatchNodeKind.AddedLine:
                 return ConsoleColor.DarkGreen;
             case PatchNodeKind.DeletedLine:
@@ -61,9 +50,9 @@ internal sealed class PatchDocument : Document
         }
     }
 
-    private static ConsoleColor? GetBackgroundColor(PatchLine line)
+    private static ConsoleColor? GetLineBackgroundColor(PatchLine line)
     {
-        return line.Kind == PatchNodeKind.DiffGitHeader
+        return line.Kind == PatchNodeKind.EntryHeader
             ? ConsoleColor.DarkCyan
             : null;
     }
@@ -71,5 +60,32 @@ internal sealed class PatchDocument : Document
     public static PatchDocument Create(Patch patch)
     {
         return new PatchDocument(patch);
+    }
+
+    private static StyledSpan GetSpan(PatchToken token)
+    {
+        var foreground = token.Kind switch
+        {
+            PatchNodeKind.PathToken => ConsoleColor.White,
+            PatchNodeKind.HashToken => ConsoleColor.DarkYellow,
+            PatchNodeKind.ModeToken => ConsoleColor.DarkYellow,
+            PatchNodeKind.TextToken => ConsoleColor.Gray,
+            PatchNodeKind.PercentageToken => ConsoleColor.DarkMagenta,
+            PatchNodeKind.RangeToken => ConsoleColor.Cyan,
+            PatchNodeKind.MinusMinusMinusToken => ConsoleColor.DarkRed,
+            PatchNodeKind.PlusPlusPlusToken => ConsoleColor.Green,
+            _ => token.Kind.IsKeyword()
+                ? ConsoleColor.Cyan
+                : token.Kind.IsOperator()
+                    ? ConsoleColor.DarkCyan
+                    : throw new UnreachableException($"Unexpected token kind {token.Kind}")
+        };
+
+        var line = token.Ancestors().OfType<PatchLine>().First();
+        var lineStart = line.TextLine.Start;
+        var start = token.Span.Start - lineStart;
+        var end = token.Span.End - lineStart;
+        var span = TextSpan.FromBounds(start, end);
+        return new StyledSpan(span, foreground, null);
     }
 }

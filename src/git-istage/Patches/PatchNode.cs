@@ -1,36 +1,36 @@
-﻿using System.Diagnostics;
-using GitIStage.Text;
+﻿using GitIStage.Text;
 
 namespace GitIStage.Patches;
 
 public abstract class PatchNode
 {
+    public abstract PatchNodeKind Kind { get; }
+
     public abstract Patch Root { get; }
 
     public PatchNode? Parent => Root.GetParent(this);
-
-    public abstract PatchNodeKind Kind { get; }
 
     public virtual TextSpan Span
     {
         get
         {
-            Debug.Assert(Children.Any());
-
-            var start = int.MaxValue;
-            var end = 0;
-
-            foreach (var child in Children)
-            {
-                start = int.Min(start, child.Span.Start);
-                end = int.Max(end, child.Span.End);
-            }
-
-            return TextSpan.FromBounds(start, end);
+            var first = Children().First().Span;
+            var last = Children().Last().Span;
+            return TextSpan.FromBounds(first.Start, last.End);
         }
     }
 
-    public abstract IEnumerable<PatchNode> Children { get; }
+    public virtual TextSpan FullSpan
+    {
+        get
+        {
+            var first = Children().First().FullSpan;
+            var last = Children().Last().FullSpan;
+            return TextSpan.FromBounds(first.Start, last.End);
+        }
+    }
+
+    public abstract IEnumerable<PatchNode> Children();
 
     public IEnumerable<PatchNode> Ancestors() => AncestorsAndSelf().Skip(1);
 
@@ -46,15 +46,15 @@ public abstract class PatchNode
 
     public IEnumerable<PatchNode> DescendantsAndSelf()
     {
-        var queue = new Queue<PatchNode>();
-        queue.Enqueue(this);
+        var queue = new Stack<PatchNode>();
+        queue.Push(this);
 
         while (queue.Count > 0)
         {
-            var current = queue.Dequeue();
+            var current = queue.Pop();
             yield return current;
-            foreach (var child in current.Children)
-                queue.Enqueue(child);
+            foreach (var child in current.Children().Reverse())
+                queue.Push(child);
         }
     }
 

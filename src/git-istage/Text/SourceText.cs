@@ -23,6 +23,9 @@ public sealed class SourceText
         ThrowIfNull(text);
         ThrowIfNull(fileName);
 
+        if (text.Length == 0 && fileName == "")
+            return Empty;
+
         return new SourceText(text, fileName);
     }
 
@@ -86,15 +89,17 @@ public sealed class SourceText
 
     public ImmutableArray<TextLine> Lines { get; }
 
-    public char this[int index] => _text[index];
+    public char this[int offset] => _text[offset];
 
     public int Length => _text.Length;
 
     public string FileName { get; }
 
-    public int GetLineIndex(int position)
+    public int GetLineIndex(int offset)
     {
-        ThrowIfNegative(position);
+        ThrowIfNegative(offset);
+        // Not a bug. We allow offset to be at the end.
+        ThrowIfGreaterThan(offset, Length);
 
         var lower = 0;
         var upper = Lines.Length - 1;
@@ -104,10 +109,10 @@ public sealed class SourceText
             var index = lower + (upper - lower) / 2;
             var start = Lines[index].Start;
 
-            if (position == start)
+            if (offset == start)
                 return index;
 
-            if (start > position)
+            if (start > offset)
             {
                 upper = index - 1;
             }
@@ -118,6 +123,17 @@ public sealed class SourceText
         }
 
         return lower - 1;
+    }
+
+    public TextPosition GetPosition(int offset)
+    {
+        ThrowIfNegative(offset);
+        // Not a bug. We allow offset to be at the end.
+        ThrowIfGreaterThan(offset, Length);
+
+        var lineIndex = GetLineIndex(offset);
+        var lineOffset = offset - Lines[lineIndex].Start;
+        return new TextPosition(lineIndex + 1, lineOffset + 1);
     }
 
     public ReadOnlySpan<char> AsSpan() => _text.AsSpan();

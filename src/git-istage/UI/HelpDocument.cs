@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using GitIStage.Commands;
 using GitIStage.Text;
@@ -6,10 +7,39 @@ namespace GitIStage.UI;
 
 internal sealed class HelpDocument : Document
 {
+    private readonly int _column1Width;
+    private readonly int _column2Width;
 
-    private HelpDocument(SourceText sourceText)
+    private HelpDocument(SourceText sourceText,
+                         int column1Width,
+                         int column2Width)
         : base(sourceText)
     {
+        ThrowIfLessThanOrEqual(column1Width, 0);
+        ThrowIfLessThanOrEqual(column2Width, 0);
+
+        _column1Width = column1Width;
+        _column2Width = column2Width;
+    }
+
+    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    {
+        var line = SourceText.Lines[index];
+        var lineSpan = new TextSpan(0, line.Length);
+        var column1Span = new TextSpan(0, _column1Width);
+        var separator1Span = new TextSpan(column1Span.End, 1);
+        var column2Span = new TextSpan(separator1Span.End, _column2Width);
+        var separator2Span = new TextSpan(column2Span.End, 1);
+        var column3Span = TextSpan.FromBounds(separator2Span.End, lineSpan.End);
+
+        return
+        [
+            new StyledSpan(column1Span, ConsoleColor.White, null),
+            new StyledSpan(separator1Span, ConsoleColor.DarkGray, null),
+            new StyledSpan(column2Span, ConsoleColor.DarkCyan, null),
+            new StyledSpan(separator2Span, ConsoleColor.DarkGray, null),
+            new StyledSpan(column3Span, ConsoleColor.DarkYellow, null),
+        ];
     }
 
     public static HelpDocument Create(IReadOnlyCollection<ConsoleCommand> commands)
@@ -40,7 +70,10 @@ internal sealed class HelpDocument : Document
             sb.AppendLine();
         }
 
+        var column1Width = maxKeyBindingLength + 1;
+        var column2Width = maxNameLength + 2;
+
         var sourceText = SourceText.From(sb.ToString());
-        return new HelpDocument(sourceText);
+        return new HelpDocument(sourceText, column1Width, column2Width);
     }
 }

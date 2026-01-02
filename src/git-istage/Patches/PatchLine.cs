@@ -4,24 +4,21 @@ namespace GitIStage.Patches;
 
 public abstract class PatchLine : PatchNode
 {
-    private protected PatchLine(Patch root, TextLine textLine)
+    private protected PatchLine(Patch root)
     {
         ThrowIfNull(root);
-        ThrowIfNull(textLine);
+        ThrowIfNull(root);
 
         Root = root;
-        TextLine = textLine;
     }
 
-    public override TextSpan Span => TextLine.Span;
+    public int LineIndex => Root.Text.GetLineIndex(Span.Start);
 
-    public override Patch Root { get; }
-
-    public TextLine TextLine { get; }
+    public TextLine TextLine => Root.Text.Lines[LineIndex];
 
     public ReadOnlySpan<char> Text => Root.Text.AsSpan(TextLine.Span);
 
     public ReadOnlySpan<char> LineBreak => Root.Text.AsSpan(TextLine.SpanLineBreak);
 
-    public override IEnumerable<PatchNode> Children => [];
+    public sealed override Patch Root { get; }
 }

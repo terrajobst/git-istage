@@ -34,7 +34,24 @@ public class PatchingTests
 
         parse.Should()
             .Throw<FormatException>()
-            .Which.Message.Should().Be("Invalid patch. Expected 'diff --git' in line 7.");
+            .Which.Message.Should().Be("Invalid patch. Expected 'diff' at 7:1");
+    }
+
+    [Fact]
+    public void Patch_MissingSpaceBetweenKeywords_IsRejected()
+    {
+        var text = """
+                   diff --git a/build.sh b/hello.sh
+                   similarityindex 100%
+                   rename from build.sh
+                   rename to hello.sh
+                   """;
+
+        Action parse = () => Patch.Parse(text);
+
+        parse.Should()
+            .Throw<FormatException>()
+            .Which.Message.Should().Be("Invalid patch. Expected '<space>' at 2:11");
     }
 
     [Fact]
@@ -44,7 +61,7 @@ public class PatchingTests
 
         parse.Should()
              .Throw<FormatException>()
-             .Which.Message.Should().Be("Invalid patch. Expected 'diff --git' in line 1.");
+             .Which.Message.Should().Be("Invalid patch. Expected 'diff' at 1:1");
     }
 
     [Fact]
@@ -54,14 +71,14 @@ public class PatchingTests
 
         parse.Should()
             .Throw<FormatException>()
-            .Which.Message.Should().Be("Invalid patch. Expected 'diff --git' in line 1.");
+            .Which.Message.Should().Be("Invalid patch. Expected 'diff' at 1:1");
     }
 
     [Fact]
     public void Patch_Header_DiffGit_CanBeParsed()
     {
         var text = """
-                   {:diff --git a/example.txt b/example.txt:}
+                   diff --git a/example1.txt b/example2.txt
                    index 27ac6d3..7576e3e 100644
                    --- a/path/to/original
                    +++ b/path/to/new
@@ -69,7 +86,11 @@ public class PatchingTests
                    +This is an important
                    """;
 
-        AssertPatchHasSingleEntryWithHeader<DiffGitPatchEntryHeader>(text);
+        var entry = AssertPatchHasSingleEntry(text);
+        entry.Header.Kind.Should().Be(PatchNodeKind.EntryHeader);
+        entry.Header.Text.ToString().Should().Be("diff --git a/example1.txt b/example2.txt");
+        entry.Header.OldPath.Value.Should().Be("example1.txt");
+        entry.Header.NewPath.Value.Should().Be("example2.txt");
     }
 
     [Fact]
@@ -84,9 +105,10 @@ public class PatchingTests
                    +This is an important
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<IndexPatchEntryHeader>(text);
+        var header = AssertPatchHasSingleEntryWithHeader<IndexHeader>(text);
 
-        header.Mode.Should().Be(PatchEntryMode.RegularNonExecutableFile);
+        header.Mode.Should().NotBeNull();
+        header.Mode.Value.Should().Be(PatchEntryMode.RegularNonExecutableFile);
     }
 
     [Fact]
@@ -101,9 +123,9 @@ public class PatchingTests
                    +This is an important
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<OldPathPatchEntryHeader>(text);
+        var header = AssertPatchHasSingleEntryWithHeader<OldPathHeader>(text);
 
-        header.Path.Should().Be("path/to/original");
+        header.Path.Value.Should().Be("path/to/original");
     }
 
     [Fact]
@@ -118,8 +140,8 @@ public class PatchingTests
                    +This is an important
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<NewPathPatchEntryHeader>(text);
-        header.Path.Should().Be("path/to/new");
+        var header = AssertPatchHasSingleEntryWithHeader<NewPathHeader>(text);
+        header.Path.Value.Should().Be("path/to/new");
     }
 
     [Fact]
@@ -131,8 +153,8 @@ public class PatchingTests
                    new mode 100644
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<OldModePatchEntryHeader>(text);
-        header.Mode.Should().Be(PatchEntryMode.RegularExecutableFile);
+        var header = AssertPatchHasSingleEntryWithHeader<OldModeHeader>(text);
+        header.Mode.Value.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -144,8 +166,8 @@ public class PatchingTests
                    {:new mode 100644:}
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<NewModePatchEntryHeader>(text);
-        header.Mode.Should().Be(PatchEntryMode.RegularNonExecutableFile);
+        var header = AssertPatchHasSingleEntryWithHeader<NewModeHeader>(text);
+        header.Mode.Value.Should().Be(PatchEntryMode.RegularNonExecutableFile);
     }
 
     [Fact]
@@ -163,8 +185,8 @@ public class PatchingTests
                    -echo Hello
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<DeletedFileModePatchEntryHeader>(text);
-        header.Mode.Should().Be(PatchEntryMode.RegularExecutableFile);
+        var header = AssertPatchHasSingleEntryWithHeader<DeletedFileModeHeader>(text);
+        header.Mode.Value.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     [Fact]
@@ -182,24 +204,8 @@ public class PatchingTests
                    +echo Hello
                    """;
 
-        var header = AssertPatchHasSingleEntryWithHeader<NewFileModePatchEntryHeader>(text);
-        header.Mode.Should().Be(PatchEntryMode.RegularExecutableFile);
-    }
-
-    [Fact]
-    public void Patch_Header_UnknownHeader_CanBeParsed()
-    {
-        var text = """
-                   diff --git a/example.txt b/example.txt
-                   index 27ac6d3..7576e3e 100644
-                   {:an unknown header is here:}
-                   --- a/path/to/original
-                   +++ b/path/to/new
-                   @@ -1,0 +1,1 @@
-                   +This is an important
-                   """;
-
-        AssertPatchHasSingleEntryWithHeader<UnknownPatchEntryHeader>(text);
+        var header = AssertPatchHasSingleEntryWithHeader<NewFileModeHeader>(text);
+        header.Mode.Value.Should().Be(PatchEntryMode.RegularExecutableFile);
     }
 
     // TODO: Test CopyFromPatchEntryHeader
@@ -338,7 +344,7 @@ public class PatchingTests
                    deleted file mode 100755
                    index c2b72f4..0000000
                    --- a/build.sh
-                   +++ b/dev/null
+                   +++ /dev/null
                    @@ -1,10 +0,0 @@
                    -#!/bin/bash
                    -
@@ -512,8 +518,8 @@ public class PatchingTests
         var hunk = AssertPatchHasSingleHunk(text);
 
         hunk.Header.Should().NotBeNull();
-        hunk.Header.OldLine.Should().Be(3);
-        hunk.Header.OldCount.Should().Be(8);
+        hunk.OldRange.LineNumber.Should().Be(3);
+        hunk.OldRange.Length.Should().Be(8);
     }
 
     [Fact]
@@ -531,9 +537,10 @@ public class PatchingTests
         var hunk = AssertPatchHasSingleHunk(text);
 
         hunk.Header.Should().NotBeNull();
-        hunk.Header.OldLine.Should().Be(3);
-        hunk.Header.OldCount.Should().Be(1);
+        hunk.OldRange.LineNumber.Should().Be(3);
+        hunk.OldRange.Length.Should().Be(1);
     }
+
     [Fact]
     public void Patch_Hunk_NewStartLength_CanBeParsed()
     {
@@ -563,8 +570,8 @@ public class PatchingTests
         var hunk = entry.Hunks[1];
 
         hunk.Header.Should().NotBeNull();
-        hunk.Header.NewLine.Should().Be(10);
-        hunk.Header.NewCount.Should().Be(4);
+        hunk.NewRange.LineNumber.Should().Be(10);
+        hunk.NewRange.Length.Should().Be(4);
     }
 
     [Fact]
@@ -582,8 +589,8 @@ public class PatchingTests
         var hunk = AssertPatchHasSingleHunk(text);
 
         hunk.Header.Should().NotBeNull();
-        hunk.Header.NewLine.Should().Be(4);
-        hunk.Header.NewCount.Should().Be(1);
+        hunk.NewRange.LineNumber.Should().Be(4);
+        hunk.NewRange.Length.Should().Be(1);
     }
 
     [Fact]
@@ -600,7 +607,8 @@ public class PatchingTests
 
         var hunk = AssertPatchHasSingleHunk(text);
 
-        hunk.Header.Function.Should().Be("void Main()");
+        hunk.Header.Function.Should().NotBeNull();
+        hunk.Header.Function.Value.Should().Be("void Main()");
     }
 
     [Fact]
@@ -671,63 +679,7 @@ public class PatchingTests
                    {:\ No newline at end of file:}
                    """;
 
-        AssertPatchHasSingleEntryWithHunkLine(text, PatchNodeKind.NoNewLine);
-    }
-
-    [Fact]
-    public void Patch_Diff_Cc_IsParsedAsConflict()
-    {
-        var text = """
-                   diff --git a/before.txt b/before.txt
-                   index 27ac6d3..7576e3e 100644
-                   --- a/before.txt
-                   +++ b/before.txt
-                   @@ -1,0 +1,1 @@
-                   +This is an important
-                   diff --cc conflicted.txt
-                   index 14eb246,98d39d3..0000000
-                   --- a/conflicted.txt
-                   +++ b/conflicted.txt
-                   @@@ -2,7 -2,7 +2,11 @@@ Additio
-                   
-                     # Lorem
-                   
-                   ++<<<<<<< HEAD
-                    +Change in Main
-                   ++=======
-                   + Change in Test
-                   ++>>>>>>> de5c834 (Change in branch Test)
-                   
-                     Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut
-                     aliquip ex ea commodo consequat.
-                   diff --git a/after.txt b/after.txt
-                   index 27ac6d3..7576e3e 100644
-                   --- a/after.txt
-                   +++ b/after.txt
-                   @@ -1,0 +1,1 @@
-                   +This is an important
-                   """;
-
-        var expectedText = """
-                           diff --git a/before.txt b/before.txt
-                           index 27ac6d3..7576e3e 100644
-                           --- a/before.txt
-                           +++ b/before.txt
-                           @@ -1,0 +1,1 @@
-                           +This is an important
-                           diff --git a/conflicted.txt b/conflicted.txt
-                           !needs merge
-                           diff --git a/after.txt b/after.txt
-                           index 27ac6d3..7576e3e 100644
-                           --- a/after.txt
-                           +++ b/after.txt
-                           @@ -1,0 +1,1 @@
-                           +This is an important
-                           """;
-
-        var actualText = Patch.Parse(text).ToString();
-        
-        actualText.Should().Be(expectedText);
+        AssertPatchHasSingleEntryWithHunkLine(text, PatchNodeKind.NoFinalLineBreakLine);
     }
 
     private static PatchEntry AssertPatchHasSingleEntry(string text)
@@ -749,21 +701,21 @@ public class PatchingTests
     }
 
     private static T AssertPatchHasSingleEntryWithHeader<T>(string textWithMarkedSpan)
-        where T: PatchEntryHeader
+        where T: PatchEntryAdditionalHeader
     {
         ParseTextWithSpan(textWithMarkedSpan, out var text, out var markedSpan);
 
         var patch = Patch.Parse(text);
 
         var markedLineIndex = patch.Text.GetLineIndex(markedSpan.Start);
-        var headerIndex = markedLineIndex;
+        var headerIndex = markedLineIndex - 1;
 
         patch.Entries.Should().HaveCount(1);
 
         var entry = patch.Entries[0];
-        entry.Headers.Should().HaveCountGreaterThan(headerIndex);
+        entry.AdditionalHeaders.Should().HaveCountGreaterThan(headerIndex);
 
-        var header = entry.Headers[headerIndex].Should().BeOfType<T>().Subject;
+        var header = entry.AdditionalHeaders[headerIndex].Should().BeOfType<T>().Subject;
 
         var expectedKind = GetExpectedKind<T>();
         header.Kind.Should().Be(expectedKind);
@@ -797,50 +749,45 @@ public class PatchingTests
     }
 
     private static PatchNodeKind GetExpectedKind<T>()
+        where T: PatchEntryAdditionalHeader
     {
-        if (typeof(T) == typeof(UnknownPatchEntryHeader))
-            return PatchNodeKind.UnknownHeader;
-
-        if (typeof(T) == typeof(DiffGitPatchEntryHeader))
-            return PatchNodeKind.DiffGitHeader;
-
-        if (typeof(T) == typeof(OldPathPatchEntryHeader))
+        if (typeof(T) == typeof(OldPathHeader))
             return PatchNodeKind.OldPathHeader;
 
-        if (typeof(T) == typeof(NewPathPatchEntryHeader))
+        if (typeof(T) == typeof(NewPathHeader))
             return PatchNodeKind.NewPathHeader;
 
-        if (typeof(T) == typeof(OldModePatchEntryHeader))
+        if (typeof(T) == typeof(OldModeHeader))
             return PatchNodeKind.OldModeHeader;
 
-        if (typeof(T) == typeof(NewModePatchEntryHeader))
+        if (typeof(T) == typeof(NewModeHeader))
             return PatchNodeKind.NewModeHeader;
 
-        if (typeof(T) == typeof(DeletedFileModePatchEntryHeader))
+        if (typeof(T) == typeof(DeletedFileModeHeader))
             return PatchNodeKind.DeletedFileModeHeader;
 
-        if (typeof(T) == typeof(NewFileModePatchEntryHeader))
+        if (typeof(T) == typeof(NewFileModeHeader))
             return PatchNodeKind.NewFileModeHeader;
 
-        if (typeof(T) == typeof(CopyFromPatchEntryHeader))
+        if (typeof(T) == typeof(CopyFromHeader))
             return PatchNodeKind.CopyFromHeader;
 
-        if (typeof(T) == typeof(CopyToPatchEntryHeader))
+        if (typeof(T) == typeof(CopyToHeader))
             return PatchNodeKind.CopyToHeader;
 
-        if (typeof(T) == typeof(RenameFromPatchEntryHeader))
+        if (typeof(T) == typeof(RenameFromHeader))
             return PatchNodeKind.RenameFromHeader;
 
-        if (typeof(T) == typeof(RenameToPatchEntryHeader))
+        if (typeof(T) == typeof(RenameToHeader))
             return PatchNodeKind.RenameToHeader;
 
-        if (typeof(T) == typeof(SimilarityIndexPatchEntryHeader))
+        if (typeof(T) == typeof(SimilarityIndexHeader))
             return PatchNodeKind.SimilarityIndexHeader;
 
-        if (typeof(T) == typeof(DissimilarityIndexPatchEntryHeader))
+        if (typeof(T) == typeof(DissimilarityIndexHeader))
             return PatchNodeKind.DissimilarityIndexHeader;
 
-        if (typeof(T) == typeof(IndexPatchEntryHeader))
+        if (typeof(T) == typeof(IndexHeader))
             return PatchNodeKind.IndexHeader;
 
         throw new UnreachableException($"Unexpected type {typeof(T)}");
