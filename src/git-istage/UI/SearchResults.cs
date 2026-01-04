@@ -14,8 +14,13 @@ internal sealed class SearchResults
             while (index >= 0)
             {
                 hits.Add(new SearchHit(i, index, searchTerm.Length));
-                index = line.Slice(index + searchTerm.Length)
+
+                var offset = index + searchTerm.Length;
+                index = line.Slice(offset)
                             .IndexOf(searchTerm, StringComparison.OrdinalIgnoreCase);
+
+                if (index >= 0)
+                    index += offset;
             }
         }
 
