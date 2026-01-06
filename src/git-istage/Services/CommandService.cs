@@ -362,7 +362,7 @@ internal sealed class CommandService
         if (nextIndex >= 0)
         {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-            _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+            _uiService.View.TopLine = _uiService.View.SelectedLine;
         }
     }
 
@@ -379,7 +379,7 @@ internal sealed class CommandService
         if (nextIndex >= 0)
         {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-            _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+            _uiService.View.TopLine = _uiService.View.SelectedLine;
         }
     }
 
