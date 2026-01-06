@@ -362,7 +362,8 @@ internal sealed class CommandService
         if (nextIndex >= 0)
         {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-            _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+            var maxTopLine = int.Max(0, _uiService.View.DocumentHeight - _uiService.View.Height);
+            _uiService.View.TopLine = int.Min(_uiService.View.SelectedLine, maxTopLine);
         }
     }
 
@@ -379,7 +380,8 @@ internal sealed class CommandService
         if (nextIndex >= 0)
         {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
-            _uiService.View.BringIntoView(_uiService.View.SelectedLine);
+            var maxTopLine = int.Max(0, _uiService.View.DocumentHeight - _uiService.View.Height);
+            _uiService.View.TopLine = int.Min(_uiService.View.SelectedLine, maxTopLine);
         }
     }
 
