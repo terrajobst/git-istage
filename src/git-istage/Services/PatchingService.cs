@@ -14,44 +14,49 @@ internal sealed class PatchingService
         _documentService = documentService;
     }
 
-    public void ApplyPatch(PatchDirection direction, bool entireHunk, int selectedLine)
+    public void ApplyPatch(PatchDirection direction, bool entireHunk, int startLine, int lineCount = 0)
     {
+        var indices = Enumerable.Range(startLine, lineCount + 1);
+
         if (_documentService.ViewFiles)
         {
-            var fileDocument = (FileDocument)_documentService.Document;
-            var change = fileDocument.GetEntry(selectedLine);
-            if (change is not null)
+            using (_gitService.SuspendEvents())
             {
-                var canBeHandled = change.ChangeKind is PatchEntryChangeKind.Added or
-                                                        PatchEntryChangeKind.Renamed or
-                                                        PatchEntryChangeKind.Modified or
-                                                        PatchEntryChangeKind.Deleted;
-
-                if (canBeHandled)
+                var fileDocument = (FileDocument)_documentService.Document;
+                var changes = indices.Select(fileDocument.GetEntry).Where(e => e is not null).Select(e => e!);
+                foreach (var change in changes)
                 {
-                    if (direction == PatchDirection.Stage)
+                    var canBeHandled = change.ChangeKind is PatchEntryChangeKind.Added or
+                        PatchEntryChangeKind.Renamed or
+                        PatchEntryChangeKind.Modified or
+                        PatchEntryChangeKind.Deleted;
+
+                    if (canBeHandled)
                     {
-                        var path = change.ChangeKind == PatchEntryChangeKind.Deleted
-                                    ? change.OldPath
-                                    : change.NewPath;
-                        _gitService.Add(path);
-                    }
-                    else if (direction == PatchDirection.Unstage)
-                    {
-                        if (change.ChangeKind == PatchEntryChangeKind.Deleted)
-                            _gitService.RestoreStaged(change.OldPath);
-                        else
-                            _gitService.Reset(change.NewPath);
-                    }
-                    else if (direction == PatchDirection.Reset)
-                    {
-                        if (change.ChangeKind == PatchEntryChangeKind.Added)
+                        if (direction == PatchDirection.Stage)
                         {
-                            _gitService.Add(change.NewPath);
-                            _gitService.RemoveForce(change.NewPath);
+                            var path = change.ChangeKind == PatchEntryChangeKind.Deleted
+                                ? change.OldPath
+                                : change.NewPath;
+                            _gitService.Add(path);
                         }
-                        else
-                            _gitService.Checkout(change.OldPath);
+                        else if (direction == PatchDirection.Unstage)
+                        {
+                            if (change.ChangeKind == PatchEntryChangeKind.Deleted)
+                                _gitService.RestoreStaged(change.OldPath);
+                            else
+                                _gitService.Reset(change.NewPath);
+                        }
+                        else if (direction == PatchDirection.Reset)
+                        {
+                            if (change.ChangeKind == PatchEntryChangeKind.Added)
+                            {
+                                _gitService.Add(change.NewPath);
+                                _gitService.RemoveForce(change.NewPath);
+                            }
+                            else
+                                _gitService.Checkout(change.OldPath);
+                        }
                     }
                 }
             }
@@ -59,25 +64,22 @@ internal sealed class PatchingService
         else
         {
             var document = (PatchDocument)_documentService.Document;
-            var line = document.Patch.Lines[selectedLine];
-            if (!line.Kind.IsAddedOrDeletedLine())
-                return;
+            
+            var lines = entireHunk
+                ? indices.Select(i => document.Patch.Lines[i].AncestorsAndSelf().OfType<PatchHunk>().FirstOrDefault())
+                         .Where(h => h is not null)
+                         .Select(h => h!)
+                         .SelectMany(h => h.Lines)
+                         .Select(l => l.TextLine.LineIndex)
+                : indices.Where(i => document.Patch.Lines[i].Kind.IsAddedOrDeletedLine());
 
-            IEnumerable<int> lines;
-            if (!entireHunk)
+            var linesMaterialized = lines.ToArray();
+            
+            if (linesMaterialized.Length > 0)
             {
-                lines = [selectedLine];
+                var patch = document.Patch.SelectForApplication(linesMaterialized, direction);
+                _gitService.ApplyPatch(patch, direction);
             }
-            else
-            {
-                var hunk = document.Patch.Lines[selectedLine].AncestorsAndSelf().OfType<PatchHunk>().First();
-                var startLine = hunk.Lines.First().TextLine.LineIndex;
-                var lineCount = hunk.Lines.Length;
-                lines = Enumerable.Range(startLine, lineCount);
-            }
-
-            var patch = document.Patch.SelectForApplication(lines, direction);
-            _gitService.ApplyPatch(patch, direction);
         }
     }
 }

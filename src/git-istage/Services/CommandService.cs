@@ -252,6 +252,48 @@ internal sealed class CommandService
 
         _uiService.View.SelectedLine++;
     }
+    
+    [CommandHandler("Extends the selection to the previous line.", "Shift+UpArrow", "Shift+K")]
+    private void ExtendSelectionUp()
+    {
+        var selection = _uiService.View.Selection;
+
+        if (selection.AtEnd)
+        {
+            // Shrink end
+            if (selection.Count > 0)
+                _uiService.View.Selection = new Selection(selection.StartLine, selection.Count - 1, true);
+            else if (selection.StartLine > 0)
+                _uiService.View.Selection = new Selection(selection.StartLine - 1, 1);
+        }
+        else
+        {
+            // Extend start
+            if (selection.StartLine > 0)
+                _uiService.View.Selection = new Selection(selection.StartLine - 1, selection.Count + 1);
+        }
+    }
+
+    [CommandHandler("Extends the selection to the next line.", "Shift+DownArrow", "Shift+J")]
+    private void ExtendSelectionDown()
+    {
+        var selection = _uiService.View.Selection; 
+
+        if (selection.AtEnd)
+        {
+            // Extend end
+            if (selection.StartLine < _uiService.View.DocumentHeight - 1)
+                _uiService.View.Selection = new Selection(selection.StartLine, selection.Count + 1, true);
+        }
+        else
+        {
+            // Shrink start
+            if (selection.Count > 0)
+                _uiService.View.Selection = new Selection(selection.StartLine + 1, selection.Count - 1);
+            else if (selection.EndLine < _uiService.View.DocumentHeight - 1)
+                _uiService.View.Selection = new Selection(selection.StartLine, selection.Count + 1, true);
+        }
+    }
 
     [CommandHandler("Scrolls up by one line.", "Control+UpArrow")]
     private void ScrollUp()
@@ -508,13 +550,13 @@ internal sealed class CommandService
         if (direction == PatchDirection.Reset && _documentService.ViewStage)
             return;
 
-        var selectedLine = _uiService.View.SelectedLine;
-        if (selectedLine < 0)
+        var selection = _uiService.View.Selection;
+        if (selection.StartLine < 0)
             return;
 
         try
         {
-            _patchingService.ApplyPatch(direction, entireHunk, selectedLine);
+            _patchingService.ApplyPatch(direction, entireHunk, selection.StartLine, selection.Count);
         }
         catch (GitCommandFailedException ex)
         {

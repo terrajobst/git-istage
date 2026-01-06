@@ -7,7 +7,7 @@ internal sealed class View
     private Document _document = Document.Empty;
     private int _topLine;
     private int _leftChar;
-    private int _selectedLine;
+    private Selection _selection;
     private bool _visibleWhitespace;
     private SearchResults? _searchResults;
 
@@ -32,8 +32,14 @@ internal sealed class View
 
     public int SelectedLine
     {
-        get => _selectedLine;
-        set => UpdateSelectedLine(value);
+        get => _selection.AtEnd ? _selection.EndLine : _selection.StartLine;
+        set => UpdateSelection(value);
+    }
+
+    public Selection Selection
+    {
+        get => _selection;
+        set => UpdateSelection(value);
     }
 
     public int Top { get; }
@@ -94,17 +100,19 @@ internal sealed class View
 
     private void Initialize()
     {
-        _topLine = Math.Max(0, Math.Min(Math.Min(_topLine, DocumentHeight - 1), DocumentHeight - Height));
-        _selectedLine = Math.Min(_selectedLine, DocumentHeight - 1);
-        _leftChar = Math.Min(_leftChar, DocumentWidth - 1);
+        // We want to preserve the current line, but we generally want to reset
+        // the selection when the document changes.
+        var newSelectionStart = int.Max(0, int.Min(_selection.StartLine, DocumentHeight - 1));
+        var newSelectionCount = 0;
+        
+        _topLine = int.Max(0, int.Min(int.Min(_topLine, DocumentHeight - 1), DocumentHeight - Height));
+        _selection = new Selection(newSelectionStart, newSelectionCount);
+        _leftChar = int.Min(_leftChar, DocumentWidth - 1);
 
         if (_document.Height > 0)
         {
             if (_topLine < 0)
                 _topLine = 0;
-
-            if (_selectedLine < 0)
-                _selectedLine = 0;
 
             if (_leftChar < 0)
                 _leftChar = 0;
@@ -124,7 +132,7 @@ internal sealed class View
         }
         else
         {
-            var endLine = Math.Min(BottomLine, DocumentHeight - 1);
+            var endLine = int.Min(BottomLine, DocumentHeight - 1);
 
             for (var i = TopLine; i <= endLine; i++)
                 RenderLine(i);
@@ -153,7 +161,7 @@ internal sealed class View
 
         var visualLine = lineIndex - TopLine + Top;
         var styledSpans = Document.GetLineStyles(lineIndex);
-        var isSelected = SelectedLine == lineIndex;
+        var isSelected = Selection.Contains(lineIndex); 
         
         Vt100.SetCursorPosition(Left, visualLine);
 
@@ -250,28 +258,55 @@ internal sealed class View
         Vt100.EraseRestOfCurrentLine();
     }
 
-    private void UpdateSelectedLine(int value)
+    private void UpdateSelection(int lineIndex)
     {
-        if (_selectedLine == -1 || _selectedLine == value || DocumentHeight == 0)
+        var selection = new Selection(lineIndex, 0);
+        UpdateSelection(selection);
+    }
+
+    private void UpdateSelection(Selection value)
+    {
+        if (_selection == value || DocumentHeight == 0)
             return;
 
-        if (value < 0 || value >= DocumentHeight)
+        if (value.StartLine >= DocumentHeight || value.EndLine >= DocumentHeight)
             throw new ArgumentOutOfRangeException(nameof(value));
 
-        var unselectedLine = _selectedLine;
-        _selectedLine = value;
+        var previousSelection = _selection;
+        _selection = value;
 
-        if (_selectedLine < TopLine)
-            TopLine = _selectedLine;
-        else if (_selectedLine >= TopLine + Height)
-            TopLine = _selectedLine - Height + 1;
-        else
-            RenderLine(_selectedLine);
+        // Render old lines that aren't part of the new selection
+        
+        for (var i = previousSelection.StartLine; i <= previousSelection.EndLine; i++)
+        {
+            if (!value.Contains(i))
+                RenderLine(i);
+        }
 
-        if (TopLine <= unselectedLine && unselectedLine < TopLine + Height)
-            RenderLine(unselectedLine);
+        // Render new lines that aren't part of the old selection
+        
+        for (var i = value.StartLine; i <= value.EndLine; i++)
+        {
+            if (!previousSelection.Contains(i))
+                RenderLine(i);
+        }
+        
+        // Scroll if necessary
+        
+        if (value.StartLine < TopLine &&
+            value.StartLine < previousSelection.StartLine)
+        {
+            // Start is offscreen, and we extended the start, so let's make sure the new start is visible.
+            TopLine = value.StartLine;
+        }
+        else if (value.EndLine >= TopLine + Height &&
+                 previousSelection.EndLine < value.EndLine)
+        {
+            // End is offscreen, and we extended the end, so let's make sure the new end is visible.
+            TopLine = value.EndLine - Height + 1;
+        }
 
-        SelectedLineChanged?.Invoke(this, EventArgs.Empty);
+        SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
     private void UpdateTopLine(int value)
@@ -285,7 +320,7 @@ internal sealed class View
         var delta = value - _topLine;
         _topLine = value;
 
-        if (Math.Abs(delta) >= Height)
+        if (int.Abs(delta) >= Height)
         {
             Render();
         }
@@ -296,7 +331,7 @@ internal sealed class View
                 // We need to scroll up by -delta lines.
 
                 Vt100.SetBackgroundColor();
-                Vt100.ScrollDown(Math.Abs(delta));
+                Vt100.ScrollDown(int.Abs(delta));
 
                 for (var i = 0; i < -delta; i++)
                 {
@@ -350,7 +385,7 @@ internal sealed class View
         if (!offScreen)
             return;
 
-        var topLine = _selectedLine - Height / 2;
+        var topLine = SelectedLine - Height / 2;
         if (topLine < 0)
             topLine = 0;
 
@@ -360,7 +395,7 @@ internal sealed class View
         UpdateTopLine(topLine);
     }
 
-    public event EventHandler? SelectedLineChanged;
+    public event EventHandler? SelectionChanged;
 
     public event EventHandler? TopLineChanged;
 

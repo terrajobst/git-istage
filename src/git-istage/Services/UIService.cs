@@ -72,7 +72,7 @@ internal sealed class UIService
         _header.Background = ConsoleColor.DarkGray;
 
         _view = new View(1, 0, Console.WindowHeight - 1, Console.WindowWidth);
-        _view.SelectedLineChanged += delegate { UpdateHeader(); };
+        _view.SelectionChanged += delegate { UpdateHeader(); };
 
         _footer = new Label(Console.WindowHeight - 1, 0, Console.WindowWidth);
         _footer.Foreground = ConsoleColor.Yellow;
