@@ -35,6 +35,9 @@ internal static class DocumentExtensions
 
     public static int FindEntryIndex(this Document document, int lineIndex)
     {
+        if (document.SourceText.Length == 0)
+            return -1;
+
         if (document is PatchDocument patchDocument)
         {
             var line = patchDocument.Patch.Lines[lineIndex];
@@ -53,6 +56,9 @@ internal static class DocumentExtensions
 
     public static int GetLineIndex(this Document document, int entryIndex)
     {
+        if (document.SourceText.Length == 0)
+            return -1;
+
         if (document is PatchDocument patchDocument)
         {
             var entry = patchDocument.Patch.Entries[entryIndex];
@@ -72,6 +78,9 @@ internal static class DocumentExtensions
 
     public static int FindPreviousChangeBlock(this Document document, int lineIndex)
     {
+        if (document.SourceText.Length == 0)
+            return -1;
+
         if (document is PatchDocument patchDocument)
         {
             var start = lineIndex;
@@ -108,6 +117,9 @@ internal static class DocumentExtensions
 
     public static int FindNextChangeBlock(this Document document, int lineIndex)
     {
+        if (document.SourceText.Length == 0)
+            return -1;
+
         if (document is PatchDocument patchDocument)
         {
             var end = lineIndex;
