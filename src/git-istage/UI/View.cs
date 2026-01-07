@@ -104,7 +104,7 @@ internal sealed class View
         // the selection when the document changes.
         var newSelectionStart = int.Max(0, int.Min(_selection.StartLine, DocumentHeight - 1));
         var newSelectionCount = 0;
-        
+
         _topLine = int.Max(0, int.Min(int.Min(_topLine, DocumentHeight - 1), DocumentHeight - Height));
         _selection = new Selection(newSelectionStart, newSelectionCount);
         _leftChar = int.Min(_leftChar, DocumentWidth - 1);
@@ -269,8 +269,8 @@ internal sealed class View
         if (_selection == value || DocumentHeight == 0)
             return;
 
-        if (value.StartLine >= DocumentHeight || value.EndLine >= DocumentHeight)
-            throw new ArgumentOutOfRangeException(nameof(value));
+        ThrowIfGreaterThanOrEqual(value.StartLine, DocumentHeight);
+        ThrowIfGreaterThanOrEqual(value.EndLine, DocumentHeight);
 
         var previousSelection = _selection;
         _selection = value;
@@ -309,16 +309,16 @@ internal sealed class View
         SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UpdateTopLine(int value)
+    private void UpdateTopLine(int lineIndex)
     {
-        if (_topLine == value)
+        if (_topLine == lineIndex || DocumentHeight == 0)
             return;
 
-        if (value < 0 || value >= DocumentHeight)
-            throw new ArgumentOutOfRangeException(nameof(value));
+        ThrowIfLessThan(lineIndex, 0);
+        ThrowIfGreaterThanOrEqual(lineIndex, DocumentHeight);
 
-        var delta = value - _topLine;
-        _topLine = value;
+        var delta = lineIndex - _topLine;
+        _topLine = lineIndex;
 
         if (int.Abs(delta) >= Height)
         {
@@ -359,26 +359,26 @@ internal sealed class View
         TopLineChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UpdateLeftChar(int value)
+    private void UpdateLeftChar(int charIndex)
     {
-        if (_leftChar == value)
+        if (_leftChar == charIndex ||  DocumentHeight == 0)
             return;
 
-        if (value < 0 || value >= DocumentWidth)
-            throw new ArgumentOutOfRangeException(nameof(value));
+        ThrowIfLessThan(charIndex, 0);
+        ThrowIfGreaterThanOrEqual(charIndex, DocumentWidth);
 
-        _leftChar = value;
+        _leftChar = charIndex;
         Render();
         LeftCharChanged?.Invoke(this, EventArgs.Empty);
     }
 
     public void BringIntoView(int lineIndex)
     {
-        if (lineIndex == -1)
+        if (DocumentHeight == 0)
             return;
 
-        if (lineIndex < 0 || lineIndex >= DocumentHeight)
-            throw new ArgumentOutOfRangeException(nameof(lineIndex));
+        ThrowIfLessThan(lineIndex, 0);
+        ThrowIfGreaterThanOrEqual(lineIndex, DocumentHeight);
 
         var offScreen = lineIndex < _topLine ||
                         lineIndex > _topLine + Height - 1;
