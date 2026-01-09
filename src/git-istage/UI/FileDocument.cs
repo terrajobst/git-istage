@@ -9,12 +9,19 @@ internal sealed class FileDocument : Document
 {
     private readonly int _indexOfFirstFile;
     private readonly Patch _patch;
+    private readonly bool _viewStage;
 
-    private FileDocument(SourceText sourceText, int indexOfFirstFile, Patch patch)
+    private const int IndentationWidth = 8;
+    private const int ChangeColumnWidth = 14;
+    private const int PathColumnStart = IndentationWidth + ChangeColumnWidth;
+    private const int IndexOfFirstFile = 3;
+    
+    private FileDocument(SourceText sourceText, int indexOfFirstFile, Patch patch, bool viewStage)
         : base(sourceText)
     {
         _indexOfFirstFile = indexOfFirstFile;
         _patch = patch;
+        _viewStage = viewStage;
     }
 
     public Patch Patch => _patch;
@@ -41,30 +48,19 @@ internal sealed class FileDocument : Document
         {
             var line = GetLine(index);
             var lineLength = line.Length;
-            var foreground = GetForegroundColor(entry);
+            var foreground = GetForegroundColor();
 
             // Change
-            yield return new StyledSpan(new TextSpan(8, 12), foreground, null);
+            yield return new StyledSpan(new TextSpan(IndentationWidth, ChangeColumnWidth), foreground, null);
 
             // Path
-            yield return new StyledSpan(TextSpan.FromBounds(20, lineLength), ConsoleColor.DarkCyan, null);
+            yield return new StyledSpan(TextSpan.FromBounds(PathColumnStart, lineLength), ConsoleColor.DarkCyan, null);
         }
     }
 
-    private static ConsoleColor? GetForegroundColor(PatchEntry changes)
+    private ConsoleColor? GetForegroundColor()
     {
-        switch (changes.Change)
-        {
-            case PatchEntryChange.Added:
-            case PatchEntryChange.Copied:
-                return ConsoleColor.DarkGreen;
-            case PatchEntryChange.Renamed:
-            case PatchEntryChange.Deleted:
-            case PatchEntryChange.Modified:
-                return ConsoleColor.DarkRed;
-            default:
-                return null;
-        }
+        return _viewStage ? ConsoleColor.DarkGreen : ConsoleColor.DarkRed;
     }
 
     public static FileDocument Create(Patch patch, bool viewStage)
@@ -75,12 +71,12 @@ internal sealed class FileDocument : Document
             builder.AppendLine();
             builder.AppendLine(viewStage ? "Changes to be committed:" : "Changes not staged for commit:");
 
-            var indent = new string(' ', 8);
+            var indent = new string(' ', IndentationWidth);
 
             foreach (var entry in patch.Entries)
             {
                 var path = entry.Change == PatchEntryChange.Deleted ? entry.OldPath : entry.NewPath;
-                var change = (entry.Change.ToString().ToLower() + ":").PadRight(12);
+                var change = GetChangeText(entry.Change).PadRight(ChangeColumnWidth);
 
                 builder.AppendLine();
                 builder.Append(indent);
@@ -89,9 +85,22 @@ internal sealed class FileDocument : Document
             }
         }
 
-        const int indexOfFirstFile = 3;
         var sourceText = SourceText.From(builder.ToString());
 
-        return new FileDocument(sourceText, indexOfFirstFile, patch);
+        return new FileDocument(sourceText, IndexOfFirstFile, patch, viewStage);
+    }
+
+    private static string GetChangeText(PatchEntryChange change)
+    {
+        return change switch
+        {
+            PatchEntryChange.Added => "added:",
+            PatchEntryChange.Deleted => "deleted:",
+            PatchEntryChange.Modified => "modified:",
+            PatchEntryChange.Renamed => "renamed:",
+            PatchEntryChange.Copied => "copied:",
+            PatchEntryChange.ModeChanged => "mode changed:",
+            _ => throw new ArgumentOutOfRangeException(nameof(change), change, null)
+        };
     }
 }
