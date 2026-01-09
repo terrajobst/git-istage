@@ -59,6 +59,12 @@ public sealed class PatchEntry : PatchNode
                     NewMode = PatchEntryMode.Nonexistent;
                     Change = PatchEntryChange.Deleted;
                     break;
+                case PatchNodeKind.BinaryFilesDifferHeader:
+                    var bfd = (BinaryFilesDifferHeader)additionalHeader;
+                    NewPath = bfd.NewPath.Value;
+                    OldPath = bfd.OldPath.Value;
+                    Change = PatchEntryChange.Modified;
+                    break;
                 case PatchNodeKind.CopyFromHeader:
                 case PatchNodeKind.CopyToHeader:
                     Change = PatchEntryChange.Copied;

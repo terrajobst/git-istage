@@ -82,6 +82,10 @@ internal sealed class PatchParser
                 if (_tokenizer.StartsWith("---"))
                     return ParseOldPathHeader();
                 return null;
+            case 'B':
+                if (_tokenizer.StartsWith("Binary"))
+                    return ParseBinaryFilesDifferHeader();
+                return null;
             case 'c':
                 if (_tokenizer.StartsWith("copy from"))
                     return ParseCopyFromHeader();
@@ -312,7 +316,27 @@ internal sealed class PatchParser
         _tokenizer.NextLine();
         return result;
     }
-    
+
+    private BinaryFilesDifferHeader ParseBinaryFilesDifferHeader()
+    {
+        var binaryKeyword = _tokenizer.ParseToken(PatchNodeKind.BinaryKeyword);
+        _tokenizer.ParseSpace();
+        var filesKeyword = _tokenizer.ParseToken(PatchNodeKind.FilesKeyword);
+        _tokenizer.ParseSpace();
+        var oldPath = _tokenizer.ParsePathUntil("a/", " and");
+        _tokenizer.ParseSpace();
+        var andKeyword = _tokenizer.ParseToken(PatchNodeKind.AndKeyword);
+        _tokenizer.ParseSpace();
+        var newPath = _tokenizer.ParsePathUntil("b/", " differ");
+        _tokenizer.ParseSpace();
+        var differKeyword = _tokenizer.ParseToken(PatchNodeKind.DifferKeyword);
+        _tokenizer.ParseEndOfLine();
+
+        var result = new BinaryFilesDifferHeader(_tokenizer.Root, binaryKeyword, filesKeyword, oldPath, andKeyword, newPath, differKeyword);
+        _tokenizer.NextLine();
+        return result;
+    }
+
     private ImmutableArray<PatchHunk> ParseHunks()
     {
         var hunks = new List<PatchHunk>();

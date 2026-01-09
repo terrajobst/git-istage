@@ -40,6 +40,10 @@ public enum PatchNodeKind
     RenameKeyword,
     SimilarityKeyword,
     DissimilarityKeyword,
+    BinaryKeyword,
+    FilesKeyword,
+    AndKeyword,
+    DifferKeyword,
 
     // Nodes
     Patch,
@@ -62,6 +66,7 @@ public enum PatchNodeKind
     RenameToHeader,
     SimilarityIndexHeader,
     DissimilarityIndexHeader,
+    BinaryFilesDifferHeader,
 
     // Hunk Lines
     ContextLine,

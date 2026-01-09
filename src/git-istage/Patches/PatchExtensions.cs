@@ -29,6 +29,10 @@ internal static class PatchExtensions
             PatchNodeKind.RenameKeyword => "rename",
             PatchNodeKind.SimilarityKeyword => "similarity",
             PatchNodeKind.DissimilarityKeyword => "dissimilarity",
+            PatchNodeKind.BinaryKeyword => "Binary",
+            PatchNodeKind.FilesKeyword => "files",
+            PatchNodeKind.AndKeyword => "and",
+            PatchNodeKind.DifferKeyword => "differ",
             PatchNodeKind.PercentageToken => "%",
             PatchNodeKind.MinusMinusToken => "--",
             PatchNodeKind.MinusMinusMinusToken => "---",
@@ -60,7 +64,11 @@ internal static class PatchExtensions
             PatchNodeKind.ToKeyword or
             PatchNodeKind.RenameKeyword or
             PatchNodeKind.SimilarityKeyword or
-            PatchNodeKind.DissimilarityKeyword => true,
+            PatchNodeKind.DissimilarityKeyword or
+            PatchNodeKind.BinaryKeyword or
+            PatchNodeKind.FilesKeyword or
+            PatchNodeKind.AndKeyword or
+            PatchNodeKind.DifferKeyword  => true,
             _ => false
         };
     }
