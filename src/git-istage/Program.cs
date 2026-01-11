@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using GitIStage.Services;
+using GitIStage.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -18,18 +19,20 @@ internal static class Program
         }
         catch (GitIStageStartupException ex)
         {
-            Console.WriteLine(ex.Message);
+            Terminal.WriteLine(ex.Message);
             return -100;
         }
         catch (Exception ex) when (!Debugger.IsAttached)
         {
-            Console.WriteLine($"fatal: unhandled error {ex}");
+            Terminal.WriteLine($"fatal: unhandled error {ex}");
             return -500;
         }
     }
 
     private static async Task Run()
     {
+        Terminal.Initialize();
+        
         using var host = Host.CreateDefaultBuilder()
                              .ConfigureServices(ConfigureServices)
                              .ConfigureLogging(l => l.ClearProviders())

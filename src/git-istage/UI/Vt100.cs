@@ -4,51 +4,51 @@ internal static class Vt100
 {
     public static void SwitchToAlternateBuffer()
     {
-        Console.Write("\x1b[?1049h");
+        Terminal.Write("\x1b[?1049h");
     }
 
     public static void SwitchToMainBuffer()
     {
-        Console.Write("\x1b[?1049l");
+        Terminal.Write("\x1b[?1049l");
     }
 
     public static void ShowCursor()
     {
-        Console.Write("\x1b[?25h");
+        Terminal.Write("\x1b[?25h");
     }
 
     public static void HideCursor()
     {
-        Console.Write("\x1b[?25l");
+        Terminal.Write("\x1b[?25l");
     }
 
     public static void SetCursorPosition(int x, int y)
     {
-        Console.Write($"\x1b[{y + 1};{x + 1}H");
+        Terminal.Write($"\x1b[{y + 1};{x + 1}H");
     }
 
     public static void NegativeColors()
     {
-        Console.Write("\x1b[7m");
+        Terminal.Write("\x1b[7m");
     }
 
     public static void PositiveColors()
     {
-        Console.Write("\x1b[27m");
+        Terminal.Write("\x1b[27m");
     }
 
     public static void SetForegroundColor(ConsoleColor? color = null)
     {
         // If color is null, set to default
         var code = color != null ? GetColor(color.Value, foreground: true) : 39;
-        Console.Write($"\x1b[{(int)code}m");
+        Terminal.Write($"\x1b[{(int)code}m");
     }
 
     public static void SetBackgroundColor(ConsoleColor? color = null)
     {
         // If color is null, set to default
         var code = color != null ? GetColor(color.Value, foreground: false) : 49;
-        Console.Write($"\x1b[{(int)code}m");
+        Terminal.Write($"\x1b[{(int)code}m");
     }
 
     private static int GetColor(ConsoleColor color, bool foreground)
@@ -96,26 +96,26 @@ internal static class Vt100
 
     public static void ResetScrollMargins()
     {
-        Console.Write($"\x1b[r");
+        Terminal.Write($"\x1b[r");
     }
 
     public static void SetScrollMargins(int top, int bottom)
     {
-        Console.Write($"\x1b[{top};{bottom}r");
+        Terminal.Write($"\x1b[{top};{bottom}r");
     }
 
     public static void ScrollUp(int lines)
     {
-        Console.Write($"\x1b[{lines}S");
+        Terminal.Write($"\x1b[{lines}S");
     }
 
     public static void ScrollDown(int lines)
     {
-        Console.Write($"\x1b[{lines}T");
+        Terminal.Write($"\x1b[{lines}T");
     }
 
     public static void EraseRestOfCurrentLine()
     {
-        Console.Write($"\x1b[K");
+        Terminal.Write($"\x1b[K");
     }
 }

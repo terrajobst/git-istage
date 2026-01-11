@@ -1,4 +1,6 @@
-﻿namespace GitIStage.Services;
+﻿using GitIStage.UI;
+
+namespace GitIStage.Services;
 
 internal sealed class Application
 {
@@ -20,14 +22,14 @@ internal sealed class Application
         {
             while (!_done)
             {
-                var width = Console.WindowWidth;
-                var height = Console.WindowHeight;
+                var width = Terminal.WindowWidth;
+                var height = Terminal.WindowHeight;
 
-                var key = Console.ReadKey(true);
+                var key = Terminal.ReadKey();
                 var command = _commandService.GetCommand(key);
                 command?.Execute();
 
-                if (width != Console.WindowWidth || height != Console.WindowHeight)
+                if (width != Terminal.WindowWidth || height != Terminal.WindowHeight)
                     _uiService.ResizeScreen();
             }
         }

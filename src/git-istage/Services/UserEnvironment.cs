@@ -1,4 +1,6 @@
-﻿namespace GitIStage.Services;
+﻿using GitIStage.UI;
+
+namespace GitIStage.Services;
 
 internal sealed class UserEnvironment
 {
@@ -21,7 +23,7 @@ internal sealed class UserEnvironment
 
                 Directory.Move(oldSettingsDirectory, settingsDirectory);
 
-                Console.WriteLine($"info: settings were migrated from '{oldSettingsDirectory}' to '{settingsDirectory}'");
+                Terminal.WriteLine($"info: settings were migrated from '{oldSettingsDirectory}' to '{settingsDirectory}'");
             }
         }
 

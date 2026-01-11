@@ -26,6 +26,7 @@ internal sealed class UIService
         _gitService = gitService;
         _documentService = documentService;
         _documentService.Changed += DocumentServiceOnChanged;
+        Terminal.WindowSizeChanged += (_, _) => ResizeScreen();
     }
 
     public bool HelpShowing
@@ -67,18 +68,18 @@ internal sealed class UIService
     {
         var oldView = (View?)_view;
 
-        _header = new Label(0, 0, Console.WindowWidth);
+        _header = new Label(0, 0, Terminal.WindowWidth);
         _header.Foreground = ConsoleColor.Yellow;
         _header.Background = ConsoleColor.DarkGray;
 
-        _view = new View(1, 0, Console.WindowHeight - 1, Console.WindowWidth);
+        _view = new View(1, 0, Terminal.WindowHeight - 1, Terminal.WindowWidth);
         _view.SelectionChanged += delegate { UpdateHeader(); };
 
-        _footer = new Label(Console.WindowHeight - 1, 0, Console.WindowWidth);
+        _footer = new Label(Terminal.WindowHeight - 1, 0, Terminal.WindowWidth);
         _footer.Foreground = ConsoleColor.Yellow;
         _footer.Background = ConsoleColor.DarkGray;
 
-        Vt100.SetScrollMargins(2, Console.WindowHeight - 1);
+        Vt100.SetScrollMargins(2, Terminal.WindowHeight - 1);
 
         UpdateRepositoryState();
 
@@ -150,15 +151,15 @@ internal sealed class UIService
         while (true)
         {
             Vt100.HideCursor();
-            Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
+            Vt100.SetCursorPosition(0, Terminal.WindowHeight - 1);
             Vt100.SetForegroundColor(ConsoleColor.Blue);
             Vt100.SetBackgroundColor(ConsoleColor.Gray);
-            Console.Write("/");
-            Console.Write(sb);
+            Terminal.Write("/");
+            Terminal.Write(sb.ToString());
             Vt100.EraseRestOfCurrentLine();
             Vt100.ShowCursor();
 
-            var k = Console.ReadKey(intercept: true);
+            var k = Terminal.ReadKey();
 
             if (k.Key == ConsoleKey.Enter)
             {
@@ -177,7 +178,7 @@ internal sealed class UIService
             else if (k.KeyChar >= 32)
             {
                 sb.Append(k.KeyChar);
-                if (sb.Length == Console.WindowWidth - 1)
+                if (sb.Length == Terminal.WindowWidth - 1)
                     break;
             }
         }
@@ -192,12 +193,12 @@ internal sealed class UIService
         if (searchResults.Hits.Count == 0)
         {
             Vt100.HideCursor();
-            Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
+            Vt100.SetCursorPosition(0, Terminal.WindowHeight - 1);
             Vt100.SetForegroundColor(ConsoleColor.Blue);
             Vt100.SetBackgroundColor(ConsoleColor.Gray);
-            Console.Write("<< NO RESULTS FOUND >>");
+            Terminal.Write("<< NO RESULTS FOUND >>");
             Vt100.EraseRestOfCurrentLine();
-            Console.ReadKey();
+            Terminal.ReadKey();
             UpdateFooter();
             return;
         }
@@ -264,8 +265,8 @@ internal sealed class UIService
 
     public void RenderGitError(GitCommandFailedException ex)
     {
-        Console.Clear();
-        Console.WriteLine(ex.Message);
-        Console.ReadKey();
+        Terminal.Clear();
+        Terminal.WriteLine(ex.Message);
+        Terminal.ReadKey();
     }
 }
