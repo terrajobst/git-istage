@@ -10,6 +10,7 @@ namespace GitIStage.Services;
 internal sealed class UIService
 {
     private readonly IServiceProvider _serviceProvider;
+    private readonly KeyboardService _keyboardService;
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
 
@@ -29,9 +30,10 @@ internal sealed class UIService
 
     private readonly StringBuilder _inputLineDigits = new();
 
-    public UIService(IServiceProvider serviceProvider, GitService gitService, DocumentService documentService)
+    public UIService(IServiceProvider serviceProvider, KeyboardService keyboardService, GitService gitService, DocumentService documentService)
     {
         _serviceProvider = serviceProvider;
+        _keyboardService = keyboardService;
         _gitService = gitService;
         _documentService = documentService;
         _documentService.Changed += DocumentServiceOnChanged;
@@ -286,7 +288,7 @@ internal sealed class UIService
             Vt100.EraseRestOfCurrentLine();
             Vt100.ShowCursor();
 
-            var k = Console.ReadKey(intercept: true);
+            var k = _keyboardService.ReadKey();
 
             if (k.Key == ConsoleKey.Enter)
             {
@@ -325,7 +327,7 @@ internal sealed class UIService
             Vt100.SetBackgroundColor(ConsoleColor.Gray);
             Console.Write("<< NO RESULTS FOUND >>");
             Vt100.EraseRestOfCurrentLine();
-            Console.ReadKey();
+            _keyboardService.ReadKey();
             UpdateFooter();
             return;
         }

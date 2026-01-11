@@ -1,6 +1,7 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using GitIStage.Services;
+using GitIStage.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -48,6 +49,7 @@ internal static class Program
         serviceCollection.AddSingleton<GitEnvironment>();
         serviceCollection.AddSingleton<UserEnvironment>();
         serviceCollection.AddSingleton<Application>();
+        serviceCollection.AddSingleton<KeyboardService>();
         serviceCollection.AddSingleton<GitService>();
         serviceCollection.AddSingleton<PatchingService>();
         serviceCollection.AddSingleton<DocumentService>();
