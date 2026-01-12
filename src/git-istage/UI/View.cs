@@ -68,10 +68,6 @@ internal sealed class View
 
     public int Width => Right - Left;
 
-    public int DocumentWidth => Document.Width;
-
-    public int DocumentHeight => Document.Height;
-
     public bool VisibleWhitespace
     {
         get => _visibleWhitespace;
@@ -102,22 +98,12 @@ internal sealed class View
     {
         // We want to preserve the current line, but we generally want to reset
         // the selection when the document changes.
-        var newSelectionStart = int.Max(0, int.Min(_selection.StartLine, DocumentHeight - 1));
+        var newSelectionStart = int.Max(0, int.Min(_selection.StartLine, Document.Height - 1));
         var newSelectionCount = 0;
 
-        _topLine = int.Max(0, int.Min(int.Min(_topLine, DocumentHeight - 1), DocumentHeight - Height));
+        _topLine = int.Max(0, int.Min(int.Min(_topLine, Document.Height - 1), Document.Height - Height));
         _selection = new Selection(newSelectionStart, newSelectionCount);
-        _leftChar = int.Min(_leftChar, DocumentWidth - 1);
-
-        if (_document.Height > 0)
-        {
-            if (_topLine < 0)
-                _topLine = 0;
-
-            if (_leftChar < 0)
-                _leftChar = 0;
-        }
-
+        _leftChar = int.Max(0, int.Min(_leftChar, Document.Width - 1));
         _searchResults = null;
 
         Render();
@@ -125,14 +111,14 @@ internal sealed class View
 
     private void Render()
     {
-        if (_document.Height == 0)
+        if (_document.IsEmpty)
         {
             for (var i = Top; i < Bottom; i++)
                 RenderNonExistingLine(i);
         }
         else
         {
-            var endLine = int.Min(BottomLine, DocumentHeight - 1);
+            var endLine = int.Min(BottomLine, Document.Height - 1);
 
             for (var i = TopLine; i <= endLine; i++)
                 RenderLine(i);
@@ -266,11 +252,11 @@ internal sealed class View
 
     private void UpdateSelection(Selection value)
     {
-        if (_selection == value || DocumentHeight == 0)
+        if (_selection == value || Document.Height == 0)
             return;
 
-        ThrowIfGreaterThanOrEqual(value.StartLine, DocumentHeight);
-        ThrowIfGreaterThanOrEqual(value.EndLine, DocumentHeight);
+        ThrowIfGreaterThanOrEqual(value.StartLine, Document.Height);
+        ThrowIfGreaterThanOrEqual(value.EndLine, Document.Height);
 
         var previousSelection = _selection;
         _selection = value;
@@ -311,11 +297,11 @@ internal sealed class View
 
     private void UpdateTopLine(int lineIndex)
     {
-        if (_topLine == lineIndex || DocumentHeight == 0)
+        if (_topLine == lineIndex || Document.Height == 0)
             return;
 
         ThrowIfLessThan(lineIndex, 0);
-        ThrowIfGreaterThanOrEqual(lineIndex, DocumentHeight);
+        ThrowIfGreaterThanOrEqual(lineIndex, Document.Height);
 
         var delta = lineIndex - _topLine;
         _topLine = lineIndex;
@@ -361,11 +347,11 @@ internal sealed class View
 
     private void UpdateLeftChar(int charIndex)
     {
-        if (_leftChar == charIndex ||  DocumentHeight == 0)
+        if (_leftChar == charIndex ||  Document.Height == 0)
             return;
 
         ThrowIfLessThan(charIndex, 0);
-        ThrowIfGreaterThanOrEqual(charIndex, DocumentWidth);
+        ThrowIfGreaterThanOrEqual(charIndex, Document.Width);
 
         _leftChar = charIndex;
         Render();
@@ -374,11 +360,11 @@ internal sealed class View
 
     public void BringIntoView(int lineIndex)
     {
-        if (DocumentHeight == 0)
+        if (Document.Height == 0)
             return;
 
         ThrowIfLessThan(lineIndex, 0);
-        ThrowIfGreaterThanOrEqual(lineIndex, DocumentHeight);
+        ThrowIfGreaterThanOrEqual(lineIndex, Document.Height);
 
         var offScreen = lineIndex < _topLine ||
                         lineIndex > _topLine + Height - 1;
@@ -389,8 +375,8 @@ internal sealed class View
         if (topLine < 0)
             topLine = 0;
 
-        if (topLine > DocumentHeight - Height)
-            topLine = DocumentHeight - Height;
+        if (topLine > Document.Height - Height)
+            topLine = Document.Height - Height;
 
         UpdateTopLine(topLine);
     }

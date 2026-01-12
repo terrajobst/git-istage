@@ -4,15 +4,8 @@ internal readonly struct Selection : IEquatable<Selection>
 {
     public Selection(int startLine, int count, bool atEnd = false)
     {
-        if (startLine == -1 && count == 0 && !atEnd)
-        {
-            // We accept this special case as empty.
-        }
-        else
-        {
-            ThrowIfNegative(startLine);
-            ThrowIfLessThan(count, 0);
-        }
+        ThrowIfNegative(startLine);
+        ThrowIfLessThan(count, 0);
 
         StartLine = startLine;
         Count = count;

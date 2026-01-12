@@ -17,6 +17,8 @@ internal abstract class Document
             .Max();
     }
 
+    public bool IsEmpty => SourceText.Length == 0;
+    
     public SourceText SourceText { get; }
     
     public int Height => SourceText.Lines.Length;

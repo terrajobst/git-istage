@@ -112,7 +112,7 @@ internal sealed class UIService
 
         var mode = _documentService.ViewStage ? "S" : "W";
 
-        if (_documentService.ViewFiles || _documentService.Document.Height == 0)
+        if (_documentService.ViewFiles || _documentService.Document.IsEmpty)
         {
             _header.Text = $" {mode} | Files ";
         }

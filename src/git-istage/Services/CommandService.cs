@@ -109,8 +109,7 @@ internal sealed class CommandService
         if (_uiService.HelpShowing)
             return;
 
-        var tipTree = _gitService.Repository.Head.Tip?.Tree;
-        if (!_gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index).Any())
+        if (!_documentService.IndexPatch.Entries.Any())
             return;
 
         using (_gitService.SuspendEvents())
@@ -124,35 +123,48 @@ internal sealed class CommandService
     [CommandHandler("Stashes changes from the working copy, but leaves the stage as-is.", "Alt+S")]
     private void Stash()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
+        if (!_documentService.WorkingCopyPatch.Entries.Any())
+            return;
+        
         _gitService.StashUntrackedKeepIndex();
     }
 
     [CommandHandler("Toggle between working copy changes and staged changes.", "T")]
     private void ToggleBetweenWorkingDirectoryAndStaging()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
         _documentService.ViewStage = !_documentService.ViewStage;
     }
 
     [CommandHandler("Toggle between seeing changes and changed files.", "F")]
     private void ToggleFilesAndChanges()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
         _documentService.ViewFiles = !_documentService.ViewFiles;
     }
 
     [CommandHandler("Increases the number of contextual lines.", "OemPlus")]
     private void IncreaseContext()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
         _documentService.ContextLines += 1;
     }
 
     [CommandHandler("Decreases the number of contextual lines.", "OemMinus")]
     private void DecreaseContext()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
         if (_documentService.ContextLines == 0)
             return;
 
@@ -162,21 +174,25 @@ internal sealed class CommandService
     [CommandHandler("Toggles between standard diff and full diff", "Oem7")]
     private void ToggleFullDiff()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
         _documentService.ViewFullDiff = !_documentService.ViewFullDiff;
     }
 
     [CommandHandler("Toggles between showing and hiding whitespace.", "W")]
     private void ToggleWhitespace()
     {
-        if (_uiService.HelpShowing) return;
+        if (_uiService.HelpShowing)
+            return;
+
         _uiService.View.VisibleWhitespace = !_uiService.View.VisibleWhitespace;
     }
 
     [CommandHandler("Selects the first line.", "Home")]
     private void GoHome()
     {
-        if (_uiService.View.DocumentHeight == 0)
+        if (_uiService.View.Document.Height == 0)
             return;
 
         _uiService.View.LeftChar = 0;
@@ -196,11 +212,11 @@ internal sealed class CommandService
     [CommandHandler("Selects the last line.", "End")]
     private void GoEnd()
     {
-        if (_uiService.View.DocumentHeight == 0)
+        if (_uiService.View.Document.Height == 0)
             return;
 
         _uiService.View.LeftChar = 0;
-        _uiService.View.SelectedLine = _uiService.View.DocumentHeight - 1;
+        _uiService.View.SelectedLine = _uiService.View.Document.Height - 1;
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
@@ -221,7 +237,7 @@ internal sealed class CommandService
 
     private void GoLine(int line)
     {
-        if (_uiService.View.DocumentHeight == 0)
+        if (_uiService.View.Document.Height == 0)
             return;
 
         line -= 1;
@@ -238,7 +254,7 @@ internal sealed class CommandService
     [CommandHandler("Selects the previous line.", "UpArrow", "K")]
     private void SelectUp()
     {
-        if (_uiService.View.SelectedLine <= 0)
+        if (_uiService.View.SelectedLine == 0)
             return;
 
         _uiService.View.SelectedLine--;
@@ -247,7 +263,7 @@ internal sealed class CommandService
     [CommandHandler("Selects the next line.", "DownArrow", "J")]
     private void SelectDown()
     {
-        if (_uiService.View.SelectedLine == _uiService.View.DocumentHeight - 1)
+        if (_uiService.View.SelectedLine >= _uiService.View.Document.Height - 1)
             return;
 
         _uiService.View.SelectedLine++;
@@ -282,7 +298,7 @@ internal sealed class CommandService
         if (selection.AtEnd)
         {
             // Extend end
-            if (selection.StartLine < _uiService.View.DocumentHeight - 1)
+            if (selection.StartLine < _uiService.View.Document.Height - 1)
                 _uiService.View.Selection = new Selection(selection.StartLine, selection.Count + 1, true);
         }
         else
@@ -290,7 +306,7 @@ internal sealed class CommandService
             // Shrink start
             if (selection.Count > 0)
                 _uiService.View.Selection = new Selection(selection.StartLine + 1, selection.Count - 1);
-            else if (selection.EndLine < _uiService.View.DocumentHeight - 1)
+            else if (selection.EndLine < _uiService.View.Document.Height - 1)
                 _uiService.View.Selection = new Selection(selection.StartLine, selection.Count + 1, true);
         }
     }
@@ -307,7 +323,7 @@ internal sealed class CommandService
     [CommandHandler("Scrolls down by one line.", "Control+DownArrow")]
     private void ScrollDown()
     {
-        if (_uiService.View.TopLine >= _uiService.View.DocumentHeight - _uiService.View.Height)
+        if (_uiService.View.TopLine >= _uiService.View.Document.Height - _uiService.View.Height)
             return;
 
         _uiService.View.TopLine++;
@@ -318,17 +334,16 @@ internal sealed class CommandService
     {
         var delta = Math.Min(_uiService.View.Height, _uiService.View.SelectedLine);
         _uiService.View.TopLine = Math.Max(0, _uiService.View.TopLine - delta);
-        _uiService.View.SelectedLine = _uiService.View.SelectedLine - delta;
+        _uiService.View.SelectedLine -= delta;
     }
 
     [CommandHandler("Selects the line one screen below.", "PageDown", "SpaceBar")]
     private void ScrollPageDown()
     {
-        var delta = Math.Min(_uiService.View.Height, _uiService.View.DocumentHeight - _uiService.View.SelectedLine - 1);
-        _uiService.View.TopLine = Math.Min(
-            Math.Max(0, _uiService.View.DocumentHeight - _uiService.View.Height),
-            _uiService.View.TopLine + delta);
-        _uiService.View.SelectedLine = _uiService.View.SelectedLine + delta;
+        var delta = Math.Min(_uiService.View.Height, _uiService.View.Document.Height - _uiService.View.SelectedLine - 1);
+        _uiService.View.TopLine = Math.Min(Math.Max(0, _uiService.View.Document.Height - _uiService.View.Height),
+                                           _uiService.View.TopLine + delta);
+        _uiService.View.SelectedLine += delta;
     }
 
     [CommandHandler("Scrolls left by one character.", "Control+LeftArrow")]
@@ -343,7 +358,7 @@ internal sealed class CommandService
     [CommandHandler("Scrolls right by one character.", "Control+RightArrow")]
     private void ScrollRight()
     {
-        if (_uiService.View.LeftChar == _uiService.View.DocumentWidth - _uiService.View.Width)
+        if (_uiService.View.LeftChar == _uiService.View.Document.Width - _uiService.View.Width)
             return;
 
         _uiService.View.LeftChar++;
@@ -352,13 +367,14 @@ internal sealed class CommandService
     [CommandHandler("Go to the previous file.", "LeftArrow")]
     private void GoPreviousFile()
     {
-        if (_uiService.HelpShowing) return;
-        var i = _uiService.View.SelectedLine;
-        if (i < 0)
+        if (_uiService.HelpShowing)
+            return;
+
+        if (_uiService.View.SelectedLine == 0)
             return;
 
         var document = _documentService.Document;
-        var nextIndex = document.FindPreviousEntryIndex(i);
+        var nextIndex = document.FindPreviousEntryIndex(_uiService.View.SelectedLine);
         if (nextIndex >= 0)
         {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
@@ -369,13 +385,11 @@ internal sealed class CommandService
     [CommandHandler("Go to the next file.", "RightArrow")]
     private void GoNextFile()
     {
-        if (_uiService.HelpShowing) return;
-        var i = _uiService.View.SelectedLine;
-        if (i < 0)
+        if (_uiService.HelpShowing)
             return;
 
         var document = _documentService.Document;
-        var nextIndex = document.FindNextEntryIndex(i);
+        var nextIndex = document.FindNextEntryIndex(_uiService.View.SelectedLine);
         if (nextIndex >= 0)
         {
             _uiService.View.SelectedLine = document.GetLineIndex(nextIndex);
@@ -386,24 +400,20 @@ internal sealed class CommandService
     [CommandHandler("Go to previous change block.", "Oem4")]
     private void GoPreviousHunk()
     {
-        if (_uiService.HelpShowing) return;
-        var i = _uiService.View.SelectedLine;
-        if (i < 0)
+        if (_uiService.HelpShowing)
             return;
 
-        _uiService.View.SelectedLine = _documentService.Document.FindPreviousChangeBlock(i);
+        _uiService.View.SelectedLine = _documentService.Document.FindPreviousChangeBlock(_uiService.View.SelectedLine);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
     [CommandHandler("Go to next change block.", "Oem6")]
     private void GoNextHunk()
     {
-        if (_uiService.HelpShowing) return;
-        var i = _uiService.View.SelectedLine;
-        if (i < 0)
+        if (_uiService.HelpShowing)
             return;
 
-        _uiService.View.SelectedLine = _documentService.Document.FindNextChangeBlock(i);
+        _uiService.View.SelectedLine = _documentService.Document.FindNextChangeBlock(_uiService.View.SelectedLine);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
@@ -541,6 +551,9 @@ internal sealed class CommandService
         if (_uiService.HelpShowing)
             return;
 
+        if (_documentService.Document.IsEmpty)
+            return;
+        
         if (direction == PatchDirection.Stage && _documentService.ViewStage)
             return;
 
@@ -550,12 +563,9 @@ internal sealed class CommandService
         if (direction == PatchDirection.Reset && _documentService.ViewStage)
             return;
 
-        var selection = _uiService.View.Selection;
-        if (selection.StartLine < 0)
-            return;
-
         try
         {
+            var selection = _uiService.View.Selection;
             _patchingService.ApplyPatch(direction, entireHunk, selection.StartLine, selection.Count);
         }
         catch (GitCommandFailedException ex)
