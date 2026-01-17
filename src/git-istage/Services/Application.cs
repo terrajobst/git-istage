@@ -85,6 +85,11 @@ internal sealed class Application
         Enqueue(new QuitMessage());
     }
 
+    public void Invoke(Action action)
+    {
+        Enqueue(new InvokeMessage(action));
+    }
+
     private void Enqueue(Message message)
     {
         _messageQueue.Enqueue(message);

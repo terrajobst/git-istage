@@ -21,8 +21,8 @@ public abstract class RepositoryTests : IDisposable
 
         var gitEnvironment = new GitEnvironment(repositoryPath: _tempPath);
         _gitService = new GitService(gitEnvironment);
-        _documentService = new DocumentService(_gitService);
-        _patchingService = new PatchingService(_gitService, _documentService);
+        _documentService = new DocumentService(_gitService, fileWatchingService: null);
+        _patchingService = new PatchingService(_gitService, fileWatchingService: null);
     }
 
     public void Dispose()

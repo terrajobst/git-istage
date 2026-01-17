@@ -1,3 +1,4 @@
+using System.Collections.Immutable;
 using System.Diagnostics;
 using System.Text;
 using GitIStage.Text;
@@ -148,7 +149,7 @@ internal static class PatchExtensions
                     .FirstOrDefault(l => l.LineIndex < lastLineInHunk && l.Kind == PatchNodeKind.NoFinalLineBreakLine);
                 var finalLine = noFinalLineBreakLine is null || noFinalLineBreakLine.LineIndex == 0
                                     ? null
-                                    : patch.Lines[noFinalLineBreakLine.LineIndex - 1] as PatchHunkLine; 
+                                    : patch.Lines[noFinalLineBreakLine.LineIndex - 1] as PatchHunkLine;
 
                 // Get current hunk information
 
@@ -296,6 +297,7 @@ internal static class PatchExtensions
         }
     }
 
+    // TODO: I think we'll want some unit tests for this method
     public static (int Added, int Modified, int Deleted) GetFileStatistics(this Patch patch)
     {
         var added = 0;
@@ -316,31 +318,55 @@ internal static class PatchExtensions
     }
 
     // TODO: I think we'll want some unit tests for this method
-    public static Patch Update(this Patch patch, HashSet<string> affectedPaths, Patch patchForAffectedPaths)
+    public static Patch Update(this Patch patch,
+                               Patch updatedPatch,
+                               ImmutableArray<string> updatedPaths)
     {
-        var partialPatchEntryByPath = patchForAffectedPaths.Entries.ToDictionary(GetPath);
-        var entries = new List<PatchEntry>();
+        var currentPathSet = patch.Entries.Select(e => e.NewPath).ToHashSet(StringComparer.Ordinal);
+        var updatedPathSet =  updatedPaths.ToHashSet(StringComparer.Ordinal);
+
+        var updatedEntryByPath = updatedPatch.Entries.ToDictionary(e => e.NewPath, StringComparer.Ordinal);
+        var mergedEntries = new List<PatchEntry>();
 
         foreach (var oldEntry in patch.Entries)
         {
-            var path = GetPath(oldEntry);
-            if (partialPatchEntryByPath.TryGetValue(path, out var newEntry))
-                entries.Add(newEntry);
-            else if (!affectedPaths.Contains(path))
-                entries.Add(oldEntry);
+            var path = oldEntry.NewPath;
+
+            if (updatedPathSet.Contains(path) && !updatedEntryByPath.ContainsKey(path))
+            {
+                // Remove
+                continue;
+            }
+            else if (updatedEntryByPath.TryGetValue(path, out var updatedEntry))
+            {
+                // Update
+                mergedEntries.Add(updatedEntry);
+            }
+            else
+            {
+                // Keep
+                mergedEntries.Add(oldEntry);
+            }
         }
+
+        foreach (var newEntry in updatedPatch.Entries)
+        {
+            var path = newEntry.NewPath;
+
+            if (!currentPathSet.Contains(path))
+            {
+                // Add
+                mergedEntries.Add(newEntry);
+            }
+        }
+
+        mergedEntries.Sort((x, y) => x.NewPath.CompareTo(y.NewPath, StringComparison.Ordinal));
 
         var sb = new StringBuilder();
-        foreach (var entry in entries)
+        foreach (var entry in mergedEntries)
             WriteEntry(sb, entry);
 
-        var result = Patch.Parse(sb.ToString());
-        return result;
-
-        static string GetPath(PatchEntry e)
-        {
-            return string.IsNullOrEmpty(e.NewPath) ? e.OldPath : e.NewPath;
-        }
+        return Patch.Parse(sb.ToString());
 
         static void WriteEntry(StringBuilder sb, PatchEntry e)
         {

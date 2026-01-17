@@ -17,11 +17,11 @@ internal sealed class GitService : IDisposable
     public GitService(GitEnvironment environment)
     {
         _environment = environment;
-        InitializeRepo();
+        InitializeRepository();
     }
 
     [MemberNotNull(nameof(_repository))]
-    private void InitializeRepo()
+    public void InitializeRepository()
     {
         // NOTE: We're re-creating the repo because when we shell out to Git the repository state will be stale.
         _repository?.Dispose();
@@ -164,6 +164,37 @@ internal sealed class GitService : IDisposable
         RaiseFullReset();
     }
 
+    public bool IsIgnoredOrOutsideWorkingDirectory(string path)
+    {
+        var workingDirectory = Repository.Info.WorkingDirectory;
+        if (!path.StartsWith(workingDirectory, StringComparison.Ordinal))
+            return true;
+
+        var current = Path.GetRelativePath(workingDirectory, path);
+        while (current is not null && current.Length > 0)
+        {
+            var ignored = Repository.Ignore.IsPathIgnored(current);
+            if (ignored)
+                return true;
+
+            current = Path.GetDirectoryName(current);
+        }
+
+        return false;
+    }
+
+    public string GetPatch(bool fullFileDiff, int contextLines, bool stage, IEnumerable<string>? affectedPaths = null)
+    {
+        var tipTree = Repository.Head.Tip?.Tree;
+
+        var compareOptions = new CompareOptions();
+        compareOptions.ContextLines = fullFileDiff ? int.MaxValue : contextLines;
+
+        return stage
+            ? Repository.Diff.Compare<LibGit2Sharp.Patch>(tipTree, DiffTargets.Index, affectedPaths, null, compareOptions)
+            : Repository.Diff.Compare<LibGit2Sharp.Patch>(affectedPaths, true, null, compareOptions);
+    }
+
     private void RaiseFullReset()
     {
         Raise(new RepositoryChangedEventArgs());
@@ -184,7 +215,7 @@ internal sealed class GitService : IDisposable
         if (_updateCounter > 0)
             return;
 
-        InitializeRepo();
+        InitializeRepository();
         RepositoryChanged?.Invoke(this, e);
     }
 
@@ -201,9 +232,9 @@ internal sealed class GitService : IDisposable
         if (_updateCounter == 0)
             RaiseFullReset();
     }
-    
+
     public event EventHandler<RepositoryChangedEventArgs>? RepositoryChanged;
-    
+
     private sealed class SuspendedEvents : IDisposable
     {
         private readonly GitService _gitService;
@@ -214,7 +245,7 @@ internal sealed class GitService : IDisposable
 
             _gitService = gitService;
         }
-        
+
         public void Dispose()
         {
             _gitService.RestoreEvents();

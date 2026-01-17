@@ -1,7 +1,6 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using GitIStage.Services;
-using GitIStage.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -37,6 +36,8 @@ internal static class Program
                              .Build();
         host.Start();
 
+        host.Services.GetRequiredService<FileWatchingService>();
+
         var application = host.Services.GetRequiredService<Application>();
         application.Run();
 
@@ -56,6 +57,7 @@ internal static class Program
         serviceCollection.AddSingleton<UIService>();
         serviceCollection.AddSingleton<CommandService>();
         serviceCollection.AddSingleton<KeyBindingService>();
+        serviceCollection.AddSingleton<FileWatchingService>();
     }
 }
 

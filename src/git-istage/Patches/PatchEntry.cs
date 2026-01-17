@@ -116,4 +116,9 @@ public sealed class PatchEntry : PatchNode
     public PatchEntryMode NewMode { get; }
     
     public override IEnumerable<PatchNode> Children() => [Header, ..AdditionalHeaders, ..Hunks];
+
+    public override string ToString()
+    {
+        return $"{NewPath} ({Change})";
+    }
 }
