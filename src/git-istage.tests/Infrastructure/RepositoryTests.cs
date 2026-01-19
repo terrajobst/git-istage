@@ -191,10 +191,11 @@ public abstract class RepositoryTests : IDisposable
         }
     }
 
-    internal void AssertPatch(string expectedPatch, PatchDocument actualPatch)
+    internal void AssertPatch(string expectedPatch, PatchDocument actualPatch, bool includeNoFinalLineBreaks = false)
     {
         var actualPatchLines = actualPatch.Patch.Lines
-                                          .Where(l => l.Kind.IsAddedOrDeletedLine())
+                                          .Where(l => l.Kind.IsAddedOrDeletedLine() ||
+                                                      includeNoFinalLineBreaks && l.Kind ==PatchNodeKind.NoFinalLineBreakLine)
                                           .Select(l => l.Text.ToString());
 
         var expectedPatchLines = expectedPatch.ReplaceLineEndings("\n")

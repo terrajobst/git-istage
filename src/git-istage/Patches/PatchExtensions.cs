@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using GitIStage.Text;
 
@@ -95,7 +96,6 @@ internal static class PatchExtensions
         return Convert.ToString((int)mode, 8);
     }
 
-    // TODO: Handle the NoFinalLineBreak correctly
     public static Patch SelectForApplication(this Patch patch, IEnumerable<int> lineIndexes, PatchDirection direction)
     {
         var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
@@ -115,6 +115,40 @@ internal static class PatchExtensions
             {
                 var hunk = hunkLineGroup.Key;
                 var lineSet = new HashSet<int>(hunkLineGroup);
+
+                // If we're staging a line after '\ No newline at end of file', that means we're modifying the final
+                // line in a file, and that line had no line break. If we want to add a new line after it, by definition
+                // we must include the current last line as a removal because we need to add a line break.
+                //
+                // For example, consider this case:
+                //
+                //     @@ -1,2 +1,2 @@
+                //      Line 1
+                //     -Line 2
+                //     \ No newline at end of file
+                //     +Line 2 Changed
+                //     +Line 3
+                //     +Line 4
+                //     \ No newline at end of file
+                //
+                // If we only stage '+Line 3' we need to generate this diff:
+                //
+                //     @@ -1,2 +1,2 @@
+                //      Line 1
+                //     -Line 2
+                //     \ No newline at end of file
+                //     +Line 2
+                //     +Line 3
+                //     \ No newline at end of file
+                //
+                // For more details, see docs/handling-no-newline.md
+
+                var lastLineInHunk = hunkLineGroup.Max();
+                var noFinalLineBreakLine = hunk.Lines
+                    .FirstOrDefault(l => l.LineIndex < lastLineInHunk && l.Kind == PatchNodeKind.NoFinalLineBreakLine);
+                var finalLine = noFinalLineBreakLine is null || noFinalLineBreakLine.LineIndex == 0
+                                    ? null
+                                    : patch.Lines[noFinalLineBreakLine.LineIndex - 1] as PatchHunkLine; 
 
                 // Get current hunk information
 
@@ -138,8 +172,7 @@ internal static class PatchExtensions
                         oldLength++;
                 }
 
-                var delta = lineSet.Select(i => patch.Lines[i])
-                                   .Select(l => l.Kind)
+                var delta = lineSet.Select(i => patch.Lines[i].Kind)
                                    .Where(k => k.IsAddedOrDeletedLine())
                                    .Select(k => k == PatchNodeKind.AddedLine ? 1 : -1)
                                    .Sum();
@@ -212,11 +245,20 @@ internal static class PatchExtensions
 
                     if (lineSet.Contains(i) ||
                         kind == PatchNodeKind.ContextLine ||
-                        previousIncluded && kind == PatchNodeKind.NoFinalLineBreakLine)
+                        previousIncluded && kind == PatchNodeKind.NoFinalLineBreakLine ||
+                        line == finalLine || line == noFinalLineBreakLine)
                     {
                         newPatch.Append(line.Text);
                         newPatch.Append(line.LineBreak);
                         previousIncluded = true;
+
+                        if (line == noFinalLineBreakLine)
+                        {
+                            Debug.Assert(finalLine is not null);
+                            newPatch.Append('+');
+                            newPatch.Append(finalLine.Text.Slice(1));
+                            newPatch.Append(finalLine.LineBreak);
+                        }
                     }
                     else if (!isUndo && kind == PatchNodeKind.DeletedLine ||
                              isUndo && kind == PatchNodeKind.AddedLine)

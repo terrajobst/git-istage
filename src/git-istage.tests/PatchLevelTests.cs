@@ -308,4 +308,40 @@ public class PatchLevelTests : RepositoryTests
         var staged = GetDocument<PatchDocument>();
         AssertPatch(expectedPatch, staged);
     }
+
+    [Fact]
+    public void PatchLevel_NoNewlineAtEndOfFile()
+    {
+        var before = "Line 1\nLine 2";
+        var after = "Line 1\nLine 2 Changed";
+        var stagedLine = "+Line 2 Changed";
+
+        var expectedUnstaged = """
+                               -Line 2
+                               \ No newline at end of file
+                               """;
+
+        var expectedStaged = """
+                             -Line 2
+                             \ No newline at end of file
+                             +Line 2
+                             +Line 2 Changed
+                             \ No newline at end of file
+                             """;
+
+        WriteTheFile(before);
+        StageTheFile();
+        Commit();
+        WriteTheFile(after);
+        
+        StageLine(stagedLine);
+        
+        var unstaged = GetDocument<PatchDocument>();
+        AssertPatch(expectedUnstaged, unstaged, includeNoFinalLineBreaks: true);
+
+        ViewStage = true;
+
+        var staged = GetDocument<PatchDocument>();
+        AssertPatch(expectedStaged, staged, includeNoFinalLineBreaks: true);
+    }
 }
