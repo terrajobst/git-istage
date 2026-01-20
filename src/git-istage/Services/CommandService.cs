@@ -298,7 +298,7 @@ internal sealed class CommandService
         if (selection.AtEnd)
         {
             // Extend end
-            if (selection.StartLine < _uiService.View.Document.Height - 1)
+            if (selection.EndLine < _uiService.View.Document.Height - 1)
                 _uiService.View.Selection = new Selection(selection.StartLine, selection.Count + 1, true);
         }
         else
