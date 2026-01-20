@@ -56,11 +56,15 @@ internal sealed class View
         set => UpdateTopLine(value);
     }
 
+    public int TopLineMax => int.Max(0, _document.Height - 1);
+
     public int LeftChar
     {
         get => _leftChar;
         set => UpdateLeftChar(value);
     }
+
+    public int LeftCharMax => int.Max(0, _document.Width - 1);
 
     public int BottomLine => TopLine + Height - 1;
 
@@ -101,9 +105,9 @@ internal sealed class View
         var newSelectionStart = int.Max(0, int.Min(_selection.StartLine, Document.Height - 1));
         var newSelectionCount = 0;
 
-        _topLine = int.Max(0, int.Min(int.Min(_topLine, Document.Height - 1), Document.Height - Height));
+        _topLine = int.Clamp(_topLine, 0, TopLineMax); 
         _selection = new Selection(newSelectionStart, newSelectionCount);
-        _leftChar = int.Max(0, int.Min(_leftChar, Document.Width - 1));
+        _leftChar = int.Clamp(_leftChar, 0, LeftCharMax);
         _searchResults = null;
 
         Render();
@@ -111,24 +115,8 @@ internal sealed class View
 
     private void Render()
     {
-        if (_document.IsEmpty)
-        {
-            for (var i = Top; i < Bottom; i++)
-                RenderNonExistingLine(i);
-        }
-        else
-        {
-            var endLine = int.Min(BottomLine, Document.Height - 1);
-
-            for (var i = TopLine; i <= endLine; i++)
-                RenderLine(i);
-
-            var remainingStart = Top + endLine - TopLine + 1;
-            var remainingEnd = Top + Height;
-
-            for (var i = remainingStart; i < remainingEnd; i++)
-                RenderNonExistingLine(i);
-        }
+        for (var i = TopLine; i <= BottomLine; i++)
+            RenderLine(i);
     }
 
     // TODO: We need to properly support tabs. Right now the spans will count them as a single
@@ -140,6 +128,12 @@ internal sealed class View
         var isVisible = TopLine <= lineIndex && lineIndex <= BottomLine;
         if (!isVisible)
             return;
+
+        if (lineIndex >= Document.Height)
+        {
+            RenderNonExistingLine(lineIndex);
+            return;
+        }
 
         var line = Document.GetLine(lineIndex);
         var lineSpan = new TextSpan(0, line.Length);
@@ -235,8 +229,10 @@ internal sealed class View
         return new StyledSpan(clippedSpan, styledSpan.Foreground, styledSpan.Background);
     }
 
-    private static void RenderNonExistingLine(int visualLine)
+    private void RenderNonExistingLine(int lineIndex)
     {
+        var visualLine = lineIndex - TopLine + Top; 
+        
         Vt100.SetCursorPosition(0, visualLine);
         Vt100.SetForegroundColor(ConsoleColor.DarkGray);
         Vt100.SetBackgroundColor();
@@ -301,7 +297,7 @@ internal sealed class View
             return;
 
         ThrowIfLessThan(lineIndex, 0);
-        ThrowIfGreaterThanOrEqual(lineIndex, Document.Height);
+        ThrowIfGreaterThanOrEqual(lineIndex, TopLineMax);
 
         var delta = lineIndex - _topLine;
         _topLine = lineIndex;
@@ -351,7 +347,7 @@ internal sealed class View
             return;
 
         ThrowIfLessThan(charIndex, 0);
-        ThrowIfGreaterThanOrEqual(charIndex, Document.Width);
+        ThrowIfGreaterThanOrEqual(charIndex, LeftCharMax);
 
         _leftChar = charIndex;
         Render();

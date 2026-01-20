@@ -2,12 +2,6 @@
 
 This document tracks open issues I'd like to address.
 
-## Scrolling
-
-We currently can't scroll if the last visible line is file's last line. That's
-annoying because it prevents us from putting an arbitrary line as the top line.
-We should follow other editors and allow to scroll scrolling past that.
-
 ## Go To File
 
 When in file mode, hitting enter should switch to patch mode and put the top

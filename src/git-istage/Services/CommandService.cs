@@ -323,7 +323,7 @@ internal sealed class CommandService
     [CommandHandler("Scrolls down by one line.", "Control+DownArrow")]
     private void ScrollDown()
     {
-        if (_uiService.View.TopLine >= _uiService.View.Document.Height - _uiService.View.Height)
+        if (_uiService.View.TopLine == _uiService.View.TopLineMax)
             return;
 
         _uiService.View.TopLine++;
@@ -358,7 +358,7 @@ internal sealed class CommandService
     [CommandHandler("Scrolls right by one character.", "Control+RightArrow")]
     private void ScrollRight()
     {
-        if (_uiService.View.LeftChar == _uiService.View.Document.Width - _uiService.View.Width)
+        if (_uiService.View.LeftChar >= _uiService.View.LeftCharMax)
             return;
 
         _uiService.View.LeftChar++;
