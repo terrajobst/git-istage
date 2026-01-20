@@ -189,15 +189,12 @@ internal static class PatchExtensions
                 newPatch.Append(entry.Header.LineBreak);
 
                 var changes = entry;
+                var isAddition = changes.OldMode == PatchEntryMode.Nonexistent;
+                var isDeletion = changes.NewMode == PatchEntryMode.Nonexistent;
 
-                var oldPath = changes.OldPath;
-                var oldExists = oldLength != 0 || changes.OldMode != 0;
-                var isDeletion = changes.NewMode == 0;
-                var newPath = isDeletion ? changes.OldPath : changes.NewPath;
-
-                if (oldExists)
+                if (!isAddition)
                 {
-                    newPatch.Append($"--- a/{oldPath}\n");
+                    newPatch.Append($"--- a/{changes.OldPath}\n");
                 }
                 else
                 {
@@ -207,7 +204,7 @@ internal static class PatchExtensions
 
                 if (!isDeletion || !allLinesSelected)
                 {
-                    newPatch.Append($"+++ b/{newPath}\n");
+                    newPatch.Append($"+++ b/{changes.NewPath}\n");
                 }
                 else
                 {

@@ -19,65 +19,80 @@ public sealed class PatchEntry : PatchNode
         Hunks = hunks;
         OldPath = header.OldPath.Value;
         NewPath = header.NewPath.Value;
+        Change = PatchEntryChange.Modified;
 
         foreach (var additionalHeader in additionalHeaders)
         {
             switch (additionalHeader.Kind)
             {
                 case PatchNodeKind.NewPathHeader:
-                    var nph = (NewPathHeader)additionalHeader;
-                    NewPath = nph.Path.Value;
+                    var newPathHeader = (NewPathHeader)additionalHeader;
+                    NewPath = newPathHeader.Path.Value;
                     break;
                 case PatchNodeKind.OldPathHeader:
-                    var oph = (OldPathHeader)additionalHeader;
-                    OldPath = oph.Path.Value;
+                    var oldPathHeader = (OldPathHeader)additionalHeader;
+                    OldPath = oldPathHeader.Path.Value;
                     break;
                 case PatchNodeKind.IndexHeader:
-                    var ih = (IndexHeader)additionalHeader;
-                    if (ih.Mode is not null)
-                        OldMode = NewMode = ih.Mode.Value;
+                    var indexHeader = (IndexHeader)additionalHeader;
+                    if (indexHeader.Mode is not null)
+                        OldMode = NewMode = indexHeader.Mode.Value;
                     break;
                 case PatchNodeKind.NewModeHeader:
-                    var nmh = (NewModeHeader)additionalHeader;
-                    NewMode = nmh.Mode.Value;
-                    Change = PatchEntryChange.ModeChanged;
+                    var newModeHeader = (NewModeHeader)additionalHeader;
+                    NewMode = newModeHeader.Mode.Value;
+                    if (!Hunks.Any())
+                        Change = PatchEntryChange.ModeChanged;
                     break;
                 case PatchNodeKind.OldModeHeader:
-                    var omh = (OldModeHeader)additionalHeader;
-                    OldMode = omh.Mode.Value;
-                    Change = PatchEntryChange.ModeChanged;
+                    var oldModeHeader = (OldModeHeader)additionalHeader;
+                    OldMode = oldModeHeader.Mode.Value;
+                    if (!Hunks.Any())
+                        Change = PatchEntryChange.ModeChanged;
                     break;
                 case PatchNodeKind.NewFileModeHeader:
-                    var nfmh = (NewFileModeHeader)additionalHeader;
+                    var newFileModeHeader = (NewFileModeHeader)additionalHeader;
                     OldMode = PatchEntryMode.Nonexistent;
-                    NewMode = nfmh.Mode.Value;
+                    NewMode = newFileModeHeader.Mode.Value;
                     Change = PatchEntryChange.Added;
                     break;
                 case PatchNodeKind.DeletedFileModeHeader:
-                    var dfmh = (DeletedFileModeHeader)additionalHeader;
-                    OldMode =  dfmh.Mode.Value;
+                    var deletedFileModeHeader = (DeletedFileModeHeader)additionalHeader;
+                    OldMode =  deletedFileModeHeader.Mode.Value;
                     NewMode = PatchEntryMode.Nonexistent;
                     Change = PatchEntryChange.Deleted;
                     break;
                 case PatchNodeKind.BinaryFilesDifferHeader:
-                    var bfd = (BinaryFilesDifferHeader)additionalHeader;
-                    NewPath = bfd.NewPath.Value;
-                    OldPath = bfd.OldPath.Value;
-                    Change = PatchEntryChange.Modified;
+                    var binaryFilesDifferHeader = (BinaryFilesDifferHeader)additionalHeader;
+                    NewPath = binaryFilesDifferHeader.NewPath.Value;
+                    OldPath = binaryFilesDifferHeader.OldPath.Value;
                     break;
                 case PatchNodeKind.CopyFromHeader:
+                    var copyFromHeader = (CopyFromHeader)additionalHeader;
+                    OldPath = copyFromHeader.Path.Value;
+                    if (!Hunks.Any())
+                        Change = PatchEntryChange.Copied;
+                    break;
                 case PatchNodeKind.CopyToHeader:
-                    Change = PatchEntryChange.Copied;
+                    var copyToHeader = (CopyToHeader)additionalHeader;
+                    NewPath = copyToHeader.Path.Value;
+                    if (!Hunks.Any())
+                        Change = PatchEntryChange.Copied;
                     break;
                 case PatchNodeKind.RenameFromHeader:
+                    var renameFromHeader = (RenameFromHeader)additionalHeader;
+                    OldPath = renameFromHeader.Path.Value;
+                    if (!Hunks.Any())
+                        Change = PatchEntryChange.Renamed;
+                    break;
                 case PatchNodeKind.RenameToHeader:
-                    Change = PatchEntryChange.Renamed;
+                    var renameToHeader = (RenameToHeader)additionalHeader;
+                    NewPath = renameToHeader.Path.Value;
+                    if (!Hunks.Any())
+                        Change = PatchEntryChange.Renamed;
                     break;
             }
         }
-
-        if (Hunks.Any())
-            Change = PatchEntryChange.Modified;
     }
 
     public override PatchNodeKind Kind => PatchNodeKind.Entry;
