@@ -252,6 +252,31 @@ public class PatchLevelTests : RepositoryTests
     }
 
     [Fact]
+    public void PatchLevel_Reset_Line_InNewFile()
+    {
+        var original = """
+                       line 1
+                       line 2
+                       line 3
+                       line 4
+                       """;
+
+        var line = "+line 3";
+
+        var expected = """
+                       line 1
+                       line 2
+                       line 4
+                       """;
+
+        WriteTheFile(original);
+        ResetLine(line);
+
+        var actual = ReadTheFile();
+        Assert.Equal(expected, actual);
+    }
+
+    [Fact]
     public void PatchLevel_StageHunk_With_LinedEnding_Mixed()
     {
         var original = "line 1\r\nline 2\nline 3\r\nline 4\n";

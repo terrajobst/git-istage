@@ -192,24 +192,32 @@ internal static class PatchExtensions
                 var isAddition = changes.OldMode == PatchEntryMode.Nonexistent;
                 var isDeletion = changes.NewMode == PatchEntryMode.Nonexistent;
 
-                if (!isAddition)
+                if (isAddition && direction == PatchDirection.Reset)
                 {
-                    newPatch.Append($"--- a/{changes.OldPath}\n");
-                }
-                else
-                {
-                    newPatch.Append($"new file mode {changes.NewMode.ToOctalString()}\n");
-                    newPatch.Append("--- /dev/null\n");
-                }
-
-                if (!isDeletion || !allLinesSelected)
-                {
+                    newPatch.Append($"--- a/{changes.NewPath}\n");
                     newPatch.Append($"+++ b/{changes.NewPath}\n");
                 }
                 else
                 {
-                    newPatch.Append($"deleted file mode {changes.OldMode.ToOctalString()}\n");
-                    newPatch.Append("+++ /dev/null\n");
+                    if (!isAddition)
+                    {
+                        newPatch.Append($"--- a/{changes.OldPath}\n");
+                    }
+                    else
+                    {
+                        newPatch.Append($"new file mode {changes.NewMode.ToOctalString()}\n");
+                        newPatch.Append("--- /dev/null\n");
+                    }
+
+                    if (!isDeletion || !allLinesSelected)
+                    {
+                        newPatch.Append($"+++ b/{changes.NewPath}\n");
+                    }
+                    else
+                    {
+                        newPatch.Append($"deleted file mode {changes.OldMode.ToOctalString()}\n");
+                        newPatch.Append("+++ /dev/null\n");
+                    }
                 }
 
                 // Write hunk header
