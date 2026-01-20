@@ -2,16 +2,62 @@
 
 This document tracks open issues I'd like to address.
 
+## Scrolling
+
+We currently can't scroll if the last visible line is file's last line. That's
+annoying because it prevents us from putting an arbitrary line as the top line.
+We should follow other editors and allow to scroll scrolling past that.
+
+## Go To File
+
+When in file mode, hitting enter should switch to patch mode and put the top
+line as the start of that file.
+
+## Document Views
+
+We have quite a few different documents here:
+
+* Working Copy Patch
+* Working Copy Files
+* Stage Patch
+* Stage Files
+* Help
+* Last Error
+
+We should elevate this to a fist class concept and allow switching between them,
+restoring scroll position and selection.
+
+## Git Command Log
+
+It would be useful to have a history of Git commands, just like LazyGit does.
+Should include any errors. We should replace the error document with the log
+document, with new entries being prepended.
+
+## Background loading
+
+We should use a file system watcher and automatically reload when files change
+on disk.
+
+## Syntax colorization
+
+We should use a syntax highlighter (probably `TextMateSharp`) to colorize the
+code.
+
+## Theming
+
+It would be nice to support theming.
+
 ## LibGit2Sharp
 
 Ideally, we'd eliminate the need for LibGit2Sharp:
 
+
 * We only use it to compute the patch, but since it can't apply any patches, we
   need to shell out to Git for that anyway. We also shell out for committing and
   shelving.
-* You'd think we could use use `git diff` and `git diff --cached` but
-  unfortunately Git doesn't support `git diff --include-untracked` so we don't
-  get a patch for untracked files, which we want for our workflow.
+* You'd think we could use `git diff` and `git diff --cached` but unfortunately
+  Git doesn't support `git diff --include-untracked` so we don't get a patch for
+  untracked files, which we want for our workflow.
 * We could probably use `git status --untracked-files=all` and simply create an
   artificial patch.
 
