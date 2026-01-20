@@ -546,6 +546,12 @@ internal sealed class CommandService
         _uiService.HelpShowing = !_uiService.HelpShowing;
     }
 
+    [CommandHandler("Reloads the diff", "F5")]
+    private void Refresh()
+    {
+        _documentService.RecomputePatch();
+    }
+    
     private void ApplyPatch(PatchDirection direction, bool entireHunk)
     {
         if (_uiService.HelpShowing)
