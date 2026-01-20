@@ -1,4 +1,5 @@
-﻿using GitIStage.Patches;
+﻿using System.Diagnostics;
+using GitIStage.Patches;
 using GitIStage.UI;
 
 namespace GitIStage.Services;
@@ -14,15 +15,17 @@ internal sealed class PatchingService
         _documentService = documentService;
     }
 
-    public void ApplyPatch(PatchDirection direction, bool entireHunk, int startLine, int lineCount = 0)
+    public void ApplyPatch(Document document, PatchDirection direction, bool entireHunk, int startLine, int lineCount = 0)
     {
+        PatchDocument? patchDocument = document as PatchDocument;
+        FileDocument? fileDocument = document as FileDocument;
+        
         var indices = Enumerable.Range(startLine, lineCount + 1);
 
-        if (_documentService.ViewFiles)
+        if (fileDocument is not null)
         {
             using (_gitService.SuspendEvents())
             {
-                var fileDocument = (FileDocument)_documentService.Document;
                 var changes = indices.Select(fileDocument.GetEntry).Where(e => e is not null).Select(e => e!);
                 foreach (var change in changes)
                 {
@@ -61,25 +64,27 @@ internal sealed class PatchingService
                 }
             }
         }
-        else
+        else if (patchDocument is not null)
         {
-            var document = (PatchDocument)_documentService.Document;
-            
             var lines = entireHunk
-                ? indices.Select(i => document.Patch.Lines[i].AncestorsAndSelf().OfType<PatchHunk>().FirstOrDefault())
+                ? indices.Select(i => patchDocument.Patch.Lines[i].AncestorsAndSelf().OfType<PatchHunk>().FirstOrDefault())
                          .Where(h => h is not null)
                          .Select(h => h!)
                          .SelectMany(h => h.Lines)
                          .Select(l => l.TextLine.LineIndex)
-                : indices.Where(i => document.Patch.Lines[i].Kind.IsAddedOrDeletedLine());
+                : indices.Where(i => patchDocument.Patch.Lines[i].Kind.IsAddedOrDeletedLine());
 
             var linesMaterialized = lines.ToArray();
             
             if (linesMaterialized.Length > 0)
             {
-                var patch = document.Patch.SelectForApplication(linesMaterialized, direction);
+                var patch = patchDocument.Patch.SelectForApplication(linesMaterialized, direction);
                 _gitService.ApplyPatch(patch, direction);
             }
+        }
+        else
+        {
+            throw new UnreachableException($"Unexpected document {document}");
         }
     }
 }

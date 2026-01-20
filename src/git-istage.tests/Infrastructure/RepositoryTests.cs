@@ -107,25 +107,31 @@ public abstract class RepositoryTests : IDisposable
         _gitService.Repository.Commit("Update", signature, signature);
     }
 
-    internal bool ViewFiles
-    {
-        get => _documentService.ViewFiles;
-        set => _documentService.ViewFiles = value;
-    }
+    internal bool ViewFiles { get; set; }
 
-    internal bool ViewStage
-    {
-        get => _documentService.ViewStage;
-        set => _documentService.ViewStage = value;
-    }
+    internal bool ViewStage { get; set; }
 
     [CustomAssertion]
     internal T GetDocument<T>()
         where T : Document
     {
         EnsureDocumentIsUpToDate();
-        return _documentService.Document.Should().BeAssignableTo<T>().Subject;
+        return GetUntypedDocument().Should().BeAssignableTo<T>().Subject;
+
+        Document GetUntypedDocument()
+        {
+            if (ViewStage)
+            {
+                return ViewFiles ? _documentService.StageFilesDocument : _documentService.StagePatchDocument;
+            }
+            else
+            {
+                return ViewFiles ? _documentService.WorkingCopyFilesDocument : _documentService.WorkingCopyPatchDocument;
+            }
+        }
     }
+
+    internal Document GetDocument() => GetDocument<Document>();
 
     private void EnsureDocumentIsUpToDate()
     {
@@ -172,14 +178,14 @@ public abstract class RepositoryTests : IDisposable
     {
         EnsureDocumentIsUpToDate();
 
-        var document = _documentService.Document;
+        var document = GetDocument();
         var regex = WildcardPatternToRegex(wildcardPattern);
         var matchingLineIndices = Enumerable
                                   .Range(0, document.Height)
                                   .Where(i => Regex.IsMatch(document.GetLine(i), regex));
 
         var selectedLineIndex = matchingLineIndices.Should().ContainSingle().Subject;
-        _patchingService.ApplyPatch(direction, entireHunk, selectedLineIndex);
+        _patchingService.ApplyPatch(document, direction, entireHunk, selectedLineIndex);
 
         static string WildcardPatternToRegex(string pattern)
         {

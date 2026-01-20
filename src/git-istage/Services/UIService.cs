@@ -1,4 +1,6 @@
-﻿using System.Text;
+﻿using System.Diagnostics;
+using System.Diagnostics.CodeAnalysis;
+using System.Text;
 using GitIStage.Patches;
 using GitIStage.UI;
 using Microsoft.Extensions.DependencyInjection;
@@ -11,12 +13,19 @@ internal sealed class UIService
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
 
-    private Label _header = null!;
-    private View _view = null!;
-    private Label _footer = null!;
-    private bool _helpShowing;
-    private int _selectedLineBeforeHelpWasShown;
-    private int _topLineBeforeHelpWasShown;
+    private readonly Label _header;
+    private readonly Label _footer;
+
+    private ViewMode _viewMode;
+    private ViewMode _previousViewMode;
+    private View _activeView;
+    private readonly View _workingCopyPatchView;
+    private readonly View _workingCopyFilesView;
+    private readonly View _stagePatchView;
+    private readonly View _stageFilesView;
+    private readonly View _errorView;
+    private readonly View _helpView;
+    private HelpDocument? _helpDocument;
 
     private readonly StringBuilder _inputLineDigits = new();
 
@@ -26,21 +35,86 @@ internal sealed class UIService
         _gitService = gitService;
         _documentService = documentService;
         _documentService.Changed += DocumentServiceOnChanged;
+        
+        _header = new Label();
+        _header.Foreground = ConsoleColor.Yellow;
+        _header.Background = ConsoleColor.DarkGray;
+
+        _footer = new Label();
+        _footer.Foreground = ConsoleColor.Yellow;
+        _footer.Background = ConsoleColor.DarkGray;
+        
+        _workingCopyPatchView = new View();
+        _workingCopyFilesView = new View();
+        _stagePatchView = new View();
+        _stageFilesView = new View();
+        _errorView = new View();
+        _helpView = new View();
+        _activeView = _workingCopyPatchView;
+
+        UpdatePatchDocuments();
+        UpdateActiveView();
     }
 
     public bool HelpShowing
     {
-        get => _helpShowing;
-        set
-        {
-            if (value)
-                ShowHelp();
-            else
-                HideHelp();
-        }
+        get => ViewMode == ViewMode.Help;
+        set => ViewMode = value ? ViewMode.Help : _previousViewMode;
     }
 
-    public View View => _view;
+    public bool ErrorShowing
+    {
+        get => ViewMode == ViewMode.Error;
+        set => ViewMode = value ? ViewMode.Error : _previousViewMode;
+    }
+
+    public bool IsViewingDiff
+    {
+        get => ViewMode is ViewMode.WorkingCopyPatch
+                        or ViewMode.WorkingCopyFiles
+                        or ViewMode.StagePatch
+                        or ViewMode.StageFiles;
+    }
+
+    public bool IsViewingPatch
+    {
+        get => ViewMode is ViewMode.WorkingCopyPatch
+                        or ViewMode.StagePatch;
+    }
+
+    public bool IsViewingWorkingCopy
+    {
+        get => ViewMode is ViewMode.WorkingCopyPatch
+                        or ViewMode.WorkingCopyFiles;
+    }
+
+    public bool IsViewingFiles
+    {
+        get => ViewMode is ViewMode.WorkingCopyFiles
+                        or ViewMode.StageFiles;
+    }
+
+    public bool IsViewingStage
+    {
+        get => ViewMode is ViewMode.StagePatch
+                        or ViewMode.StageFiles;
+    }
+
+    public View View => _activeView;
+
+    public ViewMode ViewMode
+    {
+        get => _viewMode;
+        set
+        {
+            if (_viewMode != value)
+            {
+                _previousViewMode = _viewMode; 
+                _viewMode = value;
+                UpdateActiveView();
+            }
+        }
+    }
 
     public void Show()
     {
@@ -50,7 +124,7 @@ internal sealed class UIService
         Vt100.HideCursor();
         Vt100.SwitchToAlternateBuffer();
 
-        ResizeScreen();
+        Resize();
     }
 
     public void Hide()
@@ -63,65 +137,119 @@ internal sealed class UIService
             Win32Console.Restore();
     }
 
-    public void ResizeScreen()
+    public void Resize()
     {
-        var oldView = (View?)_view;
-
-        _header = new Label(0, 0, Console.WindowWidth);
-        _header.Foreground = ConsoleColor.Yellow;
-        _header.Background = ConsoleColor.DarkGray;
-
-        _view = new View(1, 0, Console.WindowHeight - 1, Console.WindowWidth);
-        _view.SelectionChanged += delegate { UpdateHeader(); };
-
-        _footer = new Label(Console.WindowHeight - 1, 0, Console.WindowWidth);
-        _footer.Foreground = ConsoleColor.Yellow;
-        _footer.Background = ConsoleColor.DarkGray;
-
+        _header.Resize(0, 0, Console.WindowWidth);
+        _footer.Resize(Console.WindowHeight - 1, 0, Console.WindowWidth);
+        
+        var viewTop = 1;
+        var viewLeft = 0;
+        var viewHeight = Console.WindowHeight - 1;
+        var viewWidth = Console.WindowWidth;
+        _workingCopyPatchView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        _workingCopyFilesView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        _stagePatchView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        _stageFilesView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        _errorView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        _helpView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        
         Vt100.SetScrollMargins(2, Console.WindowHeight - 1);
 
-        UpdateRepositoryState();
+        UpdateHeaderAndFooter();
+    }
 
-        if (oldView is not null)
+    private void UpdateActiveView()
+    {
+        _activeView.Visible = false;
+        _activeView.SelectionChanged -= ActiveViewSelectionChanged;
+        
+        switch (_viewMode)
         {
-            _view.VisibleWhitespace = oldView.VisibleWhitespace;
-            _view.SelectedLine = oldView.SelectedLine;
-            _view.BringIntoView(_view.SelectedLine);
+            case ViewMode.WorkingCopyPatch:
+                _activeView = _workingCopyPatchView;
+                break;
+            case ViewMode.WorkingCopyFiles:
+                _activeView = _workingCopyFilesView;
+                break;
+            case ViewMode.StagePatch:
+                _activeView = _stagePatchView;
+                break;
+            case ViewMode.StageFiles:
+                _activeView = _stageFilesView;
+                break;
+            case ViewMode.Error:
+                _activeView = _errorView;
+                break;
+            case ViewMode.Help:
+                if (_helpDocument is null)
+                {
+                    var commands = _serviceProvider.GetRequiredService<CommandService>().Commands;
+                    _helpDocument = HelpDocument.Create(commands);
+                    _helpView.Document = _helpDocument;
+                }
+                _activeView = _helpView;
+                break;
         }
+
+        _activeView.Visible = true;
+        _activeView.SelectionChanged += ActiveViewSelectionChanged;
+        
+        UpdateHeaderAndFooter();
+    }
+
+    private void UpdatePatchDocuments()
+    {
+        _workingCopyPatchView.Document = _documentService.WorkingCopyPatchDocument;
+        _workingCopyFilesView.Document = _documentService.WorkingCopyFilesDocument;
+        _stagePatchView.Document = _documentService.StagePatchDocument;
+        _stageFilesView.Document = _documentService.StageFilesDocument;
+    }
+    
+    private void ActiveViewSelectionChanged(object? sender, EventArgs e)
+    {
+        UpdateHeader();
     }
 
     private void DocumentServiceOnChanged(object? sender, EventArgs e)
     {
-        UpdateRepositoryState();
+        UpdatePatchDocuments();
+        UpdateHeaderAndFooter();
     }
 
-    private void UpdateRepositoryState()
+    private void UpdateHeaderAndFooter()
     {
-        _view.Document = _documentService.Document;
         UpdateHeader();
         UpdateFooter();
     }
 
     private void UpdateHeader()
     {
-        if (_helpShowing)
+        if (HelpShowing)
         {
             _header.Text = " Keyboard shortcuts";
             return;
         }
 
-        var mode = _documentService.ViewStage ? "S" : "W";
+        if (ErrorShowing)
+        {
+            _header.Text = " Errors";
+            return;
+        }
 
-        if (_documentService.ViewFiles || _documentService.Document.IsEmpty)
+        Debug.Assert(IsViewingDiff);
+        
+        var mode = IsViewingStage ? "S" : "W";
+
+        if (IsViewingFiles)
         {
             _header.Text = $" {mode} | Files ";
         }
         else
         {
-            var document = (PatchDocument)_documentService.Document;
-            var entryIndex = document.FindEntryIndex(_view.SelectedLine);
+            var document = (PatchDocument)_activeView.Document;
+            var entryIndex = document.FindEntryIndex(_activeView.SelectedLine);
             var entry = entryIndex < 0 ? null : document.Patch.Entries[entryIndex];
-            var emptyMarker = _documentService.ViewStage ? "*nothing to commit*" : "*clean*";
+            var emptyMarker = IsViewingStage ? "*nothing to commit*" : "*clean*";
             var path = entry is null ? emptyMarker : entry.NewPath;
             _header.Text = $" {mode} | {path}";
         }
@@ -129,13 +257,13 @@ internal sealed class UIService
 
     private void UpdateFooter()
     {
-        if (_helpShowing)
+        if (HelpShowing || ErrorShowing)
         {
             _footer.Text = string.Empty;
             return;
         }
 
-        var (stageAdded, stageModified, stageDeleted) = _documentService.IndexPatch.GetFileStatistics();
+        var (stageAdded, stageModified, stageDeleted) = _documentService.StagePatch.GetFileStatistics();
         var (workingAdded, workingModified, workingDeleted) = _documentService.WorkingCopyPatch.GetFileStatistics();
 
         var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits}" : "";
@@ -188,7 +316,7 @@ internal sealed class UIService
         if (sb.Length == 0)
             return;
 
-        var searchResults = new SearchResults(_view.Document, sb.ToString());
+        var searchResults = new SearchResults(_activeView.Document, sb.ToString());
         if (searchResults.Hits.Count == 0)
         {
             Vt100.HideCursor();
@@ -202,15 +330,17 @@ internal sealed class UIService
             return;
         }
 
-        _view.SearchResults = searchResults;
-        _view.SelectedLine = searchResults.Hits.First().LineIndex;
+        _activeView.SearchResults = searchResults;
+        _activeView.SelectedLine = searchResults.Hits.First().LineIndex;
     }
 
     public bool HasInputLine => _inputLineDigits.Length > 0;
 
     public void AppendLineDigit(char digit)
     {
-        if (_helpShowing) return;
+        if (HelpShowing || ErrorShowing)
+            return;
+
         _inputLineDigits.Append(digit);
         UpdateFooter();
     }
@@ -234,53 +364,9 @@ internal sealed class UIService
         return true;
     }
 
-    private void ShowHelp()
-    {
-        var commands = _serviceProvider.GetRequiredService<CommandService>().Commands;
-
-        _selectedLineBeforeHelpWasShown = _view.SelectedLine;
-        _topLineBeforeHelpWasShown = _view.TopLine;
-
-        _view.Document = HelpDocument.Create(commands);
-
-        _helpShowing = true;
-
-        UpdateHeader();
-        UpdateFooter();
-
-        _view.SelectedLine = 0;
-        _view.TopLine = 0;
-    }
-
-    private void HideHelp()
-    {
-        _helpShowing = false;
-
-        UpdateRepositoryState();
-
-        _view.SelectedLine = _selectedLineBeforeHelpWasShown == -1 ? 0 : _selectedLineBeforeHelpWasShown;
-        _view.TopLine = _topLineBeforeHelpWasShown;
-    }
-
     public void RenderGitError(GitCommandFailedException ex)
     {
-        // TODO: This is a hack. We should change the way we deal with documents. All documents (working copy patch,
-        //       working copy files, stage, stage files, help, error) should exist as first class citizens and be
-        //       assigned to CurrentDocument, preserving their selections and scroll positions when switching.
-        //       We should also remove HelpShowing.
-        
-        _selectedLineBeforeHelpWasShown = _view.SelectedLine;
-        _topLineBeforeHelpWasShown = _view.TopLine;
-        _view.Document = ErrorDocument.Create(ex);
-        UpdateHeader();
-        UpdateFooter();
-        _view.SelectedLine = 0;
-        _view.TopLine = 0;
-            
-        Console.ReadKey();
-        
-        UpdateRepositoryState();
-        _view.SelectedLine = _selectedLineBeforeHelpWasShown == -1 ? 0 : _selectedLineBeforeHelpWasShown;
-        _view.TopLine = _topLineBeforeHelpWasShown;
+        _errorView.Document = ErrorDocument.Create(ex);
+        ViewMode = ViewMode.Error;
     }
 }

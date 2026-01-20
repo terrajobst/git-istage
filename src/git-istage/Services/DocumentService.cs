@@ -14,13 +14,14 @@ internal sealed class DocumentService
     private readonly GitService _gitService;
 
     private GitIStagePatch _workingCopyPatch;
-    private GitIStagePatch _indexPatch;
-    private bool _viewFiles;
-    private bool _viewStage;
+    private GitIStagePatch _stagePatch;
     private bool _fullFileDiff;
     private int _contextLines = 3;
 
-    private Document _document = Document.Empty;
+    private PatchDocument _workingCopyPatchDocument;
+    private FileDocument _workingCopyFilesDocument;
+    private PatchDocument _stagePatchDocument;
+    private FileDocument _stageFilesDocument;
 
     public DocumentService(GitService gitService)
     {
@@ -31,35 +32,15 @@ internal sealed class DocumentService
 
     public GitIStagePatch WorkingCopyPatch => _workingCopyPatch;
 
-    public GitIStagePatch IndexPatch => _indexPatch;
+    public GitIStagePatch StagePatch => _stagePatch;
 
-    public Document Document => _document;
+    public PatchDocument WorkingCopyPatchDocument => _workingCopyPatchDocument;
 
-    public bool ViewFiles
-    {
-        get => _viewFiles;
-        set
-        {
-            if (_viewFiles != value)
-            {
-                _viewFiles = value;
-                UpdateDocument();
-            }
-        }
-    }
+    public FileDocument WorkingCopyFilesDocument => _workingCopyFilesDocument;
 
-    public bool ViewStage
-    {
-        get => _viewStage;
-        set
-        {
-            if (_viewStage != value)
-            {
-                _viewStage = value;
-                UpdateDocument();
-            }
-        }
-    }
+    public PatchDocument StagePatchDocument => _stagePatchDocument;
+
+    public FileDocument StageFilesDocument => _stageFilesDocument;
 
     public bool ViewFullDiff
     {
@@ -69,8 +50,7 @@ internal sealed class DocumentService
             if (_fullFileDiff != value)
             {
                 _fullFileDiff = value;
-                if (!_viewFiles)
-                    RecomputePatch();
+                RecomputePatch();
             }
         }
     }
@@ -83,18 +63,21 @@ internal sealed class DocumentService
             if (_contextLines != value)
             {
                 _contextLines = value;
-                if (!_viewFiles)
-                    RecomputePatch();
+                RecomputePatch();
             }
         }
     }
 
     [MemberNotNull(nameof(_workingCopyPatch))]
-    [MemberNotNull(nameof(_indexPatch))]
+    [MemberNotNull(nameof(_stagePatch))]
+    [MemberNotNull(nameof(_workingCopyPatchDocument))]
+    [MemberNotNull(nameof(_workingCopyFilesDocument))]
+    [MemberNotNull(nameof(_stagePatchDocument))]
+    [MemberNotNull(nameof(_stageFilesDocument))]
     public void RecomputePatch()
     {
         _workingCopyPatch = GitIStagePatch.Parse(GetPatch(stage: false));
-        _indexPatch = GitIStagePatch.Parse(GetPatch(stage: true));
+        _stagePatch = GitIStagePatch.Parse(GetPatch(stage: true));
         UpdateDocument();
     }
 
@@ -105,7 +88,7 @@ internal sealed class DocumentService
         var result = _workingCopyPatch.Update(affectedPathSet, patchForAffectedPaths);
 
         _workingCopyPatch = result;
-        _indexPatch = GitIStagePatch.Parse(GetPatch(stage: true));
+        _stagePatch = GitIStagePatch.Parse(GetPatch(stage: true));
         UpdateDocument();
     }
 
@@ -121,19 +104,17 @@ internal sealed class DocumentService
             : _gitService.Repository.Diff.Compare<Patch>(affectedPaths, true, null, compareOptions);
     }
 
+    [MemberNotNull(nameof(_workingCopyPatchDocument))]
+    [MemberNotNull(nameof(_workingCopyFilesDocument))]
+    [MemberNotNull(nameof(_stagePatchDocument))]
+    [MemberNotNull(nameof(_stageFilesDocument))]
     public void UpdateDocument()
     {
-        var patch = _viewStage ? _indexPatch : _workingCopyPatch;
+        _workingCopyPatchDocument = PatchDocument.Create(_workingCopyPatch);
+        _workingCopyFilesDocument = FileDocument.Create(_workingCopyPatch, viewStage: false);
+        _stagePatchDocument = PatchDocument.Create(_stagePatch);
+        _stageFilesDocument = FileDocument.Create(_stagePatch, viewStage: true);
         
-        if (_viewFiles)
-        {
-            _document = FileDocument.Create(patch, _viewStage);
-        }
-        else
-        {
-            _document = PatchDocument.Create(patch);
-        }
-
         Changed?.Invoke(this, EventArgs.Empty);
     }
 

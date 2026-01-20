@@ -2,20 +2,13 @@ namespace GitIStage.UI;
 
 internal sealed class Label
 {
-    private readonly int _top;
-    private readonly int _left;
-    private readonly int _width;
+    private int _top;
+    private int _left;
+    private int _width;
 
-    private ConsoleColor? _foreground = null;
-    private ConsoleColor? _background = null;
+    private ConsoleColor? _foreground;
+    private ConsoleColor? _background;
     private string _text = string.Empty;
-
-    public Label(int top, int left, int right)
-    {
-        _top = top;
-        _left = left;
-        _width = right - left;
-    }
 
     public ConsoleColor? Foreground
     {
@@ -47,8 +40,20 @@ internal sealed class Label
         }
     }
 
+    public void Resize(int top, int left, int right)
+    {
+        _top = top;
+        _left = left;
+        _width = right - left;
+
+        Render();
+    }
+    
     private void Render()
     {
+        if (_width == 0)
+            return;
+
         var textLength = Math.Min(_text.Length, _width);
         var text = _text.Substring(0, textLength);
 

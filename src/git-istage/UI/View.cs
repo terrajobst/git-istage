@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
@@ -10,14 +11,17 @@ internal sealed class View
     private Selection _selection;
     private bool _visibleWhitespace;
     private SearchResults? _searchResults;
+    private bool _visible;
 
-    public View(int top, int left, int bottom, int right)
+    public bool Visible
     {
-        Top = top;
-        Left = left;
-        Bottom = bottom;
-        Right = right;
-        Initialize();
+        get => _visible;
+        set
+        {
+            _visible = value;
+            if (_visible)
+                Render();
+        }
     }
 
     public Document Document
@@ -42,13 +46,13 @@ internal sealed class View
         set => UpdateSelection(value);
     }
 
-    public int Top { get; }
+    public int Top { get; private set; }
 
-    public int Left { get; }
+    public int Left { get; private set;  }
 
-    public int Bottom { get; }
+    public int Bottom { get; private set;  }
 
-    public int Right { get; }
+    public int Right { get; private set;  }
 
     public int TopLine
     {
@@ -97,6 +101,15 @@ internal sealed class View
             }
         }
     }
+    
+    public void Resize(int top, int left, int bottom, int right)
+    {
+        Top = top;
+        Left = left;
+        Bottom = bottom;
+        Right = right;
+        Initialize();
+    }
 
     private void Initialize()
     {
@@ -125,8 +138,7 @@ internal sealed class View
     //       non-visible characters)
     private void RenderLine(int lineIndex)
     {
-        var isVisible = TopLine <= lineIndex && lineIndex <= BottomLine;
-        if (!isVisible)
+        if (!IsVisible(lineIndex))
             return;
 
         if (lineIndex >= Document.Height)
@@ -187,13 +199,23 @@ internal sealed class View
         RenderSearchResults(lineIndex);
     }
 
-    private int GetVisualLine(int lineIndex)
+    private void RenderNonExistingLine(int lineIndex)
     {
-        return lineIndex - TopLine + Top;
+        Debug.Assert(IsVisible(lineIndex));
+
+        var visualLine = GetVisualLine(lineIndex); 
+        
+        Vt100.SetCursorPosition(0, visualLine);
+        Vt100.SetForegroundColor(ConsoleColor.DarkGray);
+        Vt100.SetBackgroundColor();
+        Console.Write("~");
+        Vt100.EraseRestOfCurrentLine();
     }
 
     private void RenderSearchResults(int lineIndex)
     {
+        Debug.Assert(IsVisible(lineIndex));
+
         var line = Document.GetLine(lineIndex);
         var visualLine = GetVisualLine(lineIndex);
         
@@ -216,6 +238,18 @@ internal sealed class View
         }
     }
 
+    private bool IsVisible(int lineIndex)
+    {
+        return Visible && TopLine <= lineIndex && lineIndex <= BottomLine;
+    }
+
+    private int GetVisualLine(int lineIndex)
+    {
+        Debug.Assert(IsVisible(lineIndex));
+
+        return lineIndex - TopLine + Top;
+    }
+
     private TextSpan ClipSpan(TextSpan span)
     {
         var clippedStart = int.Clamp(span.Start, LeftChar, LeftChar + Width - 1);
@@ -227,17 +261,6 @@ internal sealed class View
     {
         var clippedSpan = ClipSpan(styledSpan.Span);
         return new StyledSpan(clippedSpan, styledSpan.Foreground, styledSpan.Background);
-    }
-
-    private void RenderNonExistingLine(int lineIndex)
-    {
-        var visualLine = lineIndex - TopLine + Top; 
-        
-        Vt100.SetCursorPosition(0, visualLine);
-        Vt100.SetForegroundColor(ConsoleColor.DarkGray);
-        Vt100.SetBackgroundColor();
-        Console.Write("~");
-        Vt100.EraseRestOfCurrentLine();
     }
 
     private void UpdateSelection(int lineIndex)

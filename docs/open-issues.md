@@ -2,20 +2,6 @@
 
 This document tracks open issues I'd like to address.
 
-## Document Views
-
-We have quite a few different documents here:
-
-* Working Copy Patch
-* Working Copy Files
-* Stage Patch
-* Stage Files
-* Help
-* Last Error
-
-We should elevate this to a fist class concept and allow switching between them,
-restoring scroll position and selection.
-
 ## Git Command Log
 
 It would be useful to have a history of Git commands, just like LazyGit does.

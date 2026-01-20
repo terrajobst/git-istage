@@ -28,7 +28,7 @@ internal sealed class Application
                 command?.Execute();
 
                 if (width != Console.WindowWidth || height != Console.WindowHeight)
-                    _uiService.ResizeScreen();
+                    _uiService.Resize();
             }
         }
         finally

@@ -106,10 +106,10 @@ internal sealed class CommandService
 
     private void ExecuteCommit(bool amend)
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        if (!_documentService.IndexPatch.Entries.Any())
+        if (!_documentService.StagePatch.Entries.Any())
             return;
 
         using (_gitService.SuspendEvents())
@@ -123,7 +123,7 @@ internal sealed class CommandService
     [CommandHandler("Stashes changes from the working copy, but leaves the stage as-is.", "Alt+S")]
     private void Stash()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
         if (!_documentService.WorkingCopyPatch.Entries.Any())
@@ -135,25 +135,47 @@ internal sealed class CommandService
     [CommandHandler("Toggle between working copy changes and staged changes.", "T")]
     private void ToggleBetweenWorkingDirectoryAndStaging()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        _documentService.ViewStage = !_documentService.ViewStage;
+        if (_uiService.IsViewingFiles)
+        {
+            _uiService.ViewMode = _uiService.IsViewingWorkingCopy
+                ? ViewMode.StageFiles
+                : ViewMode.WorkingCopyFiles;
+        }
+        else
+        {
+            _uiService.ViewMode = _uiService.IsViewingWorkingCopy
+                ? ViewMode.StagePatch
+                : ViewMode.WorkingCopyPatch;
+        }
     }
 
     [CommandHandler("Toggle between seeing changes and changed files.", "F")]
     private void ToggleFilesAndChanges()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        _documentService.ViewFiles = !_documentService.ViewFiles;
+        if (_uiService.IsViewingFiles)
+        {
+            _uiService.ViewMode = _uiService.IsViewingWorkingCopy
+                ? ViewMode.WorkingCopyPatch
+                : ViewMode.StagePatch;
+        }
+        else
+        {
+            _uiService.ViewMode = _uiService.IsViewingWorkingCopy
+                ? ViewMode.WorkingCopyFiles
+                : ViewMode.StageFiles;
+        }
     }
 
     [CommandHandler("Increases the number of contextual lines.", "OemPlus")]
     private void IncreaseContext()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingPatch)
             return;
 
         _documentService.ContextLines += 1;
@@ -162,7 +184,7 @@ internal sealed class CommandService
     [CommandHandler("Decreases the number of contextual lines.", "OemMinus")]
     private void DecreaseContext()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingPatch)
             return;
 
         if (_documentService.ContextLines == 0)
@@ -174,7 +196,7 @@ internal sealed class CommandService
     [CommandHandler("Toggles between standard diff and full diff", "Oem7")]
     private void ToggleFullDiff()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingPatch)
             return;
 
         _documentService.ViewFullDiff = !_documentService.ViewFullDiff;
@@ -183,7 +205,7 @@ internal sealed class CommandService
     [CommandHandler("Toggles between showing and hiding whitespace.", "W")]
     private void ToggleWhitespace()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingPatch)
             return;
 
         _uiService.View.VisibleWhitespace = !_uiService.View.VisibleWhitespace;
@@ -243,8 +265,8 @@ internal sealed class CommandService
         line -= 1;
         if (line < 0)
             line = 0;
-        else if (line >= _documentService.Document.Height)
-            line = _documentService.Document.Height - 1;
+        else if (line >= _uiService.View.Document.Height)
+            line = _uiService.View.Document.Height - 1;
 
         _uiService.View.LeftChar = 0;
         _uiService.View.SelectedLine = line;
@@ -367,13 +389,13 @@ internal sealed class CommandService
     [CommandHandler("Go to the previous file.", "LeftArrow")]
     private void GoPreviousFile()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
         if (_uiService.View.SelectedLine == 0)
             return;
 
-        var document = _documentService.Document;
+        var document = _uiService.View.Document;
         var nextIndex = document.FindPreviousEntryIndex(_uiService.View.SelectedLine);
         if (nextIndex >= 0)
         {
@@ -385,10 +407,10 @@ internal sealed class CommandService
     [CommandHandler("Go to the next file.", "RightArrow")]
     private void GoNextFile()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        var document = _documentService.Document;
+        var document = _uiService.View.Document;
         var nextIndex = document.FindNextEntryIndex(_uiService.View.SelectedLine);
         if (nextIndex >= 0)
         {
@@ -400,34 +422,34 @@ internal sealed class CommandService
     [CommandHandler("Go to previous change block.", "Oem4")]
     private void GoPreviousHunk()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        _uiService.View.SelectedLine = _documentService.Document.FindPreviousChangeBlock(_uiService.View.SelectedLine);
+        _uiService.View.SelectedLine = _uiService.View.Document.FindPreviousChangeBlock(_uiService.View.SelectedLine);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
     [CommandHandler("Go to next change block.", "Oem6")]
     private void GoNextHunk()
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        _uiService.View.SelectedLine = _documentService.Document.FindNextChangeBlock(_uiService.View.SelectedLine);
+        _uiService.View.SelectedLine = _uiService.View.Document.FindNextChangeBlock(_uiService.View.SelectedLine);
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
     [CommandHandler("Go to the file.", "Enter")]
     private void GoToFile()
     {
-        if (!_documentService.ViewFiles)
+        if (!_uiService.IsViewingFiles)
             return;
         
-        var entryIndex = _documentService.Document.FindEntryIndex(_uiService.View.SelectedLine);
+        var entryIndex = _uiService.View.Document.FindEntryIndex(_uiService.View.SelectedLine);
         if (entryIndex < 0)
             return;
 
-        _documentService.ViewFiles = false;
+        ToggleFilesAndChanges();
 
         var patch = ((PatchDocument)_uiService.View.Document).Patch;
         _uiService.View.TopLine = patch.Entries[entryIndex].GetLines().First().LineIndex;
@@ -465,7 +487,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, removes the selected line from the working copy.", "R")]
     private void Reset()
     {
-        if (_uiService.HelpShowing || _documentService.ViewStage)
+        if (!_uiService.IsViewingWorkingCopy)
             return;
 
         ApplyPatch(PatchDirection.Reset, false);
@@ -474,7 +496,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, removes the selected block from the working copy.", "Shift+R")]
     private void ResetHunk()
     {
-        if (_uiService.HelpShowing || _documentService.ViewStage)
+        if (!_uiService.IsViewingWorkingCopy)
             return;
 
         ApplyPatch(PatchDirection.Reset, true);
@@ -483,7 +505,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, stages the selected line.", "S")]
     private void Stage()
     {
-        if (_uiService.HelpShowing || _documentService.ViewStage)
+        if (!_uiService.IsViewingWorkingCopy)
             return;
 
         ApplyPatch(PatchDirection.Stage, false);
@@ -492,7 +514,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the working copy, stages the selected block.", "Shift+S")]
     private void StageHunk()
     {
-        if (_uiService.HelpShowing || _documentService.ViewStage)
+        if (!_uiService.IsViewingWorkingCopy)
             return;
 
         ApplyPatch(PatchDirection.Stage, true);
@@ -501,7 +523,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the stage, unstages the selected line.", "U")]
     private void Unstage()
     {
-        if (_uiService.HelpShowing || !_documentService.ViewStage)
+        if (!_uiService.IsViewingStage)
             return;
 
         ApplyPatch(PatchDirection.Unstage, false);
@@ -510,7 +532,7 @@ internal sealed class CommandService
     [CommandHandler("When viewing the stage, unstages the selected block.", "Shift+U")]
     private void UnstageHunk()
     {
-        if (_uiService.HelpShowing || !_documentService.ViewStage)
+        if (!_uiService.IsViewingStage)
             return;
 
         ApplyPatch(PatchDirection.Unstage, true);
@@ -563,6 +585,12 @@ internal sealed class CommandService
         _uiService.HelpShowing = !_uiService.HelpShowing;
     }
 
+    [CommandHandler("Show / hide error page.", "E")]
+    private void ShowErrorPage()
+    {
+        _uiService.ErrorShowing = !_uiService.ErrorShowing;
+    }
+
     [CommandHandler("Reloads the diff", "F5")]
     private void Refresh()
     {
@@ -571,25 +599,26 @@ internal sealed class CommandService
     
     private void ApplyPatch(PatchDirection direction, bool entireHunk)
     {
-        if (_uiService.HelpShowing)
+        if (!_uiService.IsViewingDiff)
             return;
 
-        if (_documentService.Document.IsEmpty)
+        if (_uiService.View.Document.IsEmpty)
             return;
         
-        if (direction == PatchDirection.Stage && _documentService.ViewStage)
+        if (direction == PatchDirection.Stage && _uiService.IsViewingStage)
             return;
 
-        if (direction == PatchDirection.Unstage && !_documentService.ViewStage)
+        if (direction == PatchDirection.Unstage && !_uiService.IsViewingStage)
             return;
 
-        if (direction == PatchDirection.Reset && _documentService.ViewStage)
+        if (direction == PatchDirection.Reset && !_uiService.IsViewingWorkingCopy)
             return;
 
         try
         {
             var selection = _uiService.View.Selection;
-            _patchingService.ApplyPatch(direction, entireHunk, selection.StartLine, selection.Count);
+            var document = _uiService.View.Document;
+            _patchingService.ApplyPatch(document, direction, entireHunk, selection.StartLine, selection.Count);
         }
         catch (GitCommandFailedException ex)
         {
