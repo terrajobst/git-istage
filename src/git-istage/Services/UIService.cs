@@ -264,8 +264,23 @@ internal sealed class UIService
 
     public void RenderGitError(GitCommandFailedException ex)
     {
-        Console.Clear();
-        Console.WriteLine(ex.Message);
+        // TODO: This is a hack. We should change the way we deal with documents. All documents (working copy patch,
+        //       working copy files, stage, stage files, help, error) should exist as first class citizens and be
+        //       assigned to CurrentDocument, preserving their selections and scroll positions when switching.
+        //       We should also remove HelpShowing.
+        
+        _selectedLineBeforeHelpWasShown = _view.SelectedLine;
+        _topLineBeforeHelpWasShown = _view.TopLine;
+        _view.Document = ErrorDocument.Create(ex);
+        UpdateHeader();
+        UpdateFooter();
+        _view.SelectedLine = 0;
+        _view.TopLine = 0;
+            
         Console.ReadKey();
+        
+        UpdateRepositoryState();
+        _view.SelectedLine = _selectedLineBeforeHelpWasShown == -1 ? 0 : _selectedLineBeforeHelpWasShown;
+        _view.TopLine = _topLineBeforeHelpWasShown;
     }
 }
