@@ -26,6 +26,8 @@ internal sealed class FileDocument : Document
 
     public Patch Patch => _patch;
 
+    public bool ViewStage => _viewStage;
+
     public PatchEntry? GetEntry(int index)
     {
         var changeIndex = index - _indexOfFirstFile;

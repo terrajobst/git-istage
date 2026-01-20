@@ -2,11 +2,6 @@
 
 This document tracks open issues I'd like to address.
 
-## Go To File
-
-When in file mode, hitting enter should switch to patch mode and put the top
-line as the start of that file.
-
 ## Document Views
 
 We have quite a few different documents here:

@@ -417,6 +417,23 @@ internal sealed class CommandService
         _uiService.View.BringIntoView(_uiService.View.SelectedLine);
     }
 
+    [CommandHandler("Go to the file.", "Enter")]
+    private void GoToFile()
+    {
+        if (!_documentService.ViewFiles)
+            return;
+        
+        var entryIndex = _documentService.Document.FindEntryIndex(_uiService.View.SelectedLine);
+        if (entryIndex < 0)
+            return;
+
+        _documentService.ViewFiles = false;
+
+        var patch = ((PatchDocument)_uiService.View.Document).Patch;
+        _uiService.View.TopLine = patch.Entries[entryIndex].GetLines().First().LineIndex;
+        _uiService.View.SelectedLine = _uiService.View.TopLine;
+    }
+    
     [CommandHandler("Searches for a pattern.", "Oem2")]
     private void Search()
     {
