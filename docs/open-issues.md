@@ -21,7 +21,6 @@ It would be nice to support theming.
 
 Ideally, we'd eliminate the need for LibGit2Sharp:
 
-
 * We only use it to compute the patch, but since it can't apply any patches, we
   need to shell out to Git for that anyway. We also shell out for committing and
   shelving.
