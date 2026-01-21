@@ -1,65 +1,62 @@
+using System.Collections.Concurrent;
+using System.Collections.Immutable;
 using System.Diagnostics;
+using System.Globalization;
 using GitIStage.Patches;
+using GitIStage.Services;
 using GitIStage.Text;
+using Microsoft.Extensions.DependencyInjection;
+using TextMateSharp.Grammars;
+using TextMateSharp.Registry;
+using TextMateSharp.Themes;
 
 namespace GitIStage.UI;
 
 internal sealed class PatchDocument : Document
 {
-    private PatchDocument(Patch patch)
+    private readonly bool _isWorkingCopy;
+    private readonly PatchHighlighterService _patchHighlighterService;
+
+    private PatchDocument(Patch patch, bool isWorkingCopy, PatchHighlighterService patchHighlighterService)
         : base(patch.Text)
     {
         ThrowIfNull(patch);
+        ThrowIfNull(patchHighlighterService);
 
+        _isWorkingCopy = isWorkingCopy;
+        _patchHighlighterService = patchHighlighterService;
+        
         Patch = patch;
+        LoadStyles();
     }
 
     public Patch Patch { get; }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    protected override IEnumerable<StyledSpan> GetStyles()
     {
-        // NOTE: We're expected return spans that start at this line.
-
-        var line = Patch.Lines[index];
-        var lineForeground = GetLineForegroundColor(line);
-
-        if (lineForeground is not null)
+        var styles = new List<StyledSpan>();
+        
+        foreach (var entry in Patch.Entries)
         {
-            var lineBackground = GetLineBackgroundColor(line);
-            var span = new TextSpan(0, line.Span.Length);
-            return [new StyledSpan(span, lineForeground, lineBackground)];
+            var styledTokens = entry.AdditionalHeaders
+                .Prepend<PatchNode>(entry.Header)
+                .SelectMany(h => h.DescendantsAndSelf())
+                .OfType<PatchToken>()
+                .Select(GetSpan);
+     
+            foreach (var styledToken in styledTokens)
+                styles.Add(styledToken);
+            
+            var patchHighlighter = _patchHighlighterService.GetHighlighter(entry.NewPath);
+            patchHighlighter.GetHighlights(styles, entry);
         }
 
-        return line.DescendantsAndSelf()
-                   .OfType<PatchToken>()
-                   .Select(GetSpan);
+        return styles;
     }
 
-    private static TextColor? GetLineForegroundColor(PatchLine line)
+    public static PatchDocument Create(Patch patch, bool isWorkingCopy, PatchHighlighterService patchHighlighterService)
     {
-        switch (line.Kind)
-        {
-            case PatchNodeKind.EntryHeader:
-                return Colors.EntryHeaderForeground;
-            case PatchNodeKind.AddedLine:
-                return Colors.AddedText;
-            case PatchNodeKind.DeletedLine:
-                return Colors.DeletedText;
-            default:
-                return null;
-        }
-    }
-
-    private static TextColor? GetLineBackgroundColor(PatchLine line)
-    {
-        return line.Kind == PatchNodeKind.EntryHeader
-            ? Colors.EntryHeaderBackground
-            : null;
-    }
-
-    public static PatchDocument Create(Patch patch)
-    {
-        return new PatchDocument(patch);
+        return new PatchDocument(patch, isWorkingCopy, patchHighlighterService);
     }
 
     private static StyledSpan GetSpan(PatchToken token)
@@ -81,11 +78,354 @@ internal sealed class PatchDocument : Document
                     : throw new UnreachableException($"Unexpected token kind {token.Kind}")
         };
 
-        var line = token.Ancestors().OfType<PatchLine>().First();
-        var lineStart = line.TextLine.Start;
-        var start = token.Span.Start - lineStart;
-        var end = token.Span.End - lineStart;
-        var span = TextSpan.FromBounds(start, end);
-        return new StyledSpan(span, foreground, null);
+        return new StyledSpan(token.Span, foreground, null);
+    }
+}
+
+internal sealed class SyntaxTheme
+{
+    public static SyntaxTheme Instance { get; } = new();
+    
+    private readonly RegistryOptions _options;
+    private readonly Registry _registry;
+    private readonly Theme _theme;
+    private readonly ConcurrentDictionary<string, IGrammar?> _grammarByExtensions = new();
+    
+    private SyntaxTheme()
+    {
+        _options = new RegistryOptions(ThemeName.DarkPlus);
+        _registry = new Registry(_options);
+        _theme = _registry.GetTheme();
+    }
+
+    public Theme Theme => _theme;
+
+    public IGrammar? GetGrammar(string fileName)
+    {
+        var extension = Path.GetExtension(fileName);
+        return _grammarByExtensions.GetOrAdd(extension, static (ext, theme) =>
+        {
+            var initialScopeName = theme._options.GetScopeByExtension(ext);
+            return theme._registry.LoadGrammar(initialScopeName);
+        }, this);
+    }
+}
+
+public abstract class PatchHighlighter
+{
+    public static PatchHighlighter None => NoHighlights.Instance;
+    
+    private PatchHighlighter()
+    {
+    }
+
+    public abstract void GetHighlights(List<StyledSpan> receiver, PatchEntry patch);
+    
+    public static PatchHighlighter Create(SourceText workingCopyContents,
+                                          PatchEntry? workingCopyPatch,
+                                          PatchEntry? stagedPatch)
+    {
+        ThrowIfNull(workingCopyContents);
+
+        if (workingCopyPatch is null && stagedPatch is null)
+            throw new ArgumentNullException(nameof(stagedPatch), $"If {nameof(workingCopyPatch)} is null {nameof(stagedPatch)} must not be null.");
+
+        var grammar = SyntaxTheme.Instance.GetGrammar(workingCopyContents.FileName);
+        if (grammar is null)
+            return NoHighlights.Instance;
+        
+        return Highlights.Create(grammar, workingCopyContents, workingCopyPatch, stagedPatch);
+    }
+    
+    private sealed class NoHighlights : PatchHighlighter
+    {
+        public static NoHighlights Instance { get; } = new();
+
+        private NoHighlights()
+        {
+        }
+
+        public override void GetHighlights(List<StyledSpan> receiver, PatchEntry patch)
+        {
+            foreach (var hunk in patch.Hunks)
+            {
+                foreach (var hunkLine in hunk.Lines)
+                {
+                    var lineForeground = GetLineForegroundColor(hunkLine);
+                    var lineBackground = lineForeground?.Lerp(TextColor.Black, 0.7f);
+                    var lineStyle = new TextStyle { Foreground = lineForeground, Background = lineBackground };
+                    if (hunkLine.Span.Length > 0)
+                        receiver.Add(new StyledSpan(new TextSpan(hunkLine.Span.Start, 1), lineStyle));
+                }
+            }
+            
+        }
+    }
+
+    private sealed class Highlights : PatchHighlighter
+    {
+        private readonly IGrammar _grammar;
+        private readonly ImmutableArray<IStateStack?> _oldLineStates;
+
+        private Highlights(IGrammar grammar, ImmutableArray<IStateStack?> oldLineStates)
+        {
+            _grammar = grammar;
+            _oldLineStates = oldLineStates;
+        }
+
+        public static Highlights Create(IGrammar grammar,
+                                        SourceText workingCopyContents,
+                                        PatchEntry? workingCopyPatch,
+                                        PatchEntry? stagedPatch)
+        {
+            var oldLineStateBuilder = ImmutableArray.CreateBuilder<IStateStack?>();
+
+            // Select the patch to use
+            var patch = stagedPatch ?? workingCopyPatch;
+            Debug.Assert(patch is not null);
+
+            // We apply the patch in reverse to workingCopyContents. This gives us
+            // the committed state.
+            var workingCopyLine = 0;
+            IStateStack? oldState = null;
+            oldLineStateBuilder.Add(oldState);
+
+            var text = patch.Root.Text;
+            
+            foreach (var hunk in patch.Hunks)
+            {
+                var newLine = hunk.NewRange.LineNumber - 1;
+
+                HighlightRange(ref workingCopyLine, newLine, ref oldState);
+
+                foreach (var line in hunk.Lines)
+                {
+                    var lineStart = line.Span.Start + 1;
+                    var lineSpan = TextSpan.FromBounds(lineStart, line.Span.End);
+                    var lineText = text.AsMemory(lineSpan); 
+
+                    if (line.Kind == PatchNodeKind.ContextLine)
+                    {
+                        // Highlight
+                        GetHighlights(grammar, lineStart, lineText, ref oldState, null,null);
+                        oldLineStateBuilder.Add(oldState);
+                        newLine++;
+                    }
+                    else if (line.Kind == PatchNodeKind.AddedLine)
+                    {
+                        // Ignore
+                        newLine++;
+                    }
+                    else if (line.Kind == PatchNodeKind.DeletedLine)
+                    {
+                        // Highlight                  
+                        GetHighlights(grammar, lineStart, lineText, ref oldState, null, null);
+                        oldLineStateBuilder.Add(oldState);
+                    }
+                }
+            }
+
+            HighlightRange(ref workingCopyLine, workingCopyContents.Lines.Length, ref oldState);
+
+            return new Highlights(grammar, oldLineStateBuilder.ToImmutable());
+
+            void HighlightRange(ref int startLine, int endLine, ref IStateStack? state)
+            {
+                for (var i = startLine; i < endLine; i++)
+                {
+                    var line = workingCopyContents.Lines[i];
+                    var lineText = workingCopyContents.AsMemory(line.Span);
+                    GetHighlights(grammar, line.Start, lineText, ref state, null, null);
+                    oldLineStateBuilder.Add(state);
+                }
+                
+                startLine = endLine;
+            }
+        }
+
+        public override void GetHighlights(List<StyledSpan> receiver, PatchEntry patch)
+        {
+            IStateStack? newState = null;
+
+            var text = patch.Root.Text;
+            
+            foreach (var hunk in patch.Hunks)
+            {
+                var oldLine = hunk.OldRange.LineNumber - 1;
+                var newLine = hunk.NewRange.LineNumber - 1;
+
+                if (newState is null)
+                    newState = _oldLineStates[oldLine];
+
+                foreach (var hunkLine in hunk.Lines)
+                {
+                    var lineForeground = GetLineForegroundColor(hunkLine);
+                    var lineBackground = lineForeground?.Lerp(TextColor.Black, 0.7f);
+                    var lineStyle = new TextStyle { Foreground = lineForeground, Background = lineBackground };
+                    if (hunkLine.Span.Length > 0)
+                        receiver.Add(new StyledSpan(new TextSpan(hunkLine.Span.Start, 1), lineStyle));
+                    
+                    var lineStart = hunkLine.Span.Start + 1;
+                    var lineSpan = TextSpan.FromBounds(lineStart, hunkLine.Span.End);
+                    var lineText = text.AsMemory(lineSpan); 
+                    if (hunkLine.Kind == PatchNodeKind.ContextLine)
+                    {
+                        GetHighlights(_grammar, lineStart, lineText, ref newState, lineStyle, receiver);
+                        oldLine++;
+                        newLine++;
+                    }
+                    else if (hunkLine.Kind == PatchNodeKind.AddedLine)
+                    {
+                        GetHighlights(_grammar, lineStart, lineText, ref newState, lineStyle, receiver);
+                        newLine++;
+                    }
+                    else if (hunkLine.Kind == PatchNodeKind.DeletedLine)
+                    {
+                        GetHighlights(_grammar, lineStart, lineText, _oldLineStates[oldLine], lineStyle, receiver);
+                        oldLine++;
+                    }
+                }
+            }
+        }
+
+        private static void GetHighlights(IGrammar grammar, int lineStart, ReadOnlyMemory<char> text, IStateStack? state, TextStyle? lineStyle, ICollection<StyledSpan>? receiver)
+        {
+            GetHighlights(grammar, lineStart, text, ref state, lineStyle, receiver);
+        }
+
+        private static void GetHighlights(IGrammar grammar, int lineStart, ReadOnlyMemory<char> text, ref IStateStack? state, TextStyle? lineStyle, ICollection<StyledSpan>? receiver)
+        {
+            var tokenizedLine = grammar.TokenizeLine(text, state, TimeSpan.MaxValue);
+            state = tokenizedLine.RuleStack;
+
+            if (receiver is null)
+                return;
+
+            foreach (var token in tokenizedLine.Tokens)
+            {
+                var startIndex = token.StartIndex > text.Length ? text.Length : token.StartIndex;
+                var endIndex = token.EndIndex > text.Length ? text.Length : token.EndIndex;
+
+                var foreground = -1;
+                var background = -1;
+                var fontStyle = FontStyle.None;
+
+                foreach (var themeRule in SyntaxTheme.Instance.Theme.Match(token.Scopes))
+                {
+                    if (foreground == -1 && themeRule.foreground > 0)
+                        foreground = themeRule.foreground;
+
+                    if (background == -1 && themeRule.background > 0)
+                        background = themeRule.background;
+
+                    if (fontStyle == FontStyle.None && themeRule.fontStyle != FontStyle.None)
+                        fontStyle = themeRule.fontStyle;
+                }
+
+                var style = new TextStyle
+                {
+                    Foreground = GetColor(foreground),
+                    Background = GetColor(background),
+                    Attributes = GetAttributes(fontStyle)
+                };
+
+                if (lineStyle is not null)
+                    style = style.PlaceOnTopOf(lineStyle.Value);
+
+                var span = new TextSpan(lineStart + startIndex, endIndex - startIndex);
+                var styledSpan = new StyledSpan(span, style);
+                receiver.Add(styledSpan);
+            }
+        }
+        
+        private static TextColor? GetColor(int colorId)
+        {
+            if (colorId == -1)
+                return null;
+
+            return HexToColor(SyntaxTheme.Instance.Theme.GetColor(colorId));
+        }
+
+        private static TextColor HexToColor(string hexString)
+        {
+            if (hexString.Length != 7 || hexString[0] != '#')
+                throw new FormatException();
+
+            var r = byte.Parse(hexString.AsSpan(1, 2), NumberStyles.AllowHexSpecifier);
+            var g = byte.Parse(hexString.AsSpan(3, 2), NumberStyles.AllowHexSpecifier);
+            var b = byte.Parse(hexString.AsSpan(5, 2), NumberStyles.AllowHexSpecifier);
+
+            return new TextColor(r, g, b);
+        }
+
+        private static TextAttributes GetAttributes(FontStyle fontStyle)
+        {
+            var result = TextAttributes.None;
+
+            if (fontStyle == FontStyle.NotSet)
+                return result;
+
+            if ((fontStyle & FontStyle.Italic) != 0)
+                result |= TextAttributes.Italic;
+
+            if ((fontStyle & FontStyle.Bold) != 0)
+                result |= TextAttributes.Bold;
+
+            if ((fontStyle & FontStyle.Underline) != 0)
+                result |= TextAttributes.Underline;
+
+            if ((fontStyle & FontStyle.Strikethrough) != 0)
+                result |= TextAttributes.Strike;
+
+            return result;
+        }
+    }
+    
+    private static TextColor? GetLineForegroundColor(PatchLine line)
+    {
+        switch (line.Kind)
+        {
+            case PatchNodeKind.EntryHeader:
+                return Colors.EntryHeaderForeground;
+            case PatchNodeKind.AddedLine:
+                return Colors.AddedText;
+            case PatchNodeKind.DeletedLine:
+                return Colors.DeletedText;
+            default:
+                return null;
+        }
+    }
+}
+
+internal sealed class PatchHighlighterService
+{
+    private readonly IServiceProvider _serviceProvider;
+    private readonly ConcurrentDictionary<string, PatchHighlighter> _highlighters = new();
+
+    public PatchHighlighterService(IServiceProvider serviceProvider)
+    {
+        _serviceProvider = serviceProvider;
+    }
+    
+    public void Clear()
+    {
+        _highlighters.Clear();
+    }
+
+    public PatchHighlighter GetHighlighter(string fileName)
+    {
+        return _highlighters.GetOrAdd(fileName, CreateHighlighter, _serviceProvider);
+        
+        static PatchHighlighter CreateHighlighter(string fileName, IServiceProvider serviceProvider)
+        {
+            var documentService = serviceProvider.GetRequiredService<DocumentService>();
+            var workingCopyPatchEntry = documentService.WorkingCopyPatch.Entries.SingleOrDefault(e => string.Equals(e.NewPath, fileName, StringComparison.Ordinal));
+            var stagedPatchEntry = documentService.WorkingCopyPatch.Entries.SingleOrDefault(e => string.Equals(e.NewPath, fileName, StringComparison.Ordinal));
+            if (workingCopyPatchEntry is null && stagedPatchEntry is null)
+                return PatchHighlighter.None;
+
+            var workingCopyContents = SourceText.Load(fileName);
+            return PatchHighlighter.Create(workingCopyContents, workingCopyPatchEntry, stagedPatchEntry);
+        }
     }
 }

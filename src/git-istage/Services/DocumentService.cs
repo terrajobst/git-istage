@@ -9,6 +9,7 @@ namespace GitIStage.Services;
 internal sealed class DocumentService
 {
     private readonly GitService _gitService;
+    private readonly PatchHighlighterService _patchHighlighterService;
 
     private GitIStagePatch _workingCopyPatch;
     private GitIStagePatch _stagePatch;
@@ -20,9 +21,10 @@ internal sealed class DocumentService
     private PatchDocument _stagePatchDocument;
     private FileDocument _stageFilesDocument;
 
-    public DocumentService(GitService gitService, FileWatchingService? fileWatchingService)
+    public DocumentService(GitService gitService, FileWatchingService? fileWatchingService, PatchHighlighterService patchHighlighterService)
     {
         _gitService = gitService;
+        _patchHighlighterService = patchHighlighterService;
         _gitService.RepositoryChanged += GitServiceOnRepositoryChanged;
         fileWatchingService?.Changed += FileWatchingServiceOnChanged;
         RecomputePatch();
@@ -107,9 +109,9 @@ internal sealed class DocumentService
     [MemberNotNull(nameof(_stageFilesDocument))]
     public void UpdateDocument()
     {
-        _workingCopyPatchDocument = PatchDocument.Create(_workingCopyPatch);
+        _workingCopyPatchDocument = PatchDocument.Create(_workingCopyPatch, isWorkingCopy: true, _patchHighlighterService);
         _workingCopyFilesDocument = FileDocument.Create(_workingCopyPatch, viewStage: false);
-        _stagePatchDocument = PatchDocument.Create(_stagePatch);
+        _stagePatchDocument = PatchDocument.Create(_stagePatch, isWorkingCopy: false, _patchHighlighterService);
         _stageFilesDocument = FileDocument.Create(_stagePatch, viewStage: true);
 
         Changed?.Invoke(this, EventArgs.Empty);

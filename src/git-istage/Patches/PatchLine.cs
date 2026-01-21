@@ -20,5 +20,7 @@ public abstract class PatchLine : PatchNode
 
     public ReadOnlySpan<char> LineBreak => Root.Text.AsSpan(TextLine.SpanLineBreak);
 
+    public ReadOnlySpan<char> TextAndLineBreak => Root.Text.AsSpan(TextLine.SpanIncludingLineBreak);
+
     public sealed override Patch Root { get; }
 }
