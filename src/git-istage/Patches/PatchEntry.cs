@@ -27,11 +27,13 @@ public sealed class PatchEntry : PatchNode
             {
                 case PatchNodeKind.NewPathHeader:
                     var newPathHeader = (NewPathHeader)additionalHeader;
-                    NewPath = newPathHeader.Path.Value;
+                    if (!string.IsNullOrEmpty(newPathHeader.Path.Value))
+                        NewPath = newPathHeader.Path.Value;
                     break;
                 case PatchNodeKind.OldPathHeader:
                     var oldPathHeader = (OldPathHeader)additionalHeader;
-                    OldPath = oldPathHeader.Path.Value;
+                    if (!string.IsNullOrEmpty(oldPathHeader.Path.Value))
+                        OldPath = oldPathHeader.Path.Value;
                     break;
                 case PatchNodeKind.IndexHeader:
                     var indexHeader = (IndexHeader)additionalHeader;

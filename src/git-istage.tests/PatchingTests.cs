@@ -263,7 +263,7 @@ public class PatchingTests
                    """;
 
         var entry = AssertPatchHasSingleEntry(text);
-        entry.OldPath.Should().Be("");
+        entry.OldPath.Should().Be("hello.sh");
     }
 
     [Fact]
@@ -352,7 +352,7 @@ public class PatchingTests
                    """;
 
         var entry = AssertPatchHasSingleEntry(text);
-        entry.NewPath.Should().Be("");
+        entry.NewPath.Should().Be("build.sh");
     }
 
     [Fact]

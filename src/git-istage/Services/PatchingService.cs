@@ -60,10 +60,7 @@ internal sealed class PatchingService
             switch (direction)
             {
                 case PatchDirection.Stage:
-                    var path = change.Change == PatchEntryChange.Deleted
-                                ? change.OldPath
-                                : change.NewPath;
-                    _gitService.Add(path);
+                    _gitService.Add(change.NewPath);
                     break;
                 case PatchDirection.Unstage when change.Change == PatchEntryChange.Deleted:
                     _gitService.RestoreStaged(change.OldPath);
