@@ -29,6 +29,12 @@ public sealed class SourceText
         return new SourceText(text, fileName);
     }
 
+    public static SourceText Load(string fileName)
+    {
+        var text = File.ReadAllText(fileName);
+        return From(text, fileName);
+    }
+    
     private static ImmutableArray<TextLine> ParseLines(SourceText sourceText, string text)
     {
         ThrowIfNull(sourceText);
@@ -139,6 +145,10 @@ public sealed class SourceText
     public ReadOnlySpan<char> AsSpan() => _text.AsSpan();
 
     public ReadOnlySpan<char> AsSpan(TextSpan span) => _text.AsSpan(span);
+
+    public ReadOnlyMemory<char> AsMemory() => _text.AsMemory();
+
+    public ReadOnlyMemory<char> AsMemory(TextSpan span) => _text.AsMemory(span);
 
     public override string ToString() => _text;
 

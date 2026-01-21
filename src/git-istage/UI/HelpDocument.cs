@@ -19,26 +19,26 @@ internal sealed class HelpDocument : Document
 
         _column1Width = column1Width;
         _column2Width = column2Width;
+
+        LoadStyles();
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    protected override IEnumerable<StyledSpan> GetStyles()
     {
-        var line = SourceText.Lines[index];
-        var lineSpan = new TextSpan(0, line.Length);
-        var column1Span = new TextSpan(0, _column1Width);
-        var separator1Span = new TextSpan(column1Span.End, 1);
-        var column2Span = new TextSpan(separator1Span.End, _column2Width);
-        var separator2Span = new TextSpan(column2Span.End, 1);
-        var column3Span = TextSpan.FromBounds(separator2Span.End, lineSpan.End);
+        foreach (var line in SourceText.Lines)
+        {
+            var column1Span = new TextSpan(line.Start, _column1Width);
+            var separator1Span = new TextSpan(column1Span.End, 1);
+            var column2Span = new TextSpan(separator1Span.End, _column2Width);
+            var separator2Span = new TextSpan(column2Span.End, 1);
+            var column3Span = TextSpan.FromBounds(separator2Span.End, line.End);
 
-        return
-        [
-            new StyledSpan(column1Span, Colors.CommandKeyForeground, null),
-            new StyledSpan(separator1Span, Colors.SeparatorForeground, null),
-            new StyledSpan(column2Span, Colors.CommandNameForeground, null),
-            new StyledSpan(separator2Span, Colors.SeparatorForeground, null),
-            new StyledSpan(column3Span, Colors.CommandDescriptionForeground, null),
-        ];
+            yield return new StyledSpan(column1Span, Colors.CommandKeyForeground, null);
+            yield return new StyledSpan(separator1Span, Colors.SeparatorForeground, null);
+            yield return new StyledSpan(column2Span, Colors.CommandNameForeground, null);
+            yield return new StyledSpan(separator2Span, Colors.SeparatorForeground, null);
+            yield return new StyledSpan(column3Span, Colors.CommandDescriptionForeground, null);
+        }
     }
 
     public static HelpDocument Create(IReadOnlyCollection<ConsoleCommand> commands)

@@ -3,21 +3,31 @@
 public readonly struct StyledSpan : IEquatable<StyledSpan>
 {
     private readonly TextSpan _span;
+    private readonly TextStyle _style;
     private readonly TextColor? _foreground;
     private readonly TextColor? _background;
 
     public StyledSpan(TextSpan span, TextColor? foreground, TextColor? background)
+        : this(span, new TextStyle { Foreground = foreground, Background = background })
     {
         _span = span;
         _foreground = foreground;
         _background = background;
     }
 
+    public StyledSpan(TextSpan span, TextStyle style)
+    {
+        _span = span;
+        _style = style;
+    }
+
     public TextSpan Span => _span;
 
-    public TextColor? Foreground => _foreground;
+    public TextStyle Style => _style;
 
-    public TextColor? Background => _background;
+    public TextColor? Foreground => _style.Foreground;
+
+    public TextColor? Background => _style.Background;
 
     public bool Equals(StyledSpan other)
     {

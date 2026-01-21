@@ -11,10 +11,9 @@ internal sealed class FileDocument : Document
     private readonly Patch _patch;
     private readonly bool _viewStage;
 
+    private const int IndexOfFirstFile = 3;
     private const int IndentationWidth = 8;
     private const int ChangeColumnWidth = 14;
-    private const int PathColumnStart = IndentationWidth + ChangeColumnWidth;
-    private const int IndexOfFirstFile = 3;
 
     private FileDocument(SourceText sourceText, int indexOfFirstFile, Patch patch, bool viewStage)
         : base(sourceText)
@@ -22,6 +21,8 @@ internal sealed class FileDocument : Document
         _indexOfFirstFile = indexOfFirstFile;
         _patch = patch;
         _viewStage = viewStage;
+        
+        LoadStyles();
     }
 
     public Patch Patch => _patch;
@@ -43,20 +44,26 @@ internal sealed class FileDocument : Document
         return _indexOfFirstFile + entryIndex;
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    protected override IEnumerable<StyledSpan> GetStyles()
     {
-        var entry = GetEntry(index);
-        if (entry is not null)
+        var lineIndex = _indexOfFirstFile;
+        var foreground = GetForegroundColor();
+    
+        foreach (var _ in _patch.Entries)
         {
-            var line = GetLine(index);
-            var lineLength = line.Length;
-            var foreground = GetForegroundColor();
+            var line = SourceText.Lines[lineIndex];
+            var start = line.Span.Start;
 
+            var changeColumnSpan = new TextSpan(start + IndentationWidth, ChangeColumnWidth);
+            var fileNameSpan = TextSpan.FromBounds(changeColumnSpan.End, line.Span.End);
+            
             // Change
-            yield return new StyledSpan(new TextSpan(IndentationWidth, ChangeColumnWidth), foreground, null);
-
+            yield return new StyledSpan(changeColumnSpan, foreground, null);
+    
             // Path
-            yield return new StyledSpan(TextSpan.FromBounds(PathColumnStart, lineLength), Colors.PathText, null);
+            yield return new StyledSpan(fileNameSpan, Colors.PathText, null);
+    
+            lineIndex++;
         }
     }
 

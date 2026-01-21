@@ -1,14 +1,19 @@
 ﻿using System.Diagnostics;
 using System.Text.Json;
 using GitIStage.Services;
+using GitIStage.UI;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 
 namespace GitIStage;
 
+// Hello
+
 internal static class Program
 {
+    public static Application? _application;
+    
     private static async Task<int> Main()
     {
         try
@@ -38,11 +43,21 @@ internal static class Program
 
         host.Services.GetRequiredService<FileWatchingService>();
 
-        var application = host.Services.GetRequiredService<Application>();
-        application.Run();
+        _application = host.Services.GetRequiredService<Application>();
+        _application.Run();
 
         await host.StopAsync();
         await host.WaitForShutdownAsync();
+    }
+
+    public static void Render()
+    {
+        _application?.Render();
+    }
+
+    public static void Exit()
+    {
+        _application?.Exit();
     }
 
     private static void ConfigureServices(IServiceCollection serviceCollection)
@@ -55,6 +70,7 @@ internal static class Program
         serviceCollection.AddSingleton<OperationLogService>();
         serviceCollection.AddSingleton<PatchingService>();
         serviceCollection.AddSingleton<DocumentService>();
+        serviceCollection.AddSingleton<PatchHighlighterService>();
         serviceCollection.AddSingleton<UIService>();
         serviceCollection.AddSingleton<CommandService>();
         serviceCollection.AddSingleton<KeyBindingService>();

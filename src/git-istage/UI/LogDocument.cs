@@ -15,24 +15,26 @@ internal sealed class LogDocument : Document
     private LogDocument(SourceText sourceText)
         : base(sourceText)
     {
+        LoadStyles();
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    protected override IEnumerable<StyledSpan> GetStyles()
     {
-        var line = SourceText.Lines[index];
-        var lineText = SourceText.AsSpan(line.Span);
-        var span = new TextSpan(0, line.Length);
+        foreach (var line in SourceText.Lines)
+        {
+            var lineText = SourceText.AsSpan(line.Span);
 
-        TextColor foreground;
+            TextColor foreground;
 
-        if (lineText.StartsWith("! "))
-            foreground = TextColor.DarkRed;
-        else if (lineText.StartsWith(": ") || lineText.StartsWith("---"))
-            foreground = TextColor.DarkGray;
-        else
-            foreground = TextColor.White;
+            if (lineText.StartsWith("! "))
+                foreground = TextColor.DarkRed;
+            else if (lineText.StartsWith(": ") || lineText.StartsWith("---"))
+                foreground = TextColor.DarkGray;
+            else
+                foreground = TextColor.White;
 
-        return [new StyledSpan(span, foreground, null)];
+            yield return new StyledSpan(line.Span, foreground, null);
+        }
     }
 
     public LogDocument Prepend(IReadOnlyCollection<GitOperation> operations)
