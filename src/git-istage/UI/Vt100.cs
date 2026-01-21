@@ -55,6 +55,17 @@ internal static class Vt100
             WriteColor(color.Value, isForeground: false);
     }
 
+    public static void SetStyle(TextStyle style)
+    {
+        if (style.Foreground is not null)
+            WriteColor(style.Foreground.Value, isForeground: true);
+
+        if (style.Background is not null)
+            WriteColor(style.Background.Value, isForeground: false);
+
+        WriteAttributes(style.Attributes);
+    }
+    
     private static void WriteColor(TextColor color, bool isForeground)
     {
         var backgroundOffset = isForeground ? 0 : 10;
@@ -74,6 +85,28 @@ internal static class Vt100
 
             Console.Write($"\e[{code}m");
         }
+    }
+    
+    private static void WriteAttributes(TextAttributes attributes)
+    {
+        if ((attributes & TextAttributes.Bold) == TextAttributes.Bold)
+            Console.Write("\e[1m");
+        if ((attributes & TextAttributes.Dim) == TextAttributes.Dim)
+            Console.Write("\e[2m");
+        if ((attributes & TextAttributes.Italic) == TextAttributes.Italic)
+            Console.Write("\e[3m");
+        if ((attributes & TextAttributes.Underline) == TextAttributes.Underline)
+            Console.Write("\e[4m");
+        if ((attributes & TextAttributes.Blink) == TextAttributes.Blink)
+            Console.Write("\e[5m");
+        if ((attributes & TextAttributes.Blink2) == TextAttributes.Blink2)
+            Console.Write("\e[6m");
+        if ((attributes & TextAttributes.Reverse) == TextAttributes.Reverse)
+            Console.Write("\e[7m");
+        if ((attributes & TextAttributes.Conceal) == TextAttributes.Conceal)
+            Console.Write("\e[8m");
+        if ((attributes & TextAttributes.Strike) == TextAttributes.Strike)
+            Console.Write("\e[9m");
     }
 
     private static (int number, bool isBright) GetStandardColor(TextColor color)

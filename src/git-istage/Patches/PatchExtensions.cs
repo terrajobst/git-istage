@@ -379,4 +379,125 @@ internal static class PatchExtensions
             sb.Append(text.AsSpan(span));
         }
     }
+
+    public static IEnumerable<(int HunkLineIndex, int OldLineIndex, int NewLineIndex)> EnumerateIndices(this PatchHunk hunk)
+    {
+        var hunkLineIndex = 0;
+        var oldLineIndex = hunk.OldRange.LineNumber - 1;
+        var newLineIndex = hunk.NewRange.LineNumber - 1;
+        
+        foreach (var line in hunk.Lines)
+        {
+            var inOld = line.Kind is PatchNodeKind.ContextLine 
+                                  or PatchNodeKind.DeletedLine;
+
+            var inNew = line.Kind is PatchNodeKind.ContextLine 
+                                  or PatchNodeKind.AddedLine;
+            
+            yield return (hunkLineIndex, inOld ? oldLineIndex : -1, inNew ? newLineIndex : -1);
+
+            hunkLineIndex++;
+            if (inOld) oldLineIndex++;
+            if (inNew) newLineIndex++;
+        }
+    }
+
+    public static SourceText Apply(this PatchEntry patchEntry, SourceText text)
+    {
+        var sb = new StringBuilder();
+        var lastLine = 0; 
+
+        foreach (var hunk in patchEntry.Hunks)
+        {
+            var startLine = hunk.OldRange.LineNumber - 1;
+            CopyLinesTo(text, sb, lastLine, startLine);
+
+            foreach (var (hunkLineIndex, oldLineIndex, _) in hunk.EnumerateIndices())
+            {
+                var hunkLine = hunk.Lines[hunkLineIndex];
+                if (hunkLine.Kind is PatchNodeKind.DeletedLine)
+                {
+                    // Skip
+                }
+                else if (hunkLine.Kind is PatchNodeKind.ContextLine)
+                {
+                    var oldLine = text.AsSpan(text.Lines[oldLineIndex].SpanIncludingLineBreak);
+                    var contextLine = hunkLine.SelectSpanForInclusion();
+                    Debug.Assert(oldLine.SequenceEqual(contextLine));
+                    
+                    // Copy old line
+                    sb.Append(contextLine);
+                }
+                else if (hunkLine.Kind is PatchNodeKind.AddedLine)
+                {
+                    // Add old line
+                    sb.Append(hunkLine.SelectSpanForInclusion());
+                }
+            }
+            
+            lastLine = hunk.OldRange.LineNumber - 1 + hunk.OldRange.Length;
+        }
+
+        CopyLinesTo(text, sb, lastLine, text.Lines.Length);
+
+        return SourceText.From(sb.ToString(), text.FileName);
+    }
+    
+    public static SourceText ApplyReverse(this PatchEntry patchEntry, SourceText text)
+    {
+        var sb = new StringBuilder();
+        var lastLine = 0; 
+
+        foreach (var hunk in patchEntry.Hunks)
+        {
+            var startLine = hunk.NewRange.LineNumber - 1;
+            CopyLinesTo(text, sb, lastLine, startLine);
+
+            foreach (var (hunkLineIndex, _, newLineIndex) in hunk.EnumerateIndices())
+            {
+                var hunkLine = hunk.Lines[hunkLineIndex];
+                if (hunkLine.Kind is PatchNodeKind.DeletedLine)
+                {
+                    // Add back
+                    sb.Append(hunkLine.SelectSpanForInclusion());
+                }
+                else if (hunkLine.Kind is PatchNodeKind.ContextLine)
+                {
+                    var oldLine = text.AsSpan(text.Lines[newLineIndex].Span);
+                    var contextLine = hunkLine.Text.Slice(1);
+                    Debug.Assert(oldLine.SequenceEqual(contextLine));
+                    
+                    // Copy old line
+                    sb.Append(hunkLine.SelectSpanForInclusion());
+                }
+                else if (hunkLine.Kind is PatchNodeKind.AddedLine)
+                {
+                    // Skip
+                }
+            }
+
+            lastLine = hunk.NewRange.LineNumber - 1 + hunk.NewRange.Length;
+        }
+
+        CopyLinesTo(text, sb, lastLine, text.Lines.Length);
+        
+        return SourceText.From(sb.ToString(), text.FileName);
+    }
+
+    private static void CopyLinesTo(SourceText text, StringBuilder sb, int startLine, int endLine)
+    {
+        for (var i = startLine; i < endLine; i++)
+        {
+            var line = text.Lines[i];
+            sb.Append(text.AsSpan(line.SpanIncludingLineBreak));
+        }
+    }
+
+    private static ReadOnlySpan<char> SelectSpanForInclusion(this PatchHunkLine line)
+    {
+        var patch = line.Root;
+        var nextLine = line.LineIndex + 1 >= patch.Lines.Length ? null : patch.Lines[line.LineIndex + 1];
+        var noLineBreak = nextLine is not null && nextLine.Kind == PatchNodeKind.NoFinalLineBreakLine;
+        return noLineBreak ? line.Text.Slice(1) : line.TextAndLineBreak.Slice(1);
+    }
 }

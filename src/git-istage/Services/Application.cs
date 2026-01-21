@@ -130,6 +130,11 @@ internal sealed class Application
         return lastInfo.Value;
     }
 
+    public void Render()
+    {
+        Invoke(() => _uiService.Resize());
+    }
+    
     private abstract class Message
     {
     }

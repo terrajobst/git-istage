@@ -10,6 +10,7 @@ internal sealed class View
     private int _leftChar;
     private Selection _selection;
     private SearchResults? _searchResults;
+    private readonly List<StyledSpan> _lineStyles = new();
 
     public bool Visible
     {
@@ -150,21 +151,29 @@ internal sealed class View
         var clippedLineSpan = ClipSpan(lineSpan);
 
         var visualLine = lineIndex - TopLine + Top;
-        var styledSpans = Document.GetLineStyles(lineIndex);
         var isSelected = Selection.Contains(lineIndex);
 
+        _lineStyles.Clear();
+        Document.GetLineStyles(lineIndex, _lineStyles);
+
+        var lineStyle = Document.GetLineStyle(lineIndex);
+        
         Vt100.SetCursorPosition(Left, visualLine);
 
-        var lineBackground = (TextColor?)null;
-
         if (isSelected)
-            lineBackground = Colors.Selection;
+        {
+            lineStyle = new TextStyle()
+            {
+                Foreground = lineStyle.Foreground,
+                Background = lineStyle.Background?.Combine(Colors.Selection) ?? Colors.Selection
+            };
+        }
 
-        Vt100.SetForegroundColor();
-        Vt100.SetBackgroundColor(lineBackground);
+        Vt100.SetForegroundColor(lineStyle.Foreground);
+        Vt100.SetBackgroundColor(lineStyle.Background);
 
         var p = clippedLineSpan.Start;
-        foreach (var styledSpan in styledSpans)
+        foreach (var styledSpan in _lineStyles)
         {
             var clippedSpan = ClipSpan(styledSpan);
             if (clippedSpan.Span.Length == 0)
@@ -176,15 +185,10 @@ internal sealed class View
                 Console.Write(line.Slice(missingSpan));
             }
 
-            var clippedSpanForeground = clippedSpan.Foreground;
-            var clippedSpanBackground = clippedSpan.Background;
+            var style = clippedSpan.Style.PlaceOnTopOf(lineStyle);
 
-            clippedSpanBackground = lineBackground is null
-                                        ? clippedSpanBackground
-                                        : clippedSpanBackground?.Combine(lineBackground.Value) ?? lineBackground.Value;
-
-            Vt100.SetForegroundColor(clippedSpanForeground);
-            Vt100.SetBackgroundColor(clippedSpanBackground);
+            Vt100.SetForegroundColor(style.Foreground);
+            Vt100.SetBackgroundColor(style.Background);
             Console.Write(line.Slice(clippedSpan.Span));
 
             p = clippedSpan.Span.End;
@@ -192,8 +196,8 @@ internal sealed class View
 
         if (p < clippedLineSpan.End)
         {
-            Vt100.SetForegroundColor();
-            Vt100.SetBackgroundColor(lineBackground);
+            Vt100.SetForegroundColor(lineStyle.Foreground);
+            Vt100.SetBackgroundColor(lineStyle.Background);
 
             var remainderSpan = TextSpan.FromBounds(p, clippedLineSpan.End);
             Console.Write(line.Slice(remainderSpan));

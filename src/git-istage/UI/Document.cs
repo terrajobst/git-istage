@@ -1,3 +1,4 @@
+using GitIStage.Services;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
@@ -6,6 +7,8 @@ internal abstract class Document
 {
     public static readonly Document Empty = new EmptyDocument();
 
+    private LineHighlights? _lineHighlights;
+    
     protected Document(SourceText sourceText)
     {
         ThrowIfNull(sourceText);
@@ -31,7 +34,26 @@ internal abstract class Document
         return SourceText.AsSpan().Slice(lineSpan);
     }
 
-    public virtual IEnumerable<StyledSpan> GetLineStyles(int index) => [];
+    public virtual TextStyle GetLineStyle(int index)
+    {
+        return default;
+    }
+    
+    public virtual void GetLineStyles(int index, List<StyledSpan> receiver)
+    {
+        if (_lineHighlights is null)
+            _lineHighlights = GetLineHighlights();
+
+        if (_lineHighlights == LineHighlights.Empty)
+            return;
+
+        receiver.AddRange(_lineHighlights[index].AsSpan());
+    }
+
+    protected virtual LineHighlights GetLineHighlights()
+    {
+        return LineHighlights.Empty;
+    }
 
     private sealed class EmptyDocument() : Document(SourceText.Empty);
 }

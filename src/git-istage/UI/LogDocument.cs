@@ -8,7 +8,8 @@ internal sealed class LogDocument : Document
 {
     public new static LogDocument Empty { get; } = new ();
 
-    private LogDocument() : this(SourceText.Empty)
+    private LogDocument()
+        : this(SourceText.Empty)
     {
     }
 
@@ -17,22 +18,27 @@ internal sealed class LogDocument : Document
     {
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    protected override LineHighlights GetLineHighlights()
     {
-        var line = SourceText.Lines[index];
-        var lineText = SourceText.AsSpan(line.Span);
-        var span = new TextSpan(0, line.Length);
+        var styles = new List<StyledSpan>();
 
-        TextColor foreground;
+        foreach (var line in SourceText.Lines)
+        {
+            var lineText = SourceText.AsSpan(line.Span);
 
-        if (lineText.StartsWith("! "))
-            foreground = TextColor.DarkRed;
-        else if (lineText.StartsWith(": ") || lineText.StartsWith("---"))
-            foreground = TextColor.DarkGray;
-        else
-            foreground = TextColor.White;
+            TextColor foreground;
 
-        return [new StyledSpan(span, foreground, null)];
+            if (lineText.StartsWith("! "))
+                foreground = TextColor.DarkRed;
+            else if (lineText.StartsWith(": ") || lineText.StartsWith("---"))
+                foreground = TextColor.DarkGray;
+            else
+                foreground = TextColor.White;
+
+            styles.Add(new StyledSpan(line.Span, foreground, null));
+        }
+        
+        return LineHighlights.Create(SourceText, styles);
     }
 
     public LogDocument Prepend(IReadOnlyCollection<GitOperation> operations)

@@ -7,6 +7,11 @@ public static class TextSpanExtensions
         return text.AsSpan(span.Start, span.Length);
     }
 
+    public static ReadOnlyMemory<char> AsMemory(this string text, TextSpan span)
+    {
+        return text.AsMemory(span.Start, span.Length);
+    }
+
     public static ReadOnlySpan<char> Slice(this ReadOnlySpan<char> text, TextSpan span)
     {
         return text.Slice(span.Start, span.Length);

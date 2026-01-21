@@ -142,7 +142,7 @@ public abstract class RepositoryTests : IDisposable
             return;
 
         _wroteToWorkingDirectory = false;
-        _documentService.UpdateDocument();
+        _documentService.UpdateDocuments();
     }
 
     internal void StageLine(string line)

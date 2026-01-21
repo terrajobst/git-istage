@@ -201,6 +201,15 @@ internal sealed class CommandService
         _documentService.ViewFullDiff = !_documentService.ViewFullDiff;
     }
 
+    [CommandHandler("Toggles between syntax highlighting and no syntax highlighting", "H")]
+    private void ToggleSyntaxHighlighting()
+    {
+        if (!_uiService.IsViewingPatch)
+            return;
+
+        _documentService.SyntaxHighlighting = !_documentService.SyntaxHighlighting;
+    }
+
     [CommandHandler("Toggles between showing and hiding whitespace.", "W")]
     private void ToggleWhitespace()
     {

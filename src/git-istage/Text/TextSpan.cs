@@ -24,10 +24,15 @@ public readonly struct TextSpan : IEquatable<TextSpan>
         return new TextSpan(start, length);
     }
 
-    public bool OverlapsWith(TextSpan span)
+    public TextSpan RelativeTo(int position)
     {
-        return Start < span.End &&
-               End > span.Start;
+        return new TextSpan(Start - position, Length);
+    }
+
+    public bool OverlapsWith(TextSpan other)
+    {
+        return Start < other.End &&
+               End > other.Start;
     }
 
     public bool Contains(TextSpan span)
