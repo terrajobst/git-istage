@@ -33,11 +33,11 @@ internal sealed class HelpDocument : Document
 
         return
         [
-            new StyledSpan(column1Span, ConsoleColor.White, null),
-            new StyledSpan(separator1Span, ConsoleColor.DarkGray, null),
-            new StyledSpan(column2Span, ConsoleColor.DarkCyan, null),
-            new StyledSpan(separator2Span, ConsoleColor.DarkGray, null),
-            new StyledSpan(column3Span, ConsoleColor.DarkYellow, null),
+            new StyledSpan(column1Span, Colors.CommandKeyForeground, null),
+            new StyledSpan(separator1Span, Colors.SeparatorForeground, null),
+            new StyledSpan(column2Span, Colors.CommandNameForeground, null),
+            new StyledSpan(separator2Span, Colors.SeparatorForeground, null),
+            new StyledSpan(column3Span, Colors.CommandDescriptionForeground, null),
         ];
     }
 

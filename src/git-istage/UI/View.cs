@@ -99,7 +99,7 @@ internal sealed class View
             }
         }
     }
-    
+
     public void Resize(int top, int left, int bottom, int right)
     {
         Top = top;
@@ -116,7 +116,7 @@ internal sealed class View
         var newSelectionStart = int.Max(0, int.Min(_selection.StartLine, Document.Height - 1));
         var newSelectionCount = 0;
 
-        _topLine = int.Clamp(_topLine, 0, TopLineMax); 
+        _topLine = int.Clamp(_topLine, 0, TopLineMax);
         _selection = new Selection(newSelectionStart, newSelectionCount);
         _leftChar = int.Clamp(_leftChar, 0, LeftCharMax);
         _searchResults = null;
@@ -151,14 +151,14 @@ internal sealed class View
 
         var visualLine = lineIndex - TopLine + Top;
         var styledSpans = Document.GetLineStyles(lineIndex);
-        var isSelected = Selection.Contains(lineIndex); 
-        
+        var isSelected = Selection.Contains(lineIndex);
+
         Vt100.SetCursorPosition(Left, visualLine);
 
-        var lineBackground = (ConsoleColor?)null;
+        var lineBackground = (TextColor?)null;
 
         if (isSelected)
-            lineBackground = ConsoleColor.DarkBlue;
+            lineBackground = Colors.Selection;
 
         Vt100.SetForegroundColor();
         Vt100.SetBackgroundColor(lineBackground);
@@ -176,10 +176,17 @@ internal sealed class View
                 Console.Write(line.Slice(missingSpan));
             }
 
-            Vt100.SetForegroundColor(clippedSpan.Foreground);
-            Vt100.SetBackgroundColor(lineBackground ?? clippedSpan.Background);
+            var clippedSpanForeground = clippedSpan.Foreground;
+            var clippedSpanBackground = clippedSpan.Background;
+
+            clippedSpanBackground = lineBackground is null
+                                        ? clippedSpanBackground
+                                        : clippedSpanBackground?.Combine(lineBackground.Value) ?? lineBackground.Value;
+
+            Vt100.SetForegroundColor(clippedSpanForeground);
+            Vt100.SetBackgroundColor(clippedSpanBackground);
             Console.Write(line.Slice(clippedSpan.Span));
-            
+
             p = clippedSpan.Span.End;
         }
 
@@ -201,11 +208,11 @@ internal sealed class View
     {
         Debug.Assert(IsVisible(lineIndex));
 
-        var visualLine = GetVisualLine(lineIndex); 
-        
+        var visualLine = GetVisualLine(lineIndex);
+
         Vt100.SetCursorPosition(0, visualLine);
-        Vt100.SetForegroundColor(ConsoleColor.DarkGray);
-        Vt100.SetBackgroundColor();
+        Vt100.SetForegroundColor(Colors.NonExistingTextForeground);
+        Vt100.SetBackgroundColor(Colors.NonExistingTextBackground);
         Console.Write("~");
         Vt100.EraseRestOfCurrentLine();
     }
@@ -216,7 +223,7 @@ internal sealed class View
 
         var line = Document.GetLine(lineIndex);
         var visualLine = GetVisualLine(lineIndex);
-        
+
         if (SearchResults is not null)
         {
             foreach (var hit in SearchResults.Hits)
@@ -279,7 +286,7 @@ internal sealed class View
         _selection = value;
 
         // Render old lines that aren't part of the new selection
-        
+
         for (var i = previousSelection.StartLine; i <= previousSelection.EndLine; i++)
         {
             if (!value.Contains(i))
@@ -287,15 +294,15 @@ internal sealed class View
         }
 
         // Render new lines that aren't part of the old selection
-        
+
         for (var i = value.StartLine; i <= value.EndLine; i++)
         {
             if (!previousSelection.Contains(i))
                 RenderLine(i);
         }
-        
+
         // Scroll if necessary
-        
+
         if (value.StartLine < TopLine &&
             value.StartLine < previousSelection.StartLine)
         {

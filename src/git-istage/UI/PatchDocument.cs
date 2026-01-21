@@ -35,25 +35,25 @@ internal sealed class PatchDocument : Document
                    .Select(GetSpan);
     }
 
-    private static ConsoleColor? GetLineForegroundColor(PatchLine line)
+    private static TextColor? GetLineForegroundColor(PatchLine line)
     {
         switch (line.Kind)
         {
             case PatchNodeKind.EntryHeader:
-                return ConsoleColor.White;
+                return Colors.EntryHeaderForeground;
             case PatchNodeKind.AddedLine:
-                return ConsoleColor.DarkGreen;
+                return Colors.AddedText;
             case PatchNodeKind.DeletedLine:
-                return ConsoleColor.DarkRed;
+                return Colors.DeletedText;
             default:
                 return null;
         }
     }
 
-    private static ConsoleColor? GetLineBackgroundColor(PatchLine line)
+    private static TextColor? GetLineBackgroundColor(PatchLine line)
     {
         return line.Kind == PatchNodeKind.EntryHeader
-            ? ConsoleColor.DarkCyan
+            ? Colors.EntryHeaderBackground
             : null;
     }
 
@@ -66,18 +66,18 @@ internal sealed class PatchDocument : Document
     {
         var foreground = token.Kind switch
         {
-            PatchNodeKind.PathToken => ConsoleColor.White,
-            PatchNodeKind.HashToken => ConsoleColor.DarkYellow,
-            PatchNodeKind.ModeToken => ConsoleColor.DarkYellow,
-            PatchNodeKind.TextToken => ConsoleColor.Gray,
-            PatchNodeKind.PercentageToken => ConsoleColor.DarkMagenta,
-            PatchNodeKind.RangeToken => ConsoleColor.Cyan,
-            PatchNodeKind.MinusMinusMinusToken => ConsoleColor.DarkRed,
-            PatchNodeKind.PlusPlusPlusToken => ConsoleColor.Green,
+            PatchNodeKind.PathToken => Colors.PathTokenForeground,
+            PatchNodeKind.HashToken => Colors.HashTokenForeground,
+            PatchNodeKind.ModeToken => Colors.ModeTokenForeground,
+            PatchNodeKind.TextToken => Colors.TextTokenForeground,
+            PatchNodeKind.PercentageToken => Colors.PercentageTokenForeground,
+            PatchNodeKind.RangeToken => Colors.RangeTokenForeground,
+            PatchNodeKind.MinusMinusMinusToken => Colors.MinusMinusMinusTokenForeground,
+            PatchNodeKind.PlusPlusPlusToken => Colors.PlusPlusPlusTokenForeground,
             _ => token.Kind.IsKeyword()
-                ? ConsoleColor.Cyan
+                ? Colors.KeywordForeground
                 : token.Kind.IsOperator()
-                    ? ConsoleColor.DarkCyan
+                    ? Colors.OperatorForeground
                     : throw new UnreachableException($"Unexpected token kind {token.Kind}")
         };
 

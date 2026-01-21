@@ -38,12 +38,12 @@ internal sealed class UIService
         _documentService.Changed += DocumentServiceOnChanged;
         
         _header = new Label();
-        _header.Foreground = ConsoleColor.Yellow;
-        _header.Background = ConsoleColor.DarkGray;
+        _header.Foreground = Colors.HeaderForeground;
+        _header.Background = Colors.HeaderBackground;
 
         _footer = new Label();
-        _footer.Foreground = ConsoleColor.Yellow;
-        _footer.Background = ConsoleColor.DarkGray;
+        _footer.Foreground = Colors.HeaderForeground;
+        _footer.Background = Colors.HeaderBackground;
         
         _workingCopyPatchView = new View();
         _workingCopyFilesView = new View();
@@ -280,8 +280,8 @@ internal sealed class UIService
         {
             Vt100.HideCursor();
             Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
-            Vt100.SetForegroundColor(ConsoleColor.Blue);
-            Vt100.SetBackgroundColor(ConsoleColor.Gray);
+            Vt100.SetForegroundColor(Colors.SearchInputForeground);
+            Vt100.SetBackgroundColor(Colors.SearchInputBackground);
             Console.Write("/");
             Console.Write(sb);
             Vt100.EraseRestOfCurrentLine();
@@ -322,8 +322,8 @@ internal sealed class UIService
         {
             Vt100.HideCursor();
             Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
-            Vt100.SetForegroundColor(ConsoleColor.Blue);
-            Vt100.SetBackgroundColor(ConsoleColor.Gray);
+            Vt100.SetForegroundColor(Colors.SearchInputForeground);
+            Vt100.SetBackgroundColor(Colors.SearchInputBackground);
             Console.Write("<< NO RESULTS FOUND >>");
             Vt100.EraseRestOfCurrentLine();
             _keyboardService.ReadKey();

@@ -8,7 +8,7 @@ internal static class Whitespace
     {
         var result = 0;
         for (var i = 0; i < text.Length; i++)
-            result += LengthVisual(text, i);
+            result += text.LengthVisual(i);
         return result;
     }
 

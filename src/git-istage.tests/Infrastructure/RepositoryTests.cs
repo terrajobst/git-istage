@@ -101,7 +101,7 @@ public abstract class RepositoryTests : IDisposable
         var tipTree = _gitService.Repository.Head.Tip?.Tree;
         var changes = _gitService.Repository.Diff.Compare<TreeChanges>(tipTree, DiffTargets.Index);
         if (!changes.Any())
-            throw new Exception($"Nothing to commit -- did you forget to stage changes?");
+            throw new Exception("Nothing to commit -- did you forget to stage changes?");
 
         var signature = new Signature("git-istage", "git_istage@example.org", DateTimeOffset.Now);
         _gitService.Repository.Commit("Update", signature, signature);

@@ -56,13 +56,13 @@ internal sealed class FileDocument : Document
             yield return new StyledSpan(new TextSpan(IndentationWidth, ChangeColumnWidth), foreground, null);
 
             // Path
-            yield return new StyledSpan(TextSpan.FromBounds(PathColumnStart, lineLength), ConsoleColor.DarkCyan, null);
+            yield return new StyledSpan(TextSpan.FromBounds(PathColumnStart, lineLength), Colors.PathText, null);
         }
     }
 
-    private ConsoleColor? GetForegroundColor()
+    private TextColor GetForegroundColor()
     {
-        return _viewStage ? ConsoleColor.DarkGreen : ConsoleColor.DarkRed;
+        return _viewStage ? Colors.AddedText : Colors.DeletedText; 
     }
 
     public static FileDocument Create(Patch patch, bool viewStage)

@@ -1,121 +1,142 @@
+using GitIStage.Text;
+
 namespace GitIStage.UI;
 
 internal static class Vt100
 {
     public static void SwitchToAlternateBuffer()
     {
-        Console.Write("\x1b[?1049h");
+        Console.Write("\e[?1049h");
     }
 
     public static void SwitchToMainBuffer()
     {
-        Console.Write("\x1b[?1049l");
+        Console.Write("\e[?1049l");
     }
 
     public static void ShowCursor()
     {
-        Console.Write("\x1b[?25h");
+        Console.Write("\e[?25h");
     }
 
     public static void HideCursor()
     {
-        Console.Write("\x1b[?25l");
+        Console.Write("\e[?25l");
     }
 
     public static void SetCursorPosition(int x, int y)
     {
-        Console.Write($"\x1b[{y + 1};{x + 1}H");
+        Console.Write($"\e[{y + 1};{x + 1}H");
     }
 
     public static void NegativeColors()
     {
-        Console.Write("\x1b[7m");
+        Console.Write("\e[7m");
     }
 
     public static void PositiveColors()
     {
-        Console.Write("\x1b[27m");
+        Console.Write("\e[27m");
     }
 
-    public static void SetForegroundColor(ConsoleColor? color = null)
+    public static void SetForegroundColor(TextColor? color = null)
     {
-        // If color is null, set to default
-        var code = color != null ? GetColor(color.Value, foreground: true) : 39;
-        Console.Write($"\x1b[{(int)code}m");
+        if (color is null)
+            Console.Write("\e[39m");
+        else
+            WriteColor(color.Value, isForeground: true);
     }
 
-    public static void SetBackgroundColor(ConsoleColor? color = null)
+    public static void SetBackgroundColor(TextColor? color = null)
     {
-        // If color is null, set to default
-        var code = color != null ? GetColor(color.Value, foreground: false) : 49;
-        Console.Write($"\x1b[{(int)code}m");
+        if (color is null)
+            Console.Write("\e[49m");
+        else
+            WriteColor(color.Value, isForeground: false);
     }
 
-    private static int GetColor(ConsoleColor color, bool foreground)
+    private static void WriteColor(TextColor color, bool isForeground)
     {
-        switch (color)
+        var backgroundOffset = isForeground ? 0 : 10;
+        var code = 30 + backgroundOffset;
+
+        var (number, isBright) = GetStandardColor(color);
+        if (number < 0)
         {
-            case ConsoleColor.Black when foreground: return 30;
-            case ConsoleColor.DarkBlue when foreground: return 34;
-            case ConsoleColor.DarkGreen when foreground: return 32;
-            case ConsoleColor.DarkCyan when foreground: return 36;
-            case ConsoleColor.DarkRed when foreground: return 31;
-            case ConsoleColor.DarkMagenta when foreground: return 35;
-            case ConsoleColor.DarkYellow when foreground: return 33;
-            case ConsoleColor.Gray when foreground: return 37;
-            case ConsoleColor.DarkGray when foreground: return 90;
-            case ConsoleColor.Blue when foreground: return 94;
-            case ConsoleColor.Green when foreground: return 92;
-            case ConsoleColor.Cyan when foreground: return 96;
-            case ConsoleColor.Red when foreground: return 91;
-            case ConsoleColor.Magenta when foreground: return 95;
-            case ConsoleColor.Yellow when foreground: return 93;
-            case ConsoleColor.White when foreground: return 97;
-
-            case ConsoleColor.Black when !foreground: return 40;
-            case ConsoleColor.DarkBlue when !foreground: return 44;
-            case ConsoleColor.DarkGreen when !foreground: return 42;
-            case ConsoleColor.DarkCyan when !foreground: return 46;
-            case ConsoleColor.DarkRed when !foreground: return 41;
-            case ConsoleColor.DarkMagenta when !foreground: return 45;
-            case ConsoleColor.DarkYellow when !foreground: return 43;
-            case ConsoleColor.Gray when !foreground: return 47;
-            case ConsoleColor.DarkGray when !foreground: return 100;
-            case ConsoleColor.Blue when !foreground: return 104;
-            case ConsoleColor.Green when !foreground: return 102;
-            case ConsoleColor.Cyan when !foreground: return 106;
-            case ConsoleColor.Red when !foreground: return 101;
-            case ConsoleColor.Magenta when !foreground: return 105;
-            case ConsoleColor.Yellow when !foreground: return 103;
-            case ConsoleColor.White when !foreground: return 107;
-
-            default:
-                throw new Exception($"Unexpected color: {color}");
+            code += 8;
+            Console.Write($"\e[{code};2;{color.R};{color.G};{color.B}m");
         }
+        else
+        {
+            code += number;
+            if (isBright)
+                code += 60;
+
+            Console.Write($"\e[{code}m");
+        }
+    }
+
+    private static (int number, bool isBright) GetStandardColor(TextColor color)
+    {
+        if (color == TextColor.Black)        // Black
+            return (0, false);
+        if (color == TextColor.DarkRed)      // Red
+            return (1, false);
+        if (color == TextColor.DarkGreen)    // Green
+            return (2, false);
+        if (color == TextColor.DarkYellow)   // Yellow
+            return (3, false);
+        if (color == TextColor.DarkBlue)     // Blue
+            return (4, false);
+        if (color == TextColor.DarkMagenta)  // Magenta
+            return (5, false);
+        if (color == TextColor.DarkCyan)     // Cyan
+            return (6, false);
+        if (color == TextColor.Gray)         // White
+            return (7, false);
+
+        if (color == TextColor.DarkGray)    // Bright Black
+            return (0, true);
+        if (color == TextColor.Red)         // Bright Red
+            return (1, true);
+        if (color == TextColor.Green)       // Bright Green
+            return (2, true);
+        if (color == TextColor.Yellow)      // Bright Yellow
+            return (3, true);
+        if (color == TextColor.Blue)        // Bright Blue
+            return (4, true);
+        if (color == TextColor.Magenta)     // Bright Magenta
+            return (5, true);
+        if (color == TextColor.Cyan)        // Bright Cyan
+            return (6, true);
+        if (color == TextColor.White)       // Bright White
+            return (7, true);
+
+        return (-1, false);
     }
 
     public static void ResetScrollMargins()
     {
-        Console.Write($"\x1b[r");
+        Console.Write("\e[r");
     }
 
     public static void SetScrollMargins(int top, int bottom)
     {
-        Console.Write($"\x1b[{top};{bottom}r");
+        Console.Write($"\e[{top};{bottom}r");
     }
 
     public static void ScrollUp(int lines)
     {
-        Console.Write($"\x1b[{lines}S");
+        Console.Write($"\e[{lines}S");
     }
 
     public static void ScrollDown(int lines)
     {
-        Console.Write($"\x1b[{lines}T");
+        Console.Write($"\e[{lines}T");
     }
 
     public static void EraseRestOfCurrentLine()
     {
-        Console.Write($"\x1b[K");
+        Console.Write("\e[K");
     }
 }

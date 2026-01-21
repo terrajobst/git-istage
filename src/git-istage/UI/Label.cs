@@ -1,3 +1,5 @@
+using GitIStage.Text;
+
 namespace GitIStage.UI;
 
 internal sealed class Label
@@ -13,7 +15,7 @@ internal sealed class Label
 
     public int Width { get; private set; }
 
-    public ConsoleColor? Foreground
+    public TextColor? Foreground
     {
         get;
         set
@@ -23,7 +25,7 @@ internal sealed class Label
         }
     }
 
-    public ConsoleColor? Background
+    public TextColor? Background
     {
         get;
         set
