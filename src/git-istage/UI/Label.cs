@@ -2,64 +2,67 @@ namespace GitIStage.UI;
 
 internal sealed class Label
 {
-    private int _top;
-    private int _left;
-    private int _width;
+    public Label()
+    {
+        Text = string.Empty;
+    }
 
-    private ConsoleColor? _foreground;
-    private ConsoleColor? _background;
-    private string _text = string.Empty;
+    public int Top { get; private set; }
+
+    public int Left { get; private set; }
+
+    public int Width { get; private set; }
 
     public ConsoleColor? Foreground
     {
-        get => _foreground;
+        get;
         set
         {
-            _foreground = value;
+            field = value;
             Render();
         }
     }
 
     public ConsoleColor? Background
     {
-        get => _background;
+        get;
         set
         {
-            _background = value;
+            field = value;
             Render();
         }
     }
 
     public string Text
     {
-        get => _text;
+        get;
         set
         {
-            _text = value;
+            field = value;
             Render();
         }
     }
 
     public void Resize(int top, int left, int right)
     {
-        _top = top;
-        _left = left;
-        _width = right - left;
+        Top = top;
+        Left = left;
+        Width = right - left;
 
         Render();
     }
     
     private void Render()
     {
-        if (_width == 0)
+        if (Width == 0)
             return;
 
-        var textLength = Math.Min(_text.Length, _width);
-        var text = _text.Substring(0, textLength);
+        var textLength = Math.Min(Text.Length, Width);
+        var text = Text.AsSpan(0, textLength);
 
-        Vt100.SetCursorPosition(_left, _top);
-        Vt100.SetForegroundColor(_foreground);
-        Vt100.SetBackgroundColor(_background);
+        Vt100.SetCursorPosition(Left, Top);
+        Vt100.SetForegroundColor(Foreground);
+        Vt100.SetBackgroundColor(Background);
         Console.Write(text);
         Vt100.EraseRestOfCurrentLine();
     }

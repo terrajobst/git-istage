@@ -2,7 +2,6 @@
 using GitIStage.Commands;
 using GitIStage.Patches;
 using GitIStage.UI;
-using LibGit2Sharp;
 using Microsoft.Extensions.DependencyInjection;
 
 namespace GitIStage.Services;

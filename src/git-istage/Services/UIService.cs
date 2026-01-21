@@ -1,5 +1,4 @@
 ﻿using System.Diagnostics;
-using System.Diagnostics.CodeAnalysis;
 using System.Text;
 using GitIStage.Patches;
 using GitIStage.UI;

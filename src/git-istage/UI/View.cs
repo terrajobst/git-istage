@@ -9,17 +9,15 @@ internal sealed class View
     private int _topLine;
     private int _leftChar;
     private Selection _selection;
-    private bool _visibleWhitespace;
     private SearchResults? _searchResults;
-    private bool _visible;
 
     public bool Visible
     {
-        get => _visible;
+        get;
         set
         {
-            _visible = value;
-            if (_visible)
+            field = value;
+            if (field)
                 Render();
         }
     }
@@ -78,12 +76,12 @@ internal sealed class View
 
     public bool VisibleWhitespace
     {
-        get => _visibleWhitespace;
+        get;
         set
         {
-            if (_visibleWhitespace != value)
+            if (field != value)
             {
-                _visibleWhitespace = value;
+                field = value;
                 Render();
             }
         }

@@ -1,4 +1,3 @@
-using System.Diagnostics;
 using System.Text;
 using GitIStage.Commands;
 using GitIStage.Text;

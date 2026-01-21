@@ -1,6 +1,5 @@
 ﻿using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
 using GitIStage.Patches;
 using GitIStage.UI;
 using GitIStagePatch = GitIStage.Patches.Patch;
