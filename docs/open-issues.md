@@ -8,11 +8,6 @@ It would be useful to have a history of Git commands, just like LazyGit does.
 Should include any errors. We should replace the error document with the log
 document, with new entries being prepended.
 
-## Background loading
-
-We should use a file system watcher and automatically reload when files change
-on disk.
-
 ## Syntax colorization
 
 We should use a syntax highlighter (probably `TextMateSharp`) to colorize the
