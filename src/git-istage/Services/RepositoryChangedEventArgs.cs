@@ -9,13 +9,6 @@ public sealed class RepositoryChangedEventArgs : EventArgs
         AffectedPaths = [];
     }
 
-    public RepositoryChangedEventArgs(string affectedPath)
-    {
-        ThrowIfNullOrEmpty(affectedPath);
-
-        AffectedPaths = [affectedPath];
-    }
-
     public RepositoryChangedEventArgs(IEnumerable<string> affectedPaths)
     {
         ThrowIfNull(affectedPaths);

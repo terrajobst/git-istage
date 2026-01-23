@@ -12,6 +12,7 @@ internal sealed class UIService
     private readonly KeyboardService _keyboardService;
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
+    private readonly OperationLogService _logService;
 
     private readonly Label _header;
     private readonly Label _footer;
@@ -23,20 +24,26 @@ internal sealed class UIService
     private readonly View _workingCopyFilesView;
     private readonly View _stagePatchView;
     private readonly View _stageFilesView;
-    private readonly View _errorView;
+    private readonly View _logView;
     private readonly View _helpView;
     private HelpDocument? _helpDocument;
 
     private readonly StringBuilder _inputLineDigits = new();
 
-    public UIService(IServiceProvider serviceProvider, KeyboardService keyboardService, GitService gitService, DocumentService documentService)
+    public UIService(IServiceProvider serviceProvider,
+                     KeyboardService keyboardService,
+                     GitService gitService,
+                     DocumentService documentService,
+                     OperationLogService logService)
     {
         _serviceProvider = serviceProvider;
         _keyboardService = keyboardService;
         _gitService = gitService;
         _documentService = documentService;
         _documentService.Changed += DocumentServiceOnChanged;
-        
+        _logService = logService;
+        _logService.Changed += LogServiceOnChanged;
+
         _header = new Label();
         _header.Foreground = Colors.HeaderForeground;
         _header.Background = Colors.HeaderBackground;
@@ -44,12 +51,12 @@ internal sealed class UIService
         _footer = new Label();
         _footer.Foreground = Colors.HeaderForeground;
         _footer.Background = Colors.HeaderBackground;
-        
+
         _workingCopyPatchView = new View();
         _workingCopyFilesView = new View();
         _stagePatchView = new View();
         _stageFilesView = new View();
-        _errorView = new View();
+        _logView = new View();
         _helpView = new View();
         _activeView = _workingCopyPatchView;
 
@@ -63,10 +70,10 @@ internal sealed class UIService
         set => ViewMode = value ? ViewMode.Help : _previousViewMode;
     }
 
-    public bool ErrorShowing
+    public bool LogShowing
     {
-        get => ViewMode == ViewMode.Error;
-        set => ViewMode = value ? ViewMode.Error : _previousViewMode;
+        get => ViewMode == ViewMode.Log;
+        set => ViewMode = value ? ViewMode.Log : _previousViewMode;
     }
 
     public bool IsViewingDiff
@@ -110,7 +117,7 @@ internal sealed class UIService
         {
             if (_viewMode != value)
             {
-                _previousViewMode = _viewMode; 
+                _previousViewMode = _viewMode;
                 _viewMode = value;
                 UpdateActiveView();
             }
@@ -133,7 +140,7 @@ internal sealed class UIService
         Vt100.ResetScrollMargins();
         Vt100.SwitchToMainBuffer();
         Vt100.ShowCursor();
-        
+
         if (OperatingSystem.IsWindows())
             Win32Console.Restore();
     }
@@ -142,7 +149,7 @@ internal sealed class UIService
     {
         _header.Resize(0, 0, Console.WindowWidth);
         _footer.Resize(Console.WindowHeight - 1, 0, Console.WindowWidth);
-        
+
         var viewTop = 1;
         var viewLeft = 0;
         var viewHeight = Console.WindowHeight - 1;
@@ -151,9 +158,9 @@ internal sealed class UIService
         _workingCopyFilesView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
         _stagePatchView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
         _stageFilesView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
-        _errorView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
+        _logView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
         _helpView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
-        
+
         Vt100.SetScrollMargins(2, Console.WindowHeight - 1);
 
         UpdateHeaderAndFooter();
@@ -163,7 +170,7 @@ internal sealed class UIService
     {
         _activeView.Visible = false;
         _activeView.SelectionChanged -= ActiveViewSelectionChanged;
-        
+
         switch (_viewMode)
         {
             case ViewMode.WorkingCopyPatch:
@@ -178,8 +185,8 @@ internal sealed class UIService
             case ViewMode.StageFiles:
                 _activeView = _stageFilesView;
                 break;
-            case ViewMode.Error:
-                _activeView = _errorView;
+            case ViewMode.Log:
+                _activeView = _logView;
                 break;
             case ViewMode.Help:
                 if (_helpDocument is null)
@@ -194,7 +201,7 @@ internal sealed class UIService
 
         _activeView.Visible = true;
         _activeView.SelectionChanged += ActiveViewSelectionChanged;
-        
+
         UpdateHeaderAndFooter();
     }
 
@@ -205,7 +212,7 @@ internal sealed class UIService
         _stagePatchView.Document = _documentService.StagePatchDocument;
         _stageFilesView.Document = _documentService.StageFilesDocument;
     }
-    
+
     private void ActiveViewSelectionChanged(object? sender, EventArgs e)
     {
         UpdateHeader();
@@ -215,6 +222,14 @@ internal sealed class UIService
     {
         UpdatePatchDocuments();
         UpdateHeaderAndFooter();
+    }
+
+    private void LogServiceOnChanged(object? sender, EventArgs e)
+    {
+        _logView.Document = _logService.Document;
+
+        if (_logService.LastUpdateHadErrors)
+            LogShowing = true;
     }
 
     private void UpdateHeaderAndFooter()
@@ -231,14 +246,14 @@ internal sealed class UIService
             return;
         }
 
-        if (ErrorShowing)
+        if (LogShowing)
         {
-            _header.Text = " Errors";
+            _header.Text = " Operation Log";
             return;
         }
 
         Debug.Assert(IsViewingDiff);
-        
+
         var mode = IsViewingStage ? "S" : "W";
 
         if (IsViewingFiles)
@@ -258,7 +273,7 @@ internal sealed class UIService
 
     private void UpdateFooter()
     {
-        if (HelpShowing || ErrorShowing)
+        if (HelpShowing || LogShowing)
         {
             _footer.Text = string.Empty;
             return;
@@ -339,7 +354,7 @@ internal sealed class UIService
 
     public void AppendLineDigit(char digit)
     {
-        if (HelpShowing || ErrorShowing)
+        if (HelpShowing || LogShowing)
             return;
 
         _inputLineDigits.Append(digit);
@@ -363,11 +378,5 @@ internal sealed class UIService
         _inputLineDigits.Clear();
         UpdateFooter();
         return true;
-    }
-
-    public void RenderGitError(GitCommandFailedException ex)
-    {
-        _errorView.Document = ErrorDocument.Create(ex);
-        ViewMode = ViewMode.Error;
     }
 }

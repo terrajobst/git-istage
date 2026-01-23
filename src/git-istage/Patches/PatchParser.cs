@@ -399,7 +399,7 @@ internal sealed class PatchParser
 
         return hunkLines.ToImmutableArray();
     }
-    
+
     private PatchHunkLine? ParseHunkLine()
     {
         switch (_tokenizer.GetCurrentChar())

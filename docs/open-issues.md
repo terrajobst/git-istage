@@ -2,12 +2,6 @@
 
 This document tracks open issues I'd like to address.
 
-## Git Command Log
-
-It would be useful to have a history of Git commands, just like LazyGit does.
-Should include any errors. We should replace the error document with the log
-document, with new entries being prepended.
-
 ## Syntax colorization
 
 We should use a syntax highlighter (probably `TextMateSharp`) to colorize the

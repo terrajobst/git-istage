@@ -127,7 +127,7 @@ internal sealed class CommandService
 
         if (!_documentService.WorkingCopyPatch.Entries.Any())
             return;
-        
+
         _gitService.StashUntrackedKeepIndex();
     }
 
@@ -289,7 +289,7 @@ internal sealed class CommandService
 
         _uiService.View.SelectedLine++;
     }
-    
+
     [CommandHandler("Extends the selection to the previous line.", "Shift+UpArrow", "Shift+K")]
     private void ExtendSelectionUp()
     {
@@ -314,7 +314,7 @@ internal sealed class CommandService
     [CommandHandler("Extends the selection to the next line.", "Shift+DownArrow", "Shift+J")]
     private void ExtendSelectionDown()
     {
-        var selection = _uiService.View.Selection; 
+        var selection = _uiService.View.Selection;
 
         if (selection.AtEnd)
         {
@@ -443,7 +443,7 @@ internal sealed class CommandService
     {
         if (!_uiService.IsViewingFiles)
             return;
-        
+
         var entryIndex = _uiService.View.Document.FindEntryIndex(_uiService.View.SelectedLine);
         if (entryIndex < 0)
             return;
@@ -454,7 +454,7 @@ internal sealed class CommandService
         _uiService.View.TopLine = patch.Entries[entryIndex].GetLines().First().LineIndex;
         _uiService.View.SelectedLine = _uiService.View.TopLine;
     }
-    
+
     [CommandHandler("Searches for a pattern.", "Oem2")]
     private void Search()
     {
@@ -584,10 +584,10 @@ internal sealed class CommandService
         _uiService.HelpShowing = !_uiService.HelpShowing;
     }
 
-    [CommandHandler("Show / hide error page.", "E")]
-    private void ShowErrorPage()
+    [CommandHandler("Show / hide operation log", "L")]
+    private void ShowLog()
     {
-        _uiService.ErrorShowing = !_uiService.ErrorShowing;
+        _uiService.LogShowing = !_uiService.LogShowing;
     }
 
     [CommandHandler("Reloads the diff", "F5")]
@@ -595,7 +595,7 @@ internal sealed class CommandService
     {
         _documentService.RecomputePatch();
     }
-    
+
     private void ApplyPatch(PatchDirection direction, bool entireHunk)
     {
         if (!_uiService.IsViewingDiff)
@@ -603,7 +603,7 @@ internal sealed class CommandService
 
         if (_uiService.View.Document.IsEmpty)
             return;
-        
+
         if (direction == PatchDirection.Stage && _uiService.IsViewingStage)
             return;
 
@@ -613,15 +613,8 @@ internal sealed class CommandService
         if (direction == PatchDirection.Reset && !_uiService.IsViewingWorkingCopy)
             return;
 
-        try
-        {
-            var selection = _uiService.View.Selection;
-            var document = _uiService.View.Document;
-            _patchingService.ApplyPatch(document, direction, entireHunk, selection.StartLine, selection.Count);
-        }
-        catch (GitCommandFailedException ex)
-        {
-            _uiService.RenderGitError(ex);
-        }
+        var selection = _uiService.View.Selection;
+        var document = _uiService.View.Document;
+        _patchingService.ApplyPatch(document, direction, entireHunk, selection.StartLine, selection.Count);
     }
 }

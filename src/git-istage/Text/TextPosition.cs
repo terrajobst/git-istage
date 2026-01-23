@@ -6,7 +6,7 @@ public readonly struct TextPosition : IEquatable<TextPosition>
     {
         ThrowIfLessThan(lineNumber, 1);
         ThrowIfLessThan(linePosition, 1);
-        
+
         LineNumber = lineNumber;
         LinePosition = linePosition;
     }

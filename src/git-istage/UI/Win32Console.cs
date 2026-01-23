@@ -24,7 +24,7 @@ internal static class Win32Console
 
     private static bool _initialized;
     private static uint _originalConsoleMode;
-    
+
     public static void Initialize()
     {
         if (!OperatingSystem.IsWindows())
@@ -47,7 +47,7 @@ internal static class Win32Console
         if (!SetConsoleMode(iStdOut, newConsoleMode))
             Marshal.ThrowExceptionForHR(Marshal.GetHRForLastWin32Error());
     }
-    
+
     public static void Restore()
     {
         if (!OperatingSystem.IsWindows())

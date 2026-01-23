@@ -8,7 +8,7 @@ internal readonly struct PatchTokenHandle<T>
     public PatchTokenHandle(PatchTokenizer builder, int tokenIndex)
     {
         _builder = builder;
-        _tokenIndex = tokenIndex; 
+        _tokenIndex = tokenIndex;
     }
 
     public static implicit operator PatchToken<T>(PatchTokenHandle<T> handle)

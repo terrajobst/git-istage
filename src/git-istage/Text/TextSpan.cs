@@ -67,6 +67,6 @@ public readonly struct TextSpan : IEquatable<TextSpan>
     {
         return !left.Equals(right);
     }
-    
+
     public override string ToString() => $"{Start}..{End}";
 }

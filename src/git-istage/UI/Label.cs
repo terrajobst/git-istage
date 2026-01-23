@@ -53,7 +53,7 @@ internal sealed class Label
 
         Render();
     }
-    
+
     private void Render()
     {
         if (Width == 0)

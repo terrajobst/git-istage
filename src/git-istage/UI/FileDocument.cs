@@ -15,7 +15,7 @@ internal sealed class FileDocument : Document
     private const int ChangeColumnWidth = 14;
     private const int PathColumnStart = IndentationWidth + ChangeColumnWidth;
     private const int IndexOfFirstFile = 3;
-    
+
     private FileDocument(SourceText sourceText, int indexOfFirstFile, Patch patch, bool viewStage)
         : base(sourceText)
     {
@@ -62,7 +62,7 @@ internal sealed class FileDocument : Document
 
     private TextColor GetForegroundColor()
     {
-        return _viewStage ? Colors.AddedText : Colors.DeletedText; 
+        return _viewStage ? Colors.AddedText : Colors.DeletedText;
     }
 
     public static FileDocument Create(Patch patch, bool viewStage)

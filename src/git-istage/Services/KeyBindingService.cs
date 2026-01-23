@@ -67,7 +67,7 @@ internal sealed class KeyBindingService
             AllowTrailingCommas = true,
             ReadCommentHandling = JsonCommentHandling.Skip
         };
-        
+
         try
         {
             // The built-in dictionary deserialization doesn't like it when it finds a $schema key.

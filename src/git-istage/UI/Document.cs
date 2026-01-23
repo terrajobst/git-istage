@@ -5,7 +5,7 @@ namespace GitIStage.UI;
 internal abstract class Document
 {
     public static readonly Document Empty = new EmptyDocument();
-    
+
     protected Document(SourceText sourceText)
     {
         ThrowIfNull(sourceText);
@@ -18,9 +18,9 @@ internal abstract class Document
     }
 
     public bool IsEmpty => SourceText.Length == 0;
-    
+
     public SourceText SourceText { get; }
-    
+
     public int Height => SourceText.Lines.Length;
 
     public int Width { get; }

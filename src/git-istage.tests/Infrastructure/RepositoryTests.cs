@@ -20,7 +20,8 @@ public abstract class RepositoryTests : IDisposable
         Repository.Init(_tempPath, isBare: false);
 
         var gitEnvironment = new GitEnvironment(repositoryPath: _tempPath);
-        _gitService = new GitService(gitEnvironment);
+        var logService = new OperationLogService();
+        _gitService = new GitService(gitEnvironment, logService);
         _documentService = new DocumentService(_gitService, fileWatchingService: null);
         _patchingService = new PatchingService(_gitService, fileWatchingService: null);
     }

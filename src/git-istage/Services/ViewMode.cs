@@ -6,6 +6,6 @@ public enum ViewMode
     WorkingCopyFiles,
     StagePatch,
     StageFiles,
-    Error,
+    Log,
     Help
 }

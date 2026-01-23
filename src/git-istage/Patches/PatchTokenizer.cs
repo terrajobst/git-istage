@@ -51,7 +51,7 @@ internal sealed class PatchTokenizer
     public Patch Root => _root;
 
     public SourceText Text => _text;
-    
+
     public TextLine? CurrentLine => _currentLine;
 
     public bool IsEndOfLine()
@@ -105,7 +105,7 @@ internal sealed class PatchTokenizer
             Debugger.Break();
 
         Debug.Assert(IsEndOfFile() || _offset == _currentLine.Start);
-        
+
         _tokens.Clear();
     }
 
@@ -125,7 +125,7 @@ internal sealed class PatchTokenizer
     {
         SetTriviaOfLastToken(ReadSpaceTrivia());
     }
-    
+
     public void ParseEndOfLine()
     {
         SetTriviaOfLastToken(ReadEndOfLineTrivia());
@@ -134,11 +134,11 @@ internal sealed class PatchTokenizer
     private void SetTriviaOfLastToken(PatchTrivia trivia)
     {
         Debug.Assert(_tokens.Count > 0);
-        
+
         // Since TokenData is a struct we need to use
         // this construct to avoid assigning to a copy.
         var span = CollectionsMarshal.AsSpan(_tokens);
-        ref var token = ref span[^1]; 
+        ref var token = ref span[^1];
         token.TrailingTrivia = trivia;
     }
 
@@ -180,11 +180,11 @@ internal sealed class PatchTokenizer
     private PatchTokenHandle ParseToken(PatchNodeKind kind, ReadOnlySpan<char> text)
     {
         EnsureHasRemainingText(text);
-        
+
         var start = _offset;
         var end = int.Min(_offset + text.Length, _text.Length);
         var tokenSpan = TextSpan.FromBounds(start, end);
-        
+
         var tokenText = _text.AsSpan(tokenSpan);
 
         if (!tokenText.SequenceEqual(text))
@@ -248,14 +248,14 @@ internal sealed class PatchTokenizer
     {
         if (_currentLine is null || IsEndOfLine() || IsEndOfFile())
             return FabricateToken(PatchNodeKind.TextToken, "");
-        
+
         return ParseTokenUntilEndOfLineAsString(PatchNodeKind.TextToken, "<text>");
     }
 
     private PatchTokenHandle<string> ParseTokenUntilEndOfLineAsString(PatchNodeKind tokenKind, ReadOnlySpan<char> text)
     {
         EnsureHasRemainingText(text);
-        
+
         var start = _offset;
         var end = _currentLine.End;
         var tokenSpan = TextSpan.FromBounds(start, end);
@@ -425,7 +425,7 @@ internal sealed class PatchTokenizer
         var tokenIndex = RecordToken(tokenKind, tokenSpan, null);
         return new PatchTokenHandle(this, tokenIndex);
     }
-    
+
     private PatchTokenHandle<T> RecordToken<T>(PatchNodeKind tokenKind, TextSpan tokenSpan, T tokenValue)
     {
         var tokenIndex = RecordToken(tokenKind, tokenSpan, (object?)tokenValue);

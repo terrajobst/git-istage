@@ -23,25 +23,26 @@ internal sealed class PatchingService
 
     private void ApplyPatch(Document document, PatchDirection direction, bool entireHunk, IEnumerable<int> indices)
     {
-        using (_gitService.SuspendEvents())
-        using (_fileWatchingService?.SuspendEvents())
+        IEnumerable<GitOperation> operations;
+
+        if (document is FileDocument fileDocument)
         {
-            if (document is FileDocument fileDocument)
-            {
-                ApplyPatch(fileDocument, direction, indices);
-            }
-            else if (document is PatchDocument patchDocument)
-            {
-                ApplyPatch(patchDocument, direction, entireHunk, indices);
-            }
-            else
-            {
-                throw new UnreachableException($"Unexpected document {document}");
-            }
+            operations = ApplyPatch(fileDocument, direction, indices);
         }
+        else if (document is PatchDocument patchDocument)
+        {
+            operations = ApplyPatch(patchDocument, direction, entireHunk, indices);
+        }
+        else
+        {
+            throw new UnreachableException($"Unexpected document {document}");
+        }
+
+        using (_fileWatchingService?.SuspendEvents())
+            _gitService.Execute(operations);
     }
 
-    private void ApplyPatch(FileDocument fileDocument, PatchDirection direction, IEnumerable<int> indices)
+    private static IEnumerable<GitOperation> ApplyPatch(FileDocument fileDocument, PatchDirection direction, IEnumerable<int> indices)
     {
         var changes = indices.Select(fileDocument.GetEntry)
                              .Where(e => e is not null)
@@ -60,26 +61,26 @@ internal sealed class PatchingService
             switch (direction)
             {
                 case PatchDirection.Stage:
-                    _gitService.Add(change.NewPath);
+                    yield return GitOperation.Add(change.NewPath);
                     break;
                 case PatchDirection.Unstage when change.Change == PatchEntryChange.Deleted:
-                    _gitService.RestoreStaged(change.OldPath);
+                    yield return GitOperation.Restore(staged: true, change.OldPath);
                     break;
                 case PatchDirection.Unstage:
-                    _gitService.Reset(change.NewPath);
+                    yield return GitOperation.Reset(change.OldPath);
                     break;
                 case PatchDirection.Reset when change.Change == PatchEntryChange.Added:
-                    _gitService.Add(change.NewPath);
-                    _gitService.RemoveForce(change.NewPath);
+                    yield return GitOperation.Add(change.NewPath);
+                    yield return GitOperation.Remove(change.NewPath, force: true);
                     break;
                 case PatchDirection.Reset:
-                    _gitService.Checkout(change.OldPath);
+                    yield return GitOperation.Checkout(change.OldPath);
                     break;
             }
         }
     }
 
-    private void ApplyPatch(PatchDocument patchDocument, PatchDirection direction, bool entireHunk, IEnumerable<int> indices)
+    private static IEnumerable<GitOperation> ApplyPatch(PatchDocument patchDocument, PatchDirection direction, bool entireHunk, IEnumerable<int> indices)
     {
         var lines = entireHunk
             ? indices.Select(i => patchDocument.Patch.Lines[i].AncestorsAndSelf().OfType<PatchHunk>().FirstOrDefault())
@@ -94,7 +95,9 @@ internal sealed class PatchingService
         if (linesMaterialized.Length > 0)
         {
             var patch = patchDocument.Patch.SelectForApplication(linesMaterialized, direction);
-            _gitService.ApplyPatch(patch, direction);
+            var reverse = direction is PatchDirection.Reset or PatchDirection.Unstage;
+            var cached = direction != PatchDirection.Reset;
+            yield return GitOperation.Apply(patch, reverse, cached, verbose: true);
         }
     }
 }

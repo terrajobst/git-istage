@@ -52,6 +52,7 @@ internal static class Program
         serviceCollection.AddSingleton<Application>();
         serviceCollection.AddSingleton<KeyboardService>();
         serviceCollection.AddSingleton<GitService>();
+        serviceCollection.AddSingleton<OperationLogService>();
         serviceCollection.AddSingleton<PatchingService>();
         serviceCollection.AddSingleton<DocumentService>();
         serviceCollection.AddSingleton<UIService>();
@@ -64,14 +65,6 @@ internal static class Program
 internal sealed class GitIStageStartupException : Exception
 {
     public GitIStageStartupException(string message)
-        : base(message)
-    {
-    }
-}
-
-internal sealed class GitCommandFailedException : Exception
-{
-    public GitCommandFailedException(string message)
         : base(message)
     {
     }
@@ -105,11 +98,5 @@ internal static class ExceptionBuilder
     {
         var message = $"fatal: user key bindings in '{fileName}' uses an invalid key binding for command '{command}': '{bindingText}'.";
         return new GitIStageStartupException(message);
-    }
-
-    public static Exception GitCommandFailed(string command, IReadOnlyList<string> commandLog)
-    {
-        var message = $"Git command failed: git {command}{Environment.NewLine}{string.Join(Environment.NewLine, commandLog)}";
-        return new GitCommandFailedException(message);
     }
 }

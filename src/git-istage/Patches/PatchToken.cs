@@ -61,6 +61,6 @@ public abstract partial class PatchToken : PatchNode
     private protected abstract object? ValueCore { get; }
 
     internal abstract PatchToken WithTrailingWhitespace(PatchTrivia trivia);
-    
+
     public sealed override IEnumerable<PatchNode> Children() => [];
 }

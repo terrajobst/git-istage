@@ -1,22 +1,21 @@
-﻿using System.Diagnostics;
+﻿using System.Collections.Concurrent;
+using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
-using System.Text;
-using GitIStage.Patches;
 using LibGit2Sharp;
-
-using Patch = GitIStage.Patches.Patch;
 
 namespace GitIStage.Services;
 
 internal sealed class GitService : IDisposable
 {
     private readonly GitEnvironment _environment;
+    private readonly OperationLogService _logService;
     private Repository _repository;
     private int _updateCounter;
 
-    public GitService(GitEnvironment environment)
+    public GitService(GitEnvironment environment, OperationLogService logService)
     {
         _environment = environment;
+        _logService = logService;
         InitializeRepository();
     }
 
@@ -35,40 +34,48 @@ internal sealed class GitService : IDisposable
 
     public Repository Repository => _repository;
 
-    public void ApplyPatch(Patch patch, PatchDirection direction)
+    public void Execute(GitOperation operation, bool capture = true)
     {
-        var isUndo = direction is PatchDirection.Reset or PatchDirection.Unstage;
-        var patchFilePath = Path.GetTempFileName();
-        var reverse = isUndo ? "--reverse" : string.Empty;
-        var cached = direction == PatchDirection.Reset ? string.Empty : "--cached";
-        var command = $@"apply -v {cached} {reverse} --whitespace=nowarn ""{patchFilePath}""";
-
-        File.WriteAllText(patchFilePath, patch.ToString());
-        try
-        {
-            ExecuteGit(command);
-        }
-        catch (GitCommandFailedException ex)
-        {
-            var messageBuilder = new StringBuilder(ex.Message);
-            messageBuilder.AppendLine();
-            messageBuilder.AppendLine("Patch:");
-            messageBuilder.Append(patch);
-            throw new GitCommandFailedException(messageBuilder.ToString());
-        }
-        finally
-        {
-            File.Delete(patchFilePath);
-        }
-
-        var paths = patch.Entries.SelectMany(e => new[] { e.OldPath, e.NewPath })
-            .Where(p => !string.IsNullOrEmpty(p))
-            .ToArray();
-
-        RaiseFileChange(paths);
+        Execute([operation], capture);
     }
 
-    private void ExecuteGit(string arguments, bool capture = true)
+    public void Execute(IEnumerable<GitOperation> operations, bool capture = true)
+    {
+        var executedOperations = new List<GitOperation>();
+
+        foreach (var operation in operations)
+        {
+            if (operation.TempFile is not null)
+                File.WriteAllText(operation.TempFile.Path, operation.TempFile.Content());
+            try
+            {
+                var result = ExecuteGit(operation.Command, capture);
+                var executedOperation = operation.WithResult(result);
+                executedOperations.Add(executedOperation);
+            }
+            finally
+            {
+                if (operation.TempFile is not null)
+                    File.Delete(operation.TempFile.Path);
+            }
+        }
+
+        _logService.Log(executedOperations);
+
+        var affectedFiles = executedOperations
+            .SelectMany(o => o.AffectedFiles)
+            .ToHashSet(StringComparer.Ordinal);
+
+        if (affectedFiles.Any())
+        {
+            if (affectedFiles.Contains("*"))
+                RaiseFullReset();
+            else
+                RaiseFileChange(affectedFiles);
+        }
+    }
+
+    private GitOperationResult ExecuteGit(string arguments, bool capture)
     {
         var startInfo = new ProcessStartInfo
         {
@@ -81,14 +88,14 @@ internal sealed class GitService : IDisposable
             RedirectStandardOutput = capture
         };
 
-        var log = new List<string>();
+        var output = new ConcurrentQueue<string>();
 
-        void Handler(object _, DataReceivedEventArgs e)
+        static void AddOutput(string? line, ConcurrentQueue<string> receiver, bool isError)
         {
-            lock (log)
+            if (line is not null)
             {
-                if (e.Data is not null)
-                    log.Add(e.Data);
+                var marker = isError ? "!" : ":";
+                receiver.Enqueue($"{marker} {line}");
             }
         }
 
@@ -97,8 +104,8 @@ internal sealed class GitService : IDisposable
 
         if (capture)
         {
-            process.OutputDataReceived += Handler;
-            process.ErrorDataReceived += Handler;
+            process.OutputDataReceived += (_, e) => AddOutput(e.Data, output, isError: false);
+            process.ErrorDataReceived += (_, e) => AddOutput(e.Data, output, isError: true);
         }
 
         process.Start();
@@ -111,57 +118,19 @@ internal sealed class GitService : IDisposable
 
         process.WaitForExit();
 
-        if (capture)
-        {
-            var logContainsErrors = log.Any(l => l.StartsWith("fatal:", StringComparison.Ordinal) ||
-                                                 l.StartsWith("error:", StringComparison.Ordinal));
-
-            if (logContainsErrors)
-                throw ExceptionBuilder.GitCommandFailed(arguments, log);
-        }
-    }
-
-    public void Reset(string path)
-    {
-        ExecuteGit($"reset \"{path}\"");
-        RaiseFileChange(path);
-    }
-
-    public void Add(string path)
-    {
-        ExecuteGit($"add \"{path}\"");
-        RaiseFileChange(path);
-    }
-
-    public void RemoveForce(string path)
-    {
-        ExecuteGit($"rm -f \"{path}\"");
-        RaiseFileChange(path);
-    }
-
-    public void Checkout(string path)
-    {
-        ExecuteGit($"checkout \"{path}\"");
-        RaiseFileChange(path);
-    }
-
-    public void RestoreStaged(string path)
-    {
-        ExecuteGit($"restore --staged \"{path}\"");
-        RaiseFileChange(path);
+        return new GitOperationResult(process.ExitCode, [..output]);
     }
 
     public void StashUntrackedKeepIndex()
     {
-        ExecuteGit("stash -u -k");
-        RaiseFullReset();
+        var operation = GitOperation.Stash(untracked: true, keepIndex: true);
+        Execute(operation);
     }
 
     public void Commit(bool amend)
     {
-        var amendSwitch = amend ? "--amend " : string.Empty;
-        ExecuteGit($"commit -v {amendSwitch}", capture: false);
-        RaiseFullReset();
+        var operation = GitOperation.Commit(verbose: true, amend);
+        Execute(operation, capture: false);
     }
 
     public bool IsIgnoredOrOutsideWorkingDirectory(string path)
@@ -198,11 +167,6 @@ internal sealed class GitService : IDisposable
     private void RaiseFullReset()
     {
         Raise(new RepositoryChangedEventArgs());
-    }
-
-    private void RaiseFileChange(string path)
-    {
-        Raise(new RepositoryChangedEventArgs(path));
     }
 
     private void RaiseFileChange(IEnumerable<string> paths)

@@ -15,7 +15,7 @@ internal readonly struct Selection : IEquatable<Selection>
     public int StartLine { get; }
 
     public int EndLine => StartLine + Count;
-    
+
     public int Count { get; }
 
     public bool AtEnd { get; }
@@ -24,7 +24,7 @@ internal readonly struct Selection : IEquatable<Selection>
     {
         return StartLine <= lineIndex && lineIndex <= EndLine;
     }
-    
+
     public bool Equals(Selection other)
     {
         return StartLine == other.StartLine && Count == other.Count && AtEnd == other.AtEnd;

@@ -18,7 +18,7 @@ public sealed class PatchToken<T> : PatchToken
     public new T Value { get; }
 
     private protected override object? ValueCore => Value;
-    
+
     internal override PatchToken<T> WithTrailingWhitespace(PatchTrivia trivia)
     {
         Debug.Assert(TrailingWhitespace is null);
