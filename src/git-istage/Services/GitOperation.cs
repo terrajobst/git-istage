@@ -63,7 +63,7 @@ internal sealed partial class GitOperation
     {
         var needsQuoting = !path.StartsWith('\"') && path.Contains(' ');
         if (!needsQuoting)
-            AddOption(path);
+            return AddOption(path);
 
         var sb = new StringBuilder(Command);
         sb.Append(' ');
