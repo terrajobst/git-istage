@@ -61,10 +61,10 @@ internal sealed class HelpDocument : Document
         {
             sb.Append(keyBinding);
             sb.Append(' ', maxKeyBindingLength - keyBinding.Length);
-            sb.Append(" | ");
+            sb.Append(" │ ");
             sb.Append(name);
             sb.Append(' ', maxNameLength - name.Length);
-            sb.Append(" | ");
+            sb.Append(" │ ");
             sb.Append(description);
             sb.AppendLine();
         }
