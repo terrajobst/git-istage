@@ -358,9 +358,9 @@ public class PatchLevelTests : RepositoryTests
         StageTheFile();
         Commit();
         WriteTheFile(after);
-        
+
         StageLine(stagedLine);
-        
+
         var unstaged = GetDocument<PatchDocument>();
         AssertPatch(expectedUnstaged, unstaged, includeNoFinalLineBreaks: true);
 

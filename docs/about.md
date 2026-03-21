@@ -46,7 +46,7 @@ commit. Or, you can stash right from inside of git istage by hitting
 `git stash pop`.
 
 More keyboard shortcuts listed below.
-A shortcut may be preceded by a number, N. 
+A shortcut may be preceded by a number, N.
 Notes in parentheses indicate the behavior if N is given.
 
 ## Keyboard shortcuts
