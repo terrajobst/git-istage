@@ -70,7 +70,7 @@ internal static class PatchExtensions
             PatchNodeKind.BinaryKeyword or
             PatchNodeKind.FilesKeyword or
             PatchNodeKind.AndKeyword or
-            PatchNodeKind.DifferKeyword  => true,
+            PatchNodeKind.DifferKeyword => true,
             _ => false
         };
     }
@@ -323,7 +323,7 @@ internal static class PatchExtensions
                                ImmutableArray<string> updatedPaths)
     {
         var currentPathSet = patch.Entries.Select(e => e.NewPath).ToHashSet(StringComparer.Ordinal);
-        var updatedPathSet =  updatedPaths.ToHashSet(StringComparer.Ordinal);
+        var updatedPathSet = updatedPaths.ToHashSet(StringComparer.Ordinal);
 
         var updatedEntryByPath = updatedPatch.Entries.ToDictionary(e => e.NewPath, StringComparer.Ordinal);
         var mergedEntries = new List<PatchEntry>();

@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Services;
+namespace GitIStage.Services;
 
 internal sealed class UserEnvironment
 {

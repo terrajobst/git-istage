@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Tests;
+namespace GitIStage.Tests;
 
 public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 {

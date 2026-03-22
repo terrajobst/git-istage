@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 
 namespace GitIStage.Tests;
 
@@ -701,7 +701,7 @@ public class PatchingTests
     }
 
     private static T AssertPatchHasSingleEntryWithHeader<T>(string textWithMarkedSpan)
-        where T: PatchEntryAdditionalHeader
+        where T : PatchEntryAdditionalHeader
     {
         ParseTextWithSpan(textWithMarkedSpan, out var text, out var markedSpan);
 
@@ -749,7 +749,7 @@ public class PatchingTests
     }
 
     private static PatchNodeKind GetExpectedKind<T>()
-        where T: PatchEntryAdditionalHeader
+        where T : PatchEntryAdditionalHeader
     {
         if (typeof(T) == typeof(OldPathHeader))
             return PatchNodeKind.OldPathHeader;

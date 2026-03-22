@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 
 namespace GitIStage.Services;
 
@@ -13,7 +13,7 @@ public sealed class RepositoryChangedEventArgs : EventArgs
     {
         ThrowIfNull(affectedPaths);
 
-        AffectedPaths = [..affectedPaths];
+        AffectedPaths = [.. affectedPaths];
     }
 
     public ImmutableArray<string> AffectedPaths { get; }

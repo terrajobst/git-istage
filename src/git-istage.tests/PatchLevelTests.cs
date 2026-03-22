@@ -1,4 +1,4 @@
-﻿using GitIStage.UI;
+using GitIStage.UI;
 
 namespace GitIStage.Tests;
 

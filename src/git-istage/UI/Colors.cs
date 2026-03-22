@@ -1,4 +1,4 @@
-﻿using GitIStage.Text;
+using GitIStage.Text;
 
 namespace GitIStage.UI;
 

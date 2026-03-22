@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Patches;
+namespace GitIStage.Patches;
 
 public sealed class PatchEntryHeader : PatchLine
 {

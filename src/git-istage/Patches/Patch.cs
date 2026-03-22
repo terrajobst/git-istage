@@ -1,4 +1,4 @@
-﻿using System.Collections.Frozen;
+using System.Collections.Frozen;
 using System.Collections.Immutable;
 using System.Diagnostics;
 using GitIStage.Text;
@@ -62,7 +62,7 @@ public sealed class Patch : PatchNode
 
     public ImmutableArray<PatchLine> Lines { get; set; }
 
-    public override IEnumerable<PatchNode> Children() => [..Entries];
+    public override IEnumerable<PatchNode> Children() => [.. Entries];
 
     public static Patch Parse(string? text)
     {

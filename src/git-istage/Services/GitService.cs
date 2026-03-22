@@ -1,4 +1,4 @@
-﻿using System.Collections.Concurrent;
+using System.Collections.Concurrent;
 using System.Diagnostics;
 using System.Diagnostics.CodeAnalysis;
 using LibGit2Sharp;
@@ -118,7 +118,7 @@ internal sealed class GitService : IDisposable
 
         process.WaitForExit();
 
-        return new GitOperationResult(process.ExitCode, [..output]);
+        return new GitOperationResult(process.ExitCode, [.. output]);
     }
 
     public void StashUntrackedKeepIndex()

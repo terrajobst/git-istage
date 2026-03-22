@@ -1,8 +1,8 @@
-﻿using GitIStage.Patches;
+using GitIStage.Patches;
 
 namespace GitIStage.Services;
 
-partial class GitOperation
+internal partial class GitOperation
 {
     public static GitOperation Reset(string path)
     {
@@ -70,7 +70,7 @@ partial class GitOperation
             .AddOptionIf("-v", verbose)
             .AddOption("--whitespace=nowarn")
             .AddPath(tempFile.Path)
-            .WithAffectedFiles([..affectedPaths])
+            .WithAffectedFiles([.. affectedPaths])
             .WithTempFile(tempFile);
     }
 }

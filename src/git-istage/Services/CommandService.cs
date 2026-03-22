@@ -1,4 +1,4 @@
-﻿using System.Reflection;
+using System.Reflection;
 using GitIStage.Commands;
 using GitIStage.Patches;
 using GitIStage.UI;

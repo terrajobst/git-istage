@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using GitIStage.Patches.EntryHeaders;
 
 namespace GitIStage.Patches;
@@ -60,7 +60,7 @@ public sealed class PatchEntry : PatchNode
                     break;
                 case PatchNodeKind.DeletedFileModeHeader:
                     var deletedFileModeHeader = (DeletedFileModeHeader)additionalHeader;
-                    OldMode =  deletedFileModeHeader.Mode.Value;
+                    OldMode = deletedFileModeHeader.Mode.Value;
                     NewMode = PatchEntryMode.Nonexistent;
                     Change = PatchEntryChange.Deleted;
                     break;
@@ -117,7 +117,7 @@ public sealed class PatchEntry : PatchNode
 
     public PatchEntryMode NewMode { get; }
 
-    public override IEnumerable<PatchNode> Children() => [Header, ..AdditionalHeaders, ..Hunks];
+    public override IEnumerable<PatchNode> Children() => [Header, .. AdditionalHeaders, .. Hunks];
 
     public override string ToString()
     {

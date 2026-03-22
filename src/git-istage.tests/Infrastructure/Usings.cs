@@ -1,4 +1,4 @@
-﻿global using FluentAssertions;
+global using FluentAssertions;
 global using Xunit;
 global using GitIStage.Commands;
 global using GitIStage.Patches;

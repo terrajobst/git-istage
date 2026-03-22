@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Tests.Infrastructure;
+namespace GitIStage.Tests.Infrastructure;
 
 public abstract class KeyBindingServiceTestsBase : IDisposable
 {

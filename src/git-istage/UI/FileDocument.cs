@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using GitIStage.Patches;
 using GitIStage.Text;
 using Patch = GitIStage.Patches.Patch;

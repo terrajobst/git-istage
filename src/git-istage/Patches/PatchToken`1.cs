@@ -1,4 +1,4 @@
-﻿using System.Diagnostics;
+using System.Diagnostics;
 using GitIStage.Text;
 
 namespace GitIStage.Patches;

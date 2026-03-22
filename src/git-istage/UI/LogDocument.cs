@@ -1,4 +1,4 @@
-﻿using System.Text;
+using System.Text;
 using GitIStage.Services;
 using GitIStage.Text;
 
@@ -6,7 +6,7 @@ namespace GitIStage.UI;
 
 internal sealed class LogDocument : Document
 {
-    public new static LogDocument Empty { get; } = new ();
+    public new static LogDocument Empty { get; } = new();
 
     private LogDocument() : this(SourceText.Empty)
     {

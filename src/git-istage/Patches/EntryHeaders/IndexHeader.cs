@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Patches.EntryHeaders;
+namespace GitIStage.Patches.EntryHeaders;
 
 public sealed class IndexHeader : PatchEntryAdditionalHeader
 {

@@ -16,7 +16,7 @@ internal sealed class PatchTokenizer
             Value = value;
         }
 
-        public PatchNodeKind Kind  { get; }
+        public PatchNodeKind Kind { get; }
 
         public TextSpan Span { get; }
 

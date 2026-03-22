@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Text;
+namespace GitIStage.Text;
 
 public sealed class TextLine
 {

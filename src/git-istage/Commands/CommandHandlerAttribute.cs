@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Commands;
+namespace GitIStage.Commands;
 
 [AttributeUsage(AttributeTargets.Method)]
 internal sealed class CommandHandlerAttribute : Attribute

@@ -1,4 +1,4 @@
-﻿using System.Text.RegularExpressions;
+using System.Text.RegularExpressions;
 using GitIStage.UI;
 using LibGit2Sharp;
 
@@ -202,7 +202,7 @@ public abstract class RepositoryTests : IDisposable
     {
         var actualPatchLines = actualPatch.Patch.Lines
                                           .Where(l => l.Kind.IsAddedOrDeletedLine() ||
-                                                      includeNoFinalLineBreaks && l.Kind ==PatchNodeKind.NoFinalLineBreakLine)
+                                                      includeNoFinalLineBreaks && l.Kind == PatchNodeKind.NoFinalLineBreakLine)
                                           .Select(l => l.Text.ToString());
 
         var expectedPatchLines = expectedPatch.ReplaceLineEndings("\n")

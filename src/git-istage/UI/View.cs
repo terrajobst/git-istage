@@ -46,11 +46,11 @@ internal sealed class View
 
     public int Top { get; private set; }
 
-    public int Left { get; private set;  }
+    public int Left { get; private set; }
 
-    public int Bottom { get; private set;  }
+    public int Bottom { get; private set; }
 
-    public int Right { get; private set;  }
+    public int Right { get; private set; }
 
     public int TopLine
     {
@@ -371,7 +371,7 @@ internal sealed class View
 
     private void UpdateLeftChar(int charIndex)
     {
-        if (_leftChar == charIndex ||  Document.Height == 0)
+        if (_leftChar == charIndex || Document.Height == 0)
             return;
 
         ThrowIfLessThan(charIndex, 0);

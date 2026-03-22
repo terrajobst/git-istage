@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Patches.HunkLines;
+namespace GitIStage.Patches.HunkLines;
 
 public sealed class ContextLine : PatchHunkLine
 {

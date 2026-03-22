@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using GitIStage.Text;
 
 namespace GitIStage.Patches;
@@ -29,5 +29,5 @@ public sealed class PatchHunk : PatchNode
 
     public LineRange NewRange => Header.NewRange.Value;
 
-    public override IEnumerable<PatchNode> Children() => [Header, ..Lines];
+    public override IEnumerable<PatchNode> Children() => [Header, .. Lines];
 }

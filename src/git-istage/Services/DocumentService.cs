@@ -1,4 +1,4 @@
-﻿using System.Collections.Immutable;
+using System.Collections.Immutable;
 using System.Diagnostics.CodeAnalysis;
 using GitIStage.Patches;
 using GitIStage.UI;
@@ -205,7 +205,7 @@ internal sealed class DocumentService
 
         if (entriesToAddOrUpdate.Count > 0)
         {
-            UpdatePatch([..entriesToAddOrUpdate], skipIndex: indexWasChanged);
+            UpdatePatch([.. entriesToAddOrUpdate], skipIndex: indexWasChanged);
         }
     }
 

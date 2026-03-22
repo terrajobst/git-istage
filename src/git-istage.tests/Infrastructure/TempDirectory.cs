@@ -1,4 +1,4 @@
-﻿namespace GitIStage.Tests.Infrastructure;
+namespace GitIStage.Tests.Infrastructure;
 
 internal static class TempDirectory
 {
