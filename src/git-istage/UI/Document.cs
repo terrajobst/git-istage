@@ -31,7 +31,9 @@ internal abstract class Document
         return SourceText.AsSpan().Slice(lineSpan);
     }
 
-    public virtual IEnumerable<StyledSpan> GetLineStyles(int index) => [];
+    public virtual void GetLineStyles(int index, List<StyledSpan> receiver)
+    {
+    }
 
     private sealed class EmptyDocument() : Document(SourceText.Empty);
 }

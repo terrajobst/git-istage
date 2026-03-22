@@ -1,5 +1,6 @@
 using System.Text;
 using GitIStage.Commands;
+using GitIStage.Services;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
@@ -8,6 +9,7 @@ internal sealed class HelpDocument : Document
 {
     private readonly int _column1Width;
     private readonly int _column2Width;
+    private LineHighlights? _lineHighlights;
 
     private HelpDocument(SourceText sourceText,
                          int column1Width,
@@ -21,24 +23,33 @@ internal sealed class HelpDocument : Document
         _column2Width = column2Width;
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    public override void GetLineStyles(int index, List<StyledSpan> receiver)
     {
-        var line = SourceText.Lines[index];
-        var lineSpan = new TextSpan(0, line.Length);
-        var column1Span = new TextSpan(0, _column1Width);
-        var separator1Span = new TextSpan(column1Span.End, 1);
-        var column2Span = new TextSpan(separator1Span.End, _column2Width);
-        var separator2Span = new TextSpan(column2Span.End, 1);
-        var column3Span = TextSpan.FromBounds(separator2Span.End, lineSpan.End);
+        _lineHighlights ??= BuildLineHighlights();
+        if (_lineHighlights != LineHighlights.Empty)
+            receiver.AddRange(_lineHighlights[index].AsSpan());
+    }
 
-        return
-        [
-            new StyledSpan(column1Span, Colors.CommandKeyForeground, null),
-            new StyledSpan(separator1Span, Colors.SeparatorForeground, null),
-            new StyledSpan(column2Span, Colors.CommandNameForeground, null),
-            new StyledSpan(separator2Span, Colors.SeparatorForeground, null),
-            new StyledSpan(column3Span, Colors.CommandDescriptionForeground, null),
-        ];
+    private LineHighlights BuildLineHighlights()
+    {
+        var styles = new List<StyledSpan>();
+
+        foreach (var line in SourceText.Lines)
+        {
+            var column1Span = new TextSpan(line.Start, _column1Width);
+            var separator1Span = new TextSpan(column1Span.End, 1);
+            var column2Span = new TextSpan(separator1Span.End, _column2Width);
+            var separator2Span = new TextSpan(column2Span.End, 1);
+            var column3Span = TextSpan.FromBounds(separator2Span.End, line.End);
+
+            styles.Add(new StyledSpan(column1Span, Colors.CommandKeyForeground, null));
+            styles.Add(new StyledSpan(separator1Span, Colors.SeparatorForeground, null));
+            styles.Add(new StyledSpan(column2Span, Colors.CommandNameForeground, null));
+            styles.Add(new StyledSpan(separator2Span, Colors.SeparatorForeground, null));
+            styles.Add(new StyledSpan(column3Span, Colors.CommandDescriptionForeground, null));
+        }
+
+        return LineHighlights.Create(SourceText, styles);
     }
 
     public static HelpDocument Create(IReadOnlyCollection<ConsoleCommand> commands)

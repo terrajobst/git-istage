@@ -379,4 +379,5 @@ internal static class PatchExtensions
             sb.Append(text.AsSpan(span));
         }
     }
+
 }

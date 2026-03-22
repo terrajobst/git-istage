@@ -7,7 +7,6 @@ public abstract class PatchLine : PatchNode
     private protected PatchLine(Patch root)
     {
         ThrowIfNull(root);
-        ThrowIfNull(root);
 
         Root = root;
     }
@@ -19,6 +18,8 @@ public abstract class PatchLine : PatchNode
     public ReadOnlySpan<char> Text => Root.Text.AsSpan(TextLine.Span);
 
     public ReadOnlySpan<char> LineBreak => Root.Text.AsSpan(TextLine.SpanLineBreak);
+
+    public ReadOnlySpan<char> TextAndLineBreak => Root.Text.AsSpan(TextLine.SpanIncludingLineBreak);
 
     public sealed override Patch Root { get; }
 }
