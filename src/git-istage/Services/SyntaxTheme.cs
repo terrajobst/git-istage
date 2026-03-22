@@ -1,4 +1,5 @@
 using System.Collections.Concurrent;
+using GitIStage.Text;
 using TextMateSharp.Grammars;
 using TextMateSharp.Registry;
 using TextMateSharp.Themes;
@@ -23,6 +24,23 @@ internal sealed class SyntaxTheme
     }
 
     public Theme Theme => _theme;
+
+    public TextColor GetScopeColor(params string[] scopes)
+    {
+        foreach (var rule in _theme.Match(scopes))
+        {
+            if (rule.foreground > 0)
+                return TextColor.FromHex(_theme.GetColor(rule.foreground));
+        }
+
+        return GetGuiColor("editor.foreground") ?? TextColor.White;
+    }
+
+    public TextColor? GetGuiColor(string key)
+    {
+        var guiColors = _theme.GetGuiColorDictionary();
+        return guiColors.TryGetValue(key, out var hex) ? TextColor.FromHex(hex) : null;
+    }
 
     public IGrammar? GetGrammar(string fileName)
     {

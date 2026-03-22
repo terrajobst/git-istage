@@ -1,6 +1,5 @@
 using System.Collections.Immutable;
 using System.Diagnostics;
-using System.Globalization;
 using GitIStage.Patches;
 using GitIStage.Text;
 using TextMateSharp.Themes;
@@ -208,19 +207,7 @@ public sealed class LineHighlights
         if (colorId == -1)
             return null;
 
-        return HexToColor(SyntaxTheme.Instance.Theme.GetColor(colorId));
-    }
-
-    private static TextColor HexToColor(string hexString)
-    {
-        if (hexString.Length != 7 || hexString[0] != '#')
-            throw new FormatException();
-
-        var r = byte.Parse(hexString.AsSpan(1, 2), NumberStyles.AllowHexSpecifier);
-        var g = byte.Parse(hexString.AsSpan(3, 2), NumberStyles.AllowHexSpecifier);
-        var b = byte.Parse(hexString.AsSpan(5, 2), NumberStyles.AllowHexSpecifier);
-
-        return new TextColor(r, g, b);
+        return TextColor.FromHex(SyntaxTheme.Instance.Theme.GetColor(colorId));
     }
 
     private static TextAttributes GetAttributes(FontStyle fontStyle)

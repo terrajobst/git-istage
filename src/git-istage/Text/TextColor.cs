@@ -125,6 +125,41 @@ public readonly struct TextColor : IEquatable<TextColor>
         };
     }
 
+    public static TextColor FromHex(string hexString)
+    {
+        if (hexString.Length == 0 || hexString[0] != '#')
+            throw new FormatException($"Invalid hex color: {hexString}");
+
+        var hex = System.Globalization.NumberStyles.AllowHexSpecifier;
+
+        return hexString.Length switch
+        {
+            // #RGB
+            4 => new TextColor(
+                (byte)(byte.Parse(hexString.AsSpan(1, 1), hex) * 0x11),
+                (byte)(byte.Parse(hexString.AsSpan(2, 1), hex) * 0x11),
+                (byte)(byte.Parse(hexString.AsSpan(3, 1), hex) * 0x11)),
+            // #RGBA
+            5 => new TextColor(
+                (byte)(byte.Parse(hexString.AsSpan(1, 1), hex) * 0x11),
+                (byte)(byte.Parse(hexString.AsSpan(2, 1), hex) * 0x11),
+                (byte)(byte.Parse(hexString.AsSpan(3, 1), hex) * 0x11),
+                (byte)(byte.Parse(hexString.AsSpan(4, 1), hex) * 0x11)),
+            // #RRGGBB
+            7 => new TextColor(
+                byte.Parse(hexString.AsSpan(1, 2), hex),
+                byte.Parse(hexString.AsSpan(3, 2), hex),
+                byte.Parse(hexString.AsSpan(5, 2), hex)),
+            // #RRGGBBAA
+            9 => new TextColor(
+                byte.Parse(hexString.AsSpan(1, 2), hex),
+                byte.Parse(hexString.AsSpan(3, 2), hex),
+                byte.Parse(hexString.AsSpan(5, 2), hex),
+                byte.Parse(hexString.AsSpan(7, 2), hex)),
+            _ => throw new FormatException($"Invalid hex color: {hexString}")
+        };
+    }
+
     public static implicit operator TextColor(ConsoleColor color)
     {
         return FromConsole(color);

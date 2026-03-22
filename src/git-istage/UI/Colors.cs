@@ -1,66 +1,77 @@
+using GitIStage.Services;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
 
 internal static class Colors
 {
+    private static SyntaxTheme Theme => SyntaxTheme.Instance;
+
     // Header & Footer
 
-    public static TextColor HeaderForeground => TextColor.Yellow;
+    public static TextColor HeaderForeground => Theme.GetGuiColor("statusBarItem.remoteForeground") ?? TextColor.White;
 
-    public static TextColor? HeaderBackground => TextColor.DarkGray;
+    public static TextColor? HeaderBackground => Theme.GetGuiColor("statusBarItem.remoteBackground");
 
     // Document
 
-    public static TextColor NonExistingTextForeground => TextColor.DarkGray;
+    public static TextColor NonExistingTextForeground => Theme.GetGuiColor("input.placeholderForeground") ?? TextColor.DarkGray;
 
     public static TextColor? NonExistingTextBackground => null;
 
-    public static TextColor Selection => TextColor.DarkBlue.Lerp(TextColor.Black, 0.5f).WithAlpha(.8f);
+    public static TextColor Selection => Theme.GetGuiColor("editor.inactiveSelectionBackground") ?? TextColor.DarkBlue.Lerp(TextColor.Black, 0.5f).WithAlpha(.8f);
 
     // Search
 
-    public static TextColor SearchInputForeground => TextColor.Blue;
+    public static TextColor SearchInputForeground => Theme.GetGuiColor("editor.foreground") ?? TextColor.White;
 
-    public static TextColor? SearchInputBackground => TextColor.Gray;
+    public static TextColor? SearchInputBackground => Theme.GetGuiColor("editor.background");
 
     // Help
 
-    public static TextColor CommandKeyForeground => TextColor.White;
+    public static TextColor CommandKeyForeground => Theme.GetScopeColor("entity.name.function");
 
-    public static TextColor CommandNameForeground => TextColor.DarkCyan;
+    public static TextColor CommandNameForeground => Theme.GetScopeColor("support.function");
 
-    public static TextColor CommandDescriptionForeground => TextColor.DarkYellow;
+    public static TextColor CommandDescriptionForeground => Theme.GetScopeColor("string");
 
-    public static TextColor SeparatorForeground => TextColor.DarkGray;
+    public static TextColor SeparatorForeground => Theme.GetScopeColor("comment");
 
     // Patch
 
-    public static TextColor EntryHeaderForeground => TextColor.White;
+    public static TextColor EntryHeaderForeground => Theme.GetScopeColor("meta.diff.header");
 
-    public static TextColor PathTokenForeground => TextColor.White;
+    public static TextColor PathTokenForeground => Theme.GetScopeColor("string");
 
-    public static TextColor HashTokenForeground => TextColor.DarkYellow;
+    public static TextColor HashTokenForeground => Theme.GetScopeColor("constant.numeric");
 
-    public static TextColor ModeTokenForeground => TextColor.DarkYellow;
+    public static TextColor ModeTokenForeground => Theme.GetScopeColor("constant.numeric");
 
-    public static TextColor TextTokenForeground => TextColor.Gray;
+    public static TextColor TextTokenForeground => Theme.GetGuiColor("editor.foreground") ?? TextColor.Gray;
 
-    public static TextColor PercentageTokenForeground => TextColor.DarkMagenta;
+    public static TextColor PercentageTokenForeground => Theme.GetScopeColor("constant.numeric");
 
-    public static TextColor RangeTokenForeground => TextColor.Cyan;
+    public static TextColor RangeTokenForeground => Theme.GetScopeColor("keyword.control");
 
-    public static TextColor MinusMinusMinusTokenForeground => TextColor.DarkRed;
+    public static TextColor MinusMinusMinusTokenForeground => Theme.GetScopeColor("markup.deleted");
 
-    public static TextColor PlusPlusPlusTokenForeground => TextColor.Green;
+    public static TextColor PlusPlusPlusTokenForeground => Theme.GetScopeColor("markup.inserted");
 
-    public static TextColor KeywordForeground => TextColor.Cyan;
+    public static TextColor KeywordForeground => Theme.GetScopeColor("keyword.other.diff");
 
-    public static TextColor OperatorForeground => TextColor.DarkCyan;
+    public static TextColor OperatorForeground => Theme.GetScopeColor("keyword.other.diff");
 
-    public static TextColor AddedText => TextColor.DarkGreen.Lerp(TextColor.Black, .15f);
+    public static TextColor AddedText => Theme.GetScopeColor("markup.inserted");
 
-    public static TextColor DeletedText => TextColor.DarkRed.Lerp(TextColor.Black, .15f);
+    public static TextColor DeletedText => Theme.GetScopeColor("markup.deleted");
 
-    public static TextColor PathText => TextColor.DarkCyan;
+    public static TextColor PathText => Theme.GetScopeColor("entity.name.type");
+
+    // Log
+
+    public static TextColor LogErrorForeground => Theme.GetScopeColor("markup.deleted");
+
+    public static TextColor LogInfoForeground => Theme.GetScopeColor("comment");
+
+    public static TextColor LogNormalForeground => Theme.GetGuiColor("editor.foreground") ?? TextColor.White;
 }

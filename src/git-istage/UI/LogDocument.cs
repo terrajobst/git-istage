@@ -26,11 +26,11 @@ internal sealed class LogDocument : Document
         TextColor foreground;
 
         if (lineText.StartsWith("! "))
-            foreground = TextColor.DarkRed;
+            foreground = Colors.LogErrorForeground;
         else if (lineText.StartsWith(": ") || lineText.StartsWith("---"))
-            foreground = TextColor.DarkGray;
+            foreground = Colors.LogInfoForeground;
         else
-            foreground = TextColor.White;
+            foreground = Colors.LogNormalForeground;
 
         receiver.Add(new StyledSpan(new TextSpan(0, line.Span.Length), foreground, null));
     }
