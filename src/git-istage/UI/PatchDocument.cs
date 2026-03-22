@@ -1,38 +1,78 @@
+using System.Collections.Frozen;
 using System.Diagnostics;
 using GitIStage.Patches;
+using GitIStage.Services;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
 
 internal sealed class PatchDocument : Document
 {
-    private PatchDocument(Patch patch)
+    public PatchDocument(Patch patch, FrozenDictionary<PatchEntry, LineHighlights> highlights)
         : base(patch.Text)
     {
-        ThrowIfNull(patch);
-
         Patch = patch;
+        Highlights = highlights;
     }
 
     public Patch Patch { get; }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
-    {
-        // NOTE: We're expected return spans that start at this line.
+    public FrozenDictionary<PatchEntry, LineHighlights> Highlights { get; }
 
+    public override void GetLineStyles(int index, List<StyledSpan> receiver)
+    {
         var line = Patch.Lines[index];
         var lineForeground = GetLineForegroundColor(line);
+        var lineBackground = lineForeground?.Lerp(TextColor.Black, 0.8f);
 
-        if (lineForeground is not null)
+        if (line is PatchHunkLine hunkLine)
         {
-            var lineBackground = GetLineBackgroundColor(line);
-            var span = new TextSpan(0, line.Span.Length);
-            return [new StyledSpan(span, lineForeground, lineBackground)];
-        }
+            var entry = hunkLine.Ancestors().OfType<PatchEntry>().First();
+            var hasSyntaxColoring = Highlights.ContainsKey(entry);
 
-        return line.DescendantsAndSelf()
-                   .OfType<PatchToken>()
-                   .Select(GetSpan);
+            // Line-level background style (zero-length sentinel span)
+            if (lineBackground is not null)
+            {
+                receiver.Add(new StyledSpan(new TextSpan(0, 0), new TextStyle
+                {
+                    Foreground = hasSyntaxColoring ? null : lineForeground,
+                    Background = lineBackground
+                }));
+            }
+
+            var startLine = entry.Hunks.First().Lines.First().LineIndex;
+
+            if (hunkLine.Span.Length > 0)
+            {
+                var modifierStyle = new TextStyle { Foreground = lineForeground };
+                receiver.Add(new StyledSpan(new TextSpan(0, 1), modifierStyle));
+            }
+
+            if (Highlights.TryGetValue(entry, out var lineHighlights))
+            {
+                var highlightLineIndex = index - startLine;
+                if (highlightLineIndex >= 0 && highlightLineIndex < lineHighlights.Count)
+                    receiver.AddRange(lineHighlights[highlightLineIndex].AsSpan());
+            }
+        }
+        else
+        {
+            // Line-level style for non-hunk lines (e.g. entry headers)
+            if (lineForeground is not null || lineBackground is not null)
+            {
+                receiver.Add(new StyledSpan(new TextSpan(0, 0), new TextStyle
+                {
+                    Foreground = lineForeground,
+                    Background = lineBackground
+                }));
+            }
+
+            var styledTokens = line
+                .Descendants()
+                .OfType<PatchToken>()
+                .Select(ToStyledSpan);
+            receiver.AddRange(styledTokens);
+        }
     }
 
     private static TextColor? GetLineForegroundColor(PatchLine line)
@@ -50,19 +90,7 @@ internal sealed class PatchDocument : Document
         }
     }
 
-    private static TextColor? GetLineBackgroundColor(PatchLine line)
-    {
-        return line.Kind == PatchNodeKind.EntryHeader
-            ? Colors.EntryHeaderBackground
-            : null;
-    }
-
-    public static PatchDocument Create(Patch patch)
-    {
-        return new PatchDocument(patch);
-    }
-
-    private static StyledSpan GetSpan(PatchToken token)
+    private static StyledSpan ToStyledSpan(PatchToken token)
     {
         var foreground = token.Kind switch
         {
@@ -81,11 +109,9 @@ internal sealed class PatchDocument : Document
                     : throw new UnreachableException($"Unexpected token kind {token.Kind}")
         };
 
-        var line = token.Ancestors().OfType<PatchLine>().First();
-        var lineStart = line.TextLine.Start;
-        var start = token.Span.Start - lineStart;
-        var end = token.Span.End - lineStart;
-        var span = TextSpan.FromBounds(start, end);
-        return new StyledSpan(span, foreground, null);
+        var text = token.Root.Text;
+        var lineIndex = text.GetLineIndex(token.Span.Start);
+        var lineStart = text.Lines[lineIndex].Start;
+        return new StyledSpan(token.Span.RelativeTo(lineStart), foreground, null);
     }
 }

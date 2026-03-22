@@ -25,6 +25,9 @@ internal sealed class GitService : IDisposable
         // NOTE: We're re-creating the repo because when we shell out to Git the repository state will be stale.
         _repository?.Dispose();
         _repository = new Repository(_environment.RepositoryPath);
+
+        // HACK: Allows us to use relative paths
+        Environment.CurrentDirectory = _repository.Info.WorkingDirectory;
     }
 
     public void Dispose()

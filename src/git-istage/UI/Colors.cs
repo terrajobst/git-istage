@@ -16,7 +16,7 @@ internal static class Colors
 
     public static TextColor? NonExistingTextBackground => null;
 
-    public static TextColor Selection => TextColor.DarkBlue.Lerp(TextColor.Black, 0.5f).WithAlpha(.3f);
+    public static TextColor Selection => TextColor.DarkBlue.Lerp(TextColor.Black, 0.5f).WithAlpha(.8f);
 
     // Search
 
@@ -37,8 +37,6 @@ internal static class Colors
     // Patch
 
     public static TextColor EntryHeaderForeground => TextColor.White;
-
-    public static TextColor? EntryHeaderBackground => TextColor.DarkCyan;
 
     public static TextColor PathTokenForeground => TextColor.White;
 

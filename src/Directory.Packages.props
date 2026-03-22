@@ -7,6 +7,7 @@
     <PackageVersion Include="Microsoft.Extensions.Hosting" Version="10.0.0" />
     <PackageVersion Include="Nerdbank.GitVersioning" Version="3.9.50" />
     <PackageVersion Include="FluentAssertions" Version="8.8.0" />
+    <PackageVersion Include="TextMateSharp.Grammars" Version="2.0.3" />
     <PackageVersion Include="xunit.v3.mtp-v2" Version="3.2.2" />
   </ItemGroup>
 </Project>

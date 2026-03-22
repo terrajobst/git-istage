@@ -8,7 +8,8 @@ internal sealed class LogDocument : Document
 {
     public new static LogDocument Empty { get; } = new();
 
-    private LogDocument() : this(SourceText.Empty)
+    private LogDocument()
+        : this(SourceText.Empty)
     {
     }
 
@@ -17,11 +18,10 @@ internal sealed class LogDocument : Document
     {
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    public override void GetLineStyles(int index, List<StyledSpan> receiver)
     {
         var line = SourceText.Lines[index];
         var lineText = SourceText.AsSpan(line.Span);
-        var span = new TextSpan(0, line.Length);
 
         TextColor foreground;
 
@@ -32,7 +32,7 @@ internal sealed class LogDocument : Document
         else
             foreground = TextColor.White;
 
-        return [new StyledSpan(span, foreground, null)];
+        receiver.Add(new StyledSpan(new TextSpan(0, line.Span.Length), foreground, null));
     }
 
     public LogDocument Prepend(IReadOnlyCollection<GitOperation> operations)

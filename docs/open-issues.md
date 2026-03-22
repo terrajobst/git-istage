@@ -2,14 +2,15 @@
 
 This document tracks open issues I'd like to address.
 
-## Syntax colorization
+## Single file mode
 
-We should use a syntax highlighter (probably `TextMateSharp`) to colorize the
-code.
+We have way to put any file at the top of view but we don't have a way to only
+render a single entry.
 
 ## Theming
 
-It would be nice to support theming.
+It would be nice to support theming. We could that by using the colors from
+TextMate.
 
 ## LibGit2Sharp
 

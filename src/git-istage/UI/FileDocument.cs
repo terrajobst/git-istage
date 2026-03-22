@@ -1,5 +1,6 @@
 using System.Text;
 using GitIStage.Patches;
+using GitIStage.Services;
 using GitIStage.Text;
 using Patch = GitIStage.Patches.Patch;
 
@@ -10,11 +11,11 @@ internal sealed class FileDocument : Document
     private readonly int _indexOfFirstFile;
     private readonly Patch _patch;
     private readonly bool _viewStage;
+    private LineHighlights? _lineHighlights;
 
+    private const int IndexOfFirstFile = 3;
     private const int IndentationWidth = 8;
     private const int ChangeColumnWidth = 14;
-    private const int PathColumnStart = IndentationWidth + ChangeColumnWidth;
-    private const int IndexOfFirstFile = 3;
 
     private FileDocument(SourceText sourceText, int indexOfFirstFile, Patch patch, bool viewStage)
         : base(sourceText)
@@ -43,21 +44,38 @@ internal sealed class FileDocument : Document
         return _indexOfFirstFile + entryIndex;
     }
 
-    public override IEnumerable<StyledSpan> GetLineStyles(int index)
+    public override void GetLineStyles(int index, List<StyledSpan> receiver)
     {
-        var entry = GetEntry(index);
-        if (entry is not null)
+        _lineHighlights ??= BuildLineHighlights();
+        if (_lineHighlights != LineHighlights.Empty)
+            receiver.AddRange(_lineHighlights[index].AsSpan());
+    }
+
+    private LineHighlights BuildLineHighlights()
+    {
+        var lineIndex = _indexOfFirstFile;
+        var foreground = GetForegroundColor();
+
+        var styles = new List<StyledSpan>();
+
+        foreach (var _ in _patch.Entries)
         {
-            var line = GetLine(index);
-            var lineLength = line.Length;
-            var foreground = GetForegroundColor();
+            var line = SourceText.Lines[lineIndex];
+            var start = line.Span.Start;
+
+            var changeColumnSpan = new TextSpan(start + IndentationWidth, ChangeColumnWidth);
+            var fileNameSpan = TextSpan.FromBounds(changeColumnSpan.End, line.Span.End);
 
             // Change
-            yield return new StyledSpan(new TextSpan(IndentationWidth, ChangeColumnWidth), foreground, null);
+            styles.Add(new StyledSpan(changeColumnSpan, foreground, null));
 
             // Path
-            yield return new StyledSpan(TextSpan.FromBounds(PathColumnStart, lineLength), Colors.PathText, null);
+            styles.Add(new StyledSpan(fileNameSpan, Colors.PathText, null));
+
+            lineIndex++;
         }
+
+        return LineHighlights.Create(SourceText, styles);
     }
 
     private TextColor GetForegroundColor()

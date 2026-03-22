@@ -2,28 +2,28 @@ namespace GitIStage.Text;
 
 public readonly struct StyledSpan : IEquatable<StyledSpan>
 {
-    private readonly TextSpan _span;
-    private readonly TextColor? _foreground;
-    private readonly TextColor? _background;
-
     public StyledSpan(TextSpan span, TextColor? foreground, TextColor? background)
+        : this(span, new TextStyle { Foreground = foreground, Background = background })
     {
-        _span = span;
-        _foreground = foreground;
-        _background = background;
     }
 
-    public TextSpan Span => _span;
+    public StyledSpan(TextSpan span, TextStyle style)
+    {
+        Span = span;
+        Style = style;
+    }
 
-    public TextColor? Foreground => _foreground;
+    public TextSpan Span { get; }
 
-    public TextColor? Background => _background;
+    public TextStyle Style { get; }
+
+    public TextColor? Foreground => Style.Foreground;
+
+    public TextColor? Background => Style.Background;
 
     public bool Equals(StyledSpan other)
     {
-        return _span.Equals(other._span) &&
-               _foreground == other._foreground &&
-               _background == other._background;
+        return Span.Equals(other.Span) && Style.Equals(other.Style);
     }
 
     public override bool Equals(object? obj)
@@ -33,7 +33,7 @@ public readonly struct StyledSpan : IEquatable<StyledSpan>
 
     public override int GetHashCode()
     {
-        return HashCode.Combine(_span, _foreground, _background);
+        return HashCode.Combine(Span, Style);
     }
 
     public static bool operator ==(StyledSpan left, StyledSpan right)

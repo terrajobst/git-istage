@@ -14,10 +14,10 @@ internal sealed class DocumentService
     private GitIStagePatch _stagePatch;
     private bool _fullFileDiff;
     private int _contextLines = 3;
+    private bool _syntaxHighlighting = true;
 
-    private PatchDocument _workingCopyPatchDocument;
+    private DocumentState _documentState = DocumentState.Empty;
     private FileDocument _workingCopyFilesDocument;
-    private PatchDocument _stagePatchDocument;
     private FileDocument _stageFilesDocument;
 
     public DocumentService(GitService gitService, FileWatchingService? fileWatchingService)
@@ -32,11 +32,11 @@ internal sealed class DocumentService
 
     public GitIStagePatch StagePatch => _stagePatch;
 
-    public PatchDocument WorkingCopyPatchDocument => _workingCopyPatchDocument;
+    public PatchDocument WorkingCopyPatchDocument => _documentState.WorkingCopyDocument;
 
     public FileDocument WorkingCopyFilesDocument => _workingCopyFilesDocument;
 
-    public PatchDocument StagePatchDocument => _stagePatchDocument;
+    public PatchDocument StagePatchDocument => _documentState.StageDocument;
 
     public FileDocument StageFilesDocument => _stageFilesDocument;
 
@@ -66,17 +66,31 @@ internal sealed class DocumentService
         }
     }
 
+    public bool SyntaxHighlighting
+    {
+        get => _syntaxHighlighting;
+        set
+        {
+            if (_syntaxHighlighting != value)
+            {
+                _syntaxHighlighting = value;
+                if (!_syntaxHighlighting)
+                    SetDocumentState(_documentState.DropHighlights());
+                else
+                    UpdateDocuments();
+            }
+        }
+    }
+
     [MemberNotNull(nameof(_workingCopyPatch))]
     [MemberNotNull(nameof(_stagePatch))]
-    [MemberNotNull(nameof(_workingCopyPatchDocument))]
     [MemberNotNull(nameof(_workingCopyFilesDocument))]
-    [MemberNotNull(nameof(_stagePatchDocument))]
     [MemberNotNull(nameof(_stageFilesDocument))]
     public void RecomputePatch()
     {
         _workingCopyPatch = GetWorkingCopyPatch();
         _stagePatch = GetStagePatch();
-        UpdateDocument();
+        UpdateDocuments();
     }
 
     private void UpdatePatch(ImmutableArray<string> updatedPaths,
@@ -88,7 +102,7 @@ internal sealed class DocumentService
         _workingCopyPatch = result;
         if (!skipIndex)
             _stagePatch = GetStagePatch();
-        UpdateDocument();
+        UpdateDocuments();
     }
 
     private GitIStagePatch GetWorkingCopyPatch(IEnumerable<string>? affectedPaths = null)
@@ -101,17 +115,45 @@ internal sealed class DocumentService
         return GitIStagePatch.Parse(_gitService.GetPatch(_fullFileDiff, _contextLines, stage: true));
     }
 
-    [MemberNotNull(nameof(_workingCopyPatchDocument))]
     [MemberNotNull(nameof(_workingCopyFilesDocument))]
-    [MemberNotNull(nameof(_stagePatchDocument))]
     [MemberNotNull(nameof(_stageFilesDocument))]
-    public void UpdateDocument()
+    public async void UpdateDocuments()
     {
-        _workingCopyPatchDocument = PatchDocument.Create(_workingCopyPatch);
-        _workingCopyFilesDocument = FileDocument.Create(_workingCopyPatch, viewStage: false);
-        _stagePatchDocument = PatchDocument.Create(_stagePatch);
-        _stageFilesDocument = FileDocument.Create(_stagePatch, viewStage: true);
+        var workingCopyPatch = _workingCopyPatch;
+        var stagePatch = _stagePatch;
 
+        if (_documentState.ShouldPerformIncrementalUpdate(workingCopyPatch, stagePatch, _syntaxHighlighting))
+        {
+            var state = _documentState.IncrementalUpdate(workingCopyPatch, stagePatch, SyntaxTheme.Instance);
+            SetDocumentState(state);
+        }
+        else
+        {
+            // This is non-incremental update. To speed things up, let's first create
+            // the patch without any syntax highlighting.
+            var stateWithoutHighlights = DocumentState.Create(_workingCopyPatch, _stagePatch);
+            SetDocumentState(stateWithoutHighlights);
+
+            // If we don't want syntax highlighting, we're done.
+            if (!_syntaxHighlighting)
+                return;
+
+            // OK let's perform syntax highlighting in the background.
+            var stateWithHighlights = await Task.Run(() => DocumentState.CreateHighlighted(workingCopyPatch, stagePatch, SyntaxTheme.Instance));
+
+            // If the state is unchanged, replace it with the highlighted state.
+            if (_documentState == stateWithoutHighlights)
+                SetDocumentState(stateWithHighlights);
+        }
+    }
+
+    [MemberNotNull(nameof(_workingCopyFilesDocument))]
+    [MemberNotNull(nameof(_stageFilesDocument))]
+    private void SetDocumentState(DocumentState state)
+    {
+        _documentState = state;
+        _workingCopyFilesDocument = FileDocument.Create(_workingCopyPatch, viewStage: false);
+        _stageFilesDocument = FileDocument.Create(_stagePatch, viewStage: true);
         Changed?.Invoke(this, EventArgs.Empty);
     }
 
