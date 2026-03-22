@@ -6,7 +6,7 @@ namespace GitIStage.Tests.Infrastructure;
 
 public abstract class RepositoryTests : IDisposable
 {
-    private readonly string _tempPath;
+    private readonly RepositoryTempDirectory _tempDirectory;
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
     private readonly PatchingService _patchingService;
@@ -15,11 +15,11 @@ public abstract class RepositoryTests : IDisposable
 
     protected RepositoryTests()
     {
-        _tempPath = Path.Join(Path.GetTempPath(), "git-istage-test_" + Guid.NewGuid());
-        Directory.CreateDirectory(_tempPath);
-        Repository.Init(_tempPath, isBare: false);
+        _tempDirectory = RepositoryTempDirectory.Create();
+        Directory.CreateDirectory(_tempDirectory);
+        Repository.Init(_tempDirectory, isBare: false);
 
-        var gitEnvironment = new GitEnvironment(repositoryPath: _tempPath);
+        var gitEnvironment = new GitEnvironment(repositoryPath: _tempDirectory);
         var logService = new OperationLogService();
         _gitService = new GitService(gitEnvironment, logService);
         _documentService = new DocumentService(_gitService, fileWatchingService: null);
@@ -29,12 +29,7 @@ public abstract class RepositoryTests : IDisposable
     public void Dispose()
     {
         _gitService.Dispose();
-
-        // Directory.Delete() will fail for any read only files. Need to reset attributes first.
-        foreach (var file in Directory.EnumerateFiles(_tempPath, "*", SearchOption.AllDirectories))
-            File.SetAttributes(file, FileAttributes.Normal);
-
-        Directory.Delete(_tempPath, recursive: true);
+        _tempDirectory.Dispose();
     }
 
     internal void SetCoreAutoCrLfFalse()
@@ -54,21 +49,21 @@ public abstract class RepositoryTests : IDisposable
 
     internal void TouchFile(string fileName)
     {
-        var fullPath = Path.Combine(_tempPath, fileName);
+        var fullPath = Path.Combine(_tempDirectory, fileName);
         File.WriteAllText(fullPath, string.Empty);
         _wroteToWorkingDirectory = true;
     }
 
     internal void WriteFile(string fileName, string contents)
     {
-        var fullPath = Path.Combine(_tempPath, fileName);
+        var fullPath = Path.Combine(_tempDirectory, fileName);
         File.WriteAllText(fullPath, contents);
         _wroteToWorkingDirectory = true;
     }
 
     internal void DeleteFile(string fileName)
     {
-        var fullPath = Path.Combine(_tempPath, fileName);
+        var fullPath = Path.Combine(_tempDirectory, fileName);
         File.Exists(fullPath).Should().BeTrue();
         File.Delete(fullPath);
         _wroteToWorkingDirectory = true;
@@ -81,7 +76,7 @@ public abstract class RepositoryTests : IDisposable
 
     internal string ReadFile(string fileName)
     {
-        var fullPath = Path.Combine(_tempPath, fileName);
+        var fullPath = Path.Combine(_tempDirectory, fileName);
         return File.ReadAllText(fullPath);
     }
 
