@@ -19,33 +19,27 @@ internal sealed class PatchDocument : Document
 
     public FrozenDictionary<PatchEntry, LineHighlights> Highlights { get; }
 
-    public override void GetLineStyles(int index, List<StyledSpan> receiver)
+    public override void GetLineStyles(int index, List<ClassifiedSpan> receiver)
     {
         var line = Patch.Lines[index];
-        var lineForeground = GetLineForegroundColor(line);
-        var lineBackground = lineForeground?.Lerp(TextColor.Black, 0.8f);
+        var lineClassification = GetLineClassification(line);
 
         if (line is PatchHunkLine hunkLine)
         {
             var entry = hunkLine.Ancestors().OfType<PatchEntry>().First();
             var hasSyntaxColoring = Highlights.ContainsKey(entry);
 
-            // Line-level background style (zero-length sentinel span)
-            if (lineBackground is not null)
-            {
-                receiver.Add(new StyledSpan(new TextSpan(0, 0), new TextStyle
-                {
-                    Foreground = hasSyntaxColoring ? null : lineForeground,
-                    Background = lineBackground
-                }));
-            }
+            var sentinelClassification = GetSentinelClassification(lineClassification, hasSyntaxColoring);
+            if (sentinelClassification is not null)
+                receiver.Add(new ClassifiedSpan(new TextSpan(0, 0), sentinelClassification));
 
             var startLine = entry.Hunks.First().Lines.First().LineIndex;
 
             if (hunkLine.Span.Length > 0)
             {
-                var modifierStyle = new TextStyle { Foreground = lineForeground };
-                receiver.Add(new StyledSpan(new TextSpan(0, 1), modifierStyle));
+                var modifierClassification = GetModifierClassification(lineClassification);
+                if (modifierClassification is not null)
+                    receiver.Add(new ClassifiedSpan(new TextSpan(0, 1), modifierClassification));
             }
 
             if (Highlights.TryGetValue(entry, out var lineHighlights))
@@ -57,61 +51,76 @@ internal sealed class PatchDocument : Document
         }
         else
         {
-            // Line-level style for non-hunk lines (e.g. entry headers)
-            if (lineForeground is not null || lineBackground is not null)
-            {
-                receiver.Add(new StyledSpan(new TextSpan(0, 0), new TextStyle
-                {
-                    Foreground = lineForeground,
-                    Background = lineBackground
-                }));
-            }
+            if (lineClassification is not null)
+                receiver.Add(new ClassifiedSpan(new TextSpan(0, 0), lineClassification));
 
-            var styledTokens = line
+            var classifiedTokens = line
                 .Descendants()
                 .OfType<PatchToken>()
-                .Select(ToStyledSpan);
-            receiver.AddRange(styledTokens);
+                .Select(ToClassifiedSpan);
+            receiver.AddRange(classifiedTokens);
         }
     }
 
-    private static TextColor? GetLineForegroundColor(PatchLine line)
+    private static Classification? GetLineClassification(PatchLine line)
     {
-        switch (line.Kind)
+        return line.Kind switch
         {
-            case PatchNodeKind.EntryHeader:
-                return Colors.EntryHeaderForeground;
-            case PatchNodeKind.AddedLine:
-                return Colors.AddedText;
-            case PatchNodeKind.DeletedLine:
-                return Colors.DeletedText;
-            default:
-                return null;
-        }
+            PatchNodeKind.EntryHeader => PatchClassification.EntryHeader,
+            PatchNodeKind.AddedLine => PatchClassification.AddedLine,
+            PatchNodeKind.DeletedLine => PatchClassification.DeletedLine,
+            _ => null
+        };
     }
 
-    private static StyledSpan ToStyledSpan(PatchToken token)
+    private static Classification? GetSentinelClassification(Classification? lineClassification, bool hasSyntaxColoring)
     {
-        var foreground = token.Kind switch
+        if (lineClassification is null)
+            return null;
+
+        if (!hasSyntaxColoring)
+            return lineClassification;
+
+        if (lineClassification == PatchClassification.AddedLine)
+            return PatchClassification.AddedLineBackground;
+        if (lineClassification == PatchClassification.DeletedLine)
+            return PatchClassification.DeletedLineBackground;
+
+        return lineClassification;
+    }
+
+    private static Classification? GetModifierClassification(Classification? lineClassification)
+    {
+        if (lineClassification == PatchClassification.AddedLine)
+            return PatchClassification.AddedLineModifier;
+        if (lineClassification == PatchClassification.DeletedLine)
+            return PatchClassification.DeletedLineModifier;
+
+        return null;
+    }
+
+    private static ClassifiedSpan ToClassifiedSpan(PatchToken token)
+    {
+        var classification = token.Kind switch
         {
-            PatchNodeKind.PathToken => Colors.PathTokenForeground,
-            PatchNodeKind.HashToken => Colors.HashTokenForeground,
-            PatchNodeKind.ModeToken => Colors.ModeTokenForeground,
-            PatchNodeKind.TextToken => Colors.TextTokenForeground,
-            PatchNodeKind.PercentageToken => Colors.PercentageTokenForeground,
-            PatchNodeKind.RangeToken => Colors.RangeTokenForeground,
-            PatchNodeKind.MinusMinusMinusToken => Colors.MinusMinusMinusTokenForeground,
-            PatchNodeKind.PlusPlusPlusToken => Colors.PlusPlusPlusTokenForeground,
+            PatchNodeKind.PathToken => PatchClassification.PathToken,
+            PatchNodeKind.HashToken => PatchClassification.HashToken,
+            PatchNodeKind.ModeToken => PatchClassification.ModeToken,
+            PatchNodeKind.TextToken => PatchClassification.TextToken,
+            PatchNodeKind.PercentageToken => PatchClassification.PercentageToken,
+            PatchNodeKind.RangeToken => PatchClassification.RangeToken,
+            PatchNodeKind.MinusMinusMinusToken => PatchClassification.MinusMinusMinusToken,
+            PatchNodeKind.PlusPlusPlusToken => PatchClassification.PlusPlusPlusToken,
             _ => token.Kind.IsKeyword()
-                ? Colors.KeywordForeground
+                ? PatchClassification.Keyword
                 : token.Kind.IsOperator()
-                    ? Colors.OperatorForeground
+                    ? PatchClassification.Operator
                     : throw new UnreachableException($"Unexpected token kind {token.Kind}")
         };
 
         var text = token.Root.Text;
         var lineIndex = text.GetLineIndex(token.Span.Start);
         var lineStart = text.Lines[lineIndex].Start;
-        return new StyledSpan(token.Span.RelativeTo(lineStart), foreground, null);
+        return new ClassifiedSpan(token.Span.RelativeTo(lineStart), classification);
     }
 }

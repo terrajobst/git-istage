@@ -1,16 +1,23 @@
 using System.Diagnostics;
+using GitIStage.Services;
 using GitIStage.Text;
 
 namespace GitIStage.UI;
 
 internal sealed class View
 {
+    private readonly ThemeService _themeService;
     private Document _document = Document.Empty;
     private int _topLine;
     private int _leftChar;
     private Selection _selection;
     private SearchResults? _searchResults;
-    private readonly List<StyledSpan> _lineStyles = new();
+    private readonly List<ClassifiedSpan> _lineStyles = new();
+
+    public View(ThemeService themeService)
+    {
+        _themeService = themeService;
+    }
 
     public bool Visible
     {
@@ -160,7 +167,7 @@ internal sealed class View
         TextStyle lineStyle = default;
         if (_lineStyles.Count > 0 && _lineStyles[0].Span.Length == 0)
         {
-            lineStyle = _lineStyles[0].Style;
+            lineStyle = _themeService.ResolveStyle(_lineStyles[0].Classification);
             _lineStyles.RemoveAt(0);
         }
 
@@ -171,7 +178,7 @@ internal sealed class View
             lineStyle = new TextStyle()
             {
                 Foreground = lineStyle.Foreground,
-                Background = lineStyle.Background?.Combine(Colors.Selection) ?? Colors.Selection
+                Background = lineStyle.Background?.Combine(_themeService.Colors.Selection) ?? _themeService.Colors.Selection
             };
         }
 
@@ -179,9 +186,9 @@ internal sealed class View
         Vt100.SetBackgroundColor(lineStyle.Background);
 
         var p = clippedLineSpan.Start;
-        foreach (var styledSpan in _lineStyles)
+        foreach (var classifiedSpan in _lineStyles)
         {
-            var clippedSpan = ClipSpan(styledSpan);
+            var clippedSpan = ClipSpan(classifiedSpan);
             if (clippedSpan.Span.Length == 0)
                 continue;
 
@@ -191,7 +198,7 @@ internal sealed class View
                 Console.Write(line.Slice(missingSpan));
             }
 
-            var style = clippedSpan.Style.PlaceOnTopOf(lineStyle);
+            var style = ResolveStyle(clippedSpan, lineStyle);
 
             Vt100.SetForegroundColor(style.Foreground);
             Vt100.SetBackgroundColor(style.Background);
@@ -214,6 +221,23 @@ internal sealed class View
         RenderSearchResults(lineIndex);
     }
 
+    private TextStyle ResolveStyle(ClassifiedSpan span, TextStyle lineStyle)
+    {
+        var style = _themeService.ResolveStyle(span.Classification);
+
+        if (_themeService.IsKnownClassification(span.Classification))
+            return style.PlaceOnTopOf(lineStyle);
+
+        // Syntax tokens get background from line but NOT foreground,
+        // so they don't inherit added/deleted line colors.
+        return new TextStyle
+        {
+            Foreground = style.Foreground,
+            Background = style.Background ?? lineStyle.Background,
+            Attributes = style.Attributes | lineStyle.Attributes
+        };
+    }
+
     private void RenderNonExistingLine(int lineIndex)
     {
         Debug.Assert(IsVisible(lineIndex));
@@ -221,8 +245,8 @@ internal sealed class View
         var visualLine = GetVisualLine(lineIndex);
 
         Vt100.SetCursorPosition(0, visualLine);
-        Vt100.SetForegroundColor(Colors.NonExistingTextForeground);
-        Vt100.SetBackgroundColor(Colors.NonExistingTextBackground);
+        Vt100.SetForegroundColor(_themeService.Colors.NonExistingTextForeground);
+        Vt100.SetBackgroundColor(_themeService.Colors.NonExistingTextBackground);
         Console.Write("~");
         Vt100.EraseRestOfCurrentLine();
     }
@@ -272,10 +296,10 @@ internal sealed class View
         return TextSpan.FromBounds(clippedStart, clippedEnd);
     }
 
-    private StyledSpan ClipSpan(StyledSpan styledSpan)
+    private ClassifiedSpan ClipSpan(ClassifiedSpan classifiedSpan)
     {
-        var clippedSpan = ClipSpan(styledSpan.Span);
-        return new StyledSpan(clippedSpan, styledSpan.Style);
+        var clippedSpan = ClipSpan(classifiedSpan.Span);
+        return new ClassifiedSpan(clippedSpan, classifiedSpan.Classification);
     }
 
     private void UpdateSelection(int lineIndex)

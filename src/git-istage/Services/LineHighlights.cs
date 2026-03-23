@@ -2,7 +2,6 @@ using System.Collections.Immutable;
 using System.Diagnostics;
 using GitIStage.Patches;
 using GitIStage.Text;
-using TextMateSharp.Themes;
 using IGrammar = TextMateSharp.Grammars.IGrammar;
 using IStateStack = TextMateSharp.Grammars.IStateStack;
 using StateStack = TextMateSharp.Grammars.StateStack;
@@ -11,16 +10,16 @@ namespace GitIStage.Services;
 
 public sealed class LineHighlights
 {
-    public static LineHighlights Empty { get; } = new(ImmutableArray<ImmutableArray<StyledSpan>>.Empty);
+    public static LineHighlights Empty { get; } = new(ImmutableArray<ImmutableArray<ClassifiedSpan>>.Empty);
 
-    private readonly ImmutableArray<ImmutableArray<StyledSpan>> _lineStyles;
+    private readonly ImmutableArray<ImmutableArray<ClassifiedSpan>> _lineStyles;
 
-    private LineHighlights(ImmutableArray<ImmutableArray<StyledSpan>> lineStyles)
+    private LineHighlights(ImmutableArray<ImmutableArray<ClassifiedSpan>> lineStyles)
     {
         _lineStyles = lineStyles;
     }
 
-    public static LineHighlights Create(SourceText text, IReadOnlyCollection<StyledSpan> spans, int offset = 0)
+    public static LineHighlights Create(SourceText text, IReadOnlyCollection<ClassifiedSpan> spans, int offset = 0)
     {
         var start = offset;
         var end = spans.Select(s => s.Span.End).DefaultIfEmpty(offset).Last();
@@ -28,17 +27,16 @@ public sealed class LineHighlights
         var endLine = text.GetLineIndex(end);
         var lineCount = endLine - startLine + 1;
 
-        var lineBuilder = ImmutableArray.CreateBuilder<ImmutableArray<StyledSpan>>(lineCount);
+        var lineBuilder = ImmutableArray.CreateBuilder<ImmutableArray<ClassifiedSpan>>(lineCount);
         for (var i = 0; i < lineCount; i++)
-            lineBuilder.Add(ImmutableArray<StyledSpan>.Empty);
+            lineBuilder.Add(ImmutableArray<ClassifiedSpan>.Empty);
 
-        var styleBuilder = ImmutableArray.CreateBuilder<StyledSpan>();
+        var styleBuilder = ImmutableArray.CreateBuilder<ClassifiedSpan>();
         var previousIndex = -1;
 
-        foreach (var styledSpan in spans)
+        foreach (var classifiedSpan in spans)
         {
-            var style = styledSpan.Style;
-            var span = styledSpan.Span;
+            var span = classifiedSpan.Span;
             var originalLineIndex = text.GetLineIndex(span.Start);
             var line = text.Lines[originalLineIndex];
             var index = originalLineIndex - startLine;
@@ -49,8 +47,8 @@ public sealed class LineHighlights
             }
 
             var adjustedSpan = new TextSpan(span.Start - line.Start, span.Length);
-            var adjustedStyledSpan = new StyledSpan(adjustedSpan, style);
-            styleBuilder.Add(adjustedStyledSpan);
+            var adjusted = new ClassifiedSpan(adjustedSpan, classifiedSpan.Classification);
+            styleBuilder.Add(adjusted);
 
             previousIndex = index;
         }
@@ -60,8 +58,8 @@ public sealed class LineHighlights
 
         static void CommitLine(
             int index,
-            ImmutableArray<ImmutableArray<StyledSpan>>.Builder lineBuilder,
-            ImmutableArray<StyledSpan>.Builder styleBuilder)
+            ImmutableArray<ImmutableArray<ClassifiedSpan>>.Builder lineBuilder,
+            ImmutableArray<ClassifiedSpan>.Builder styleBuilder)
         {
             if (styleBuilder.Count == 0)
                 return;
@@ -76,7 +74,8 @@ public sealed class LineHighlights
         if (patch.Hunks.Length == 0)
             return Empty;
 
-        var receiver = new List<StyledSpan>();
+        var receiver = new List<ClassifiedSpan>();
+
         var text = patch.Root.Text;
         var reHighlightOldLineStart = -1;
         var newState = (IStateStack?)null;
@@ -151,12 +150,12 @@ public sealed class LineHighlights
                 SameState(stateA.Parent, stateB.Parent);
     }
 
-    private static void GetHighlights(IGrammar grammar, int lineStart, ReadOnlyMemory<char> text, IStateStack? state, ICollection<StyledSpan> receiver)
+    private static void GetHighlights(IGrammar grammar, int lineStart, ReadOnlyMemory<char> text, IStateStack? state, List<ClassifiedSpan> receiver)
     {
         GetHighlights(grammar, lineStart, text, ref state, receiver);
     }
 
-    private static void GetHighlights(IGrammar grammar, int lineStart, ReadOnlyMemory<char> text, ref IStateStack? state, ICollection<StyledSpan> receiver)
+    private static void GetHighlights(IGrammar grammar, int lineStart, ReadOnlyMemory<char> text, ref IStateStack? state, List<ClassifiedSpan> receiver)
     {
         var tokenizedLine = grammar.TokenizeLine(text, state, TimeSpan.MaxValue);
         state = tokenizedLine.RuleStack;
@@ -166,32 +165,9 @@ public sealed class LineHighlights
             var startIndex = token.StartIndex > text.Length ? text.Length : token.StartIndex;
             var endIndex = token.EndIndex > text.Length ? text.Length : token.EndIndex;
 
-            var foreground = -1;
-            var background = -1;
-            var fontStyle = FontStyle.None;
-
-            foreach (var themeRule in SyntaxTheme.Instance.Theme.Match(token.Scopes))
-            {
-                if (foreground == -1 && themeRule.foreground > 0)
-                    foreground = themeRule.foreground;
-
-                if (background == -1 && themeRule.background > 0)
-                    background = themeRule.background;
-
-                if (fontStyle == FontStyle.None && themeRule.fontStyle != FontStyle.None)
-                    fontStyle = themeRule.fontStyle;
-            }
-
-            var style = new TextStyle
-            {
-                Foreground = GetColor(foreground),
-                Background = GetColor(background),
-                Attributes = GetAttributes(fontStyle)
-            };
-
             var span = new TextSpan(lineStart + startIndex, endIndex - startIndex);
-            var styledSpan = new StyledSpan(span, style);
-            receiver.Add(styledSpan);
+            var classification = Classification.Create(token.Scopes);
+            receiver.Add(new ClassifiedSpan(span, classification));
         }
     }
 
@@ -202,37 +178,7 @@ public sealed class LineHighlights
         state = tokenizedLine.RuleStack;
     }
 
-    private static TextColor? GetColor(int colorId)
-    {
-        if (colorId == -1)
-            return null;
-
-        return TextColor.FromHex(SyntaxTheme.Instance.Theme.GetColor(colorId));
-    }
-
-    private static TextAttributes GetAttributes(FontStyle fontStyle)
-    {
-        var result = TextAttributes.None;
-
-        if (fontStyle == FontStyle.NotSet)
-            return result;
-
-        if ((fontStyle & FontStyle.Italic) != 0)
-            result |= TextAttributes.Italic;
-
-        if ((fontStyle & FontStyle.Bold) != 0)
-            result |= TextAttributes.Bold;
-
-        if ((fontStyle & FontStyle.Underline) != 0)
-            result |= TextAttributes.Underline;
-
-        if ((fontStyle & FontStyle.Strikethrough) != 0)
-            result |= TextAttributes.Strike;
-
-        return result;
-    }
-
-    public ImmutableArray<StyledSpan> this[int index] => _lineStyles[index];
+    public ImmutableArray<ClassifiedSpan> this[int index] => _lineStyles[index];
 
     public int Count => _lineStyles.Length;
 }

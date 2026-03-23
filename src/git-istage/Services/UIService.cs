@@ -13,6 +13,7 @@ internal sealed class UIService
     private readonly GitService _gitService;
     private readonly DocumentService _documentService;
     private readonly OperationLogService _logService;
+    private readonly ThemeService _themeService;
 
     private readonly Label _header;
     private readonly Label _footer;
@@ -34,7 +35,8 @@ internal sealed class UIService
                      KeyboardService keyboardService,
                      GitService gitService,
                      DocumentService documentService,
-                     OperationLogService logService)
+                     OperationLogService logService,
+                     ThemeService themeService)
     {
         _serviceProvider = serviceProvider;
         _keyboardService = keyboardService;
@@ -43,21 +45,22 @@ internal sealed class UIService
         _documentService.Changed += DocumentServiceOnChanged;
         _logService = logService;
         _logService.Changed += LogServiceOnChanged;
+        _themeService = themeService;
 
         _header = new Label();
-        _header.Foreground = Colors.HeaderForeground;
-        _header.Background = Colors.HeaderBackground;
+        _header.Foreground = _themeService.Colors.HeaderForeground;
+        _header.Background = _themeService.Colors.HeaderBackground;
 
         _footer = new Label();
-        _footer.Foreground = Colors.HeaderForeground;
-        _footer.Background = Colors.HeaderBackground;
+        _footer.Foreground = _themeService.Colors.HeaderForeground;
+        _footer.Background = _themeService.Colors.HeaderBackground;
 
-        _workingCopyPatchView = new View();
-        _workingCopyFilesView = new View();
-        _stagePatchView = new View();
-        _stageFilesView = new View();
-        _logView = new View();
-        _helpView = new View();
+        _workingCopyPatchView = new View(themeService);
+        _workingCopyFilesView = new View(themeService);
+        _stagePatchView = new View(themeService);
+        _stageFilesView = new View(themeService);
+        _logView = new View(themeService);
+        _helpView = new View(themeService);
         _activeView = _workingCopyPatchView;
 
         UpdatePatchDocuments();
@@ -295,8 +298,8 @@ internal sealed class UIService
         {
             Vt100.HideCursor();
             Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
-            Vt100.SetForegroundColor(Colors.SearchInputForeground);
-            Vt100.SetBackgroundColor(Colors.SearchInputBackground);
+            Vt100.SetForegroundColor(_themeService.Colors.SearchInputForeground);
+            Vt100.SetBackgroundColor(_themeService.Colors.SearchInputBackground);
             Console.Write("/");
             Console.Write(sb);
             Vt100.EraseRestOfCurrentLine();
@@ -337,8 +340,8 @@ internal sealed class UIService
         {
             Vt100.HideCursor();
             Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
-            Vt100.SetForegroundColor(Colors.SearchInputForeground);
-            Vt100.SetBackgroundColor(Colors.SearchInputBackground);
+            Vt100.SetForegroundColor(_themeService.Colors.SearchInputForeground);
+            Vt100.SetBackgroundColor(_themeService.Colors.SearchInputBackground);
             Console.Write("<< NO RESULTS FOUND >>");
             Vt100.EraseRestOfCurrentLine();
             _keyboardService.ReadKey();

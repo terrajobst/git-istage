@@ -125,7 +125,7 @@ internal sealed class DocumentService
         if (_documentState.ShouldPerformIncrementalUpdate(workingCopyPatch, stagePatch, _syntaxHighlighting))
         {
             var workingDirectory = _gitService.Repository.Info.WorkingDirectory;
-            var state = _documentState.IncrementalUpdate(workingDirectory, workingCopyPatch, stagePatch, SyntaxTheme.Instance);
+            var state = _documentState.IncrementalUpdate(workingDirectory, workingCopyPatch, stagePatch);
             SetDocumentState(state);
         }
         else
@@ -141,7 +141,7 @@ internal sealed class DocumentService
 
             // OK let's perform syntax highlighting in the background.
             var workingDirectory = _gitService.Repository.Info.WorkingDirectory;
-            var stateWithHighlights = await Task.Run(() => DocumentState.CreateHighlighted(workingDirectory, workingCopyPatch, stagePatch, SyntaxTheme.Instance));
+            var stateWithHighlights = await Task.Run(() => DocumentState.CreateHighlighted(workingDirectory, workingCopyPatch, stagePatch));
 
             // If the state is unchanged, replace it with the highlighted state.
             if (_documentState == stateWithoutHighlights)

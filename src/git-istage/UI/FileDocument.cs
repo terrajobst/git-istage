@@ -44,7 +44,7 @@ internal sealed class FileDocument : Document
         return _indexOfFirstFile + entryIndex;
     }
 
-    public override void GetLineStyles(int index, List<StyledSpan> receiver)
+    public override void GetLineStyles(int index, List<ClassifiedSpan> receiver)
     {
         _lineHighlights ??= BuildLineHighlights();
         if (_lineHighlights != LineHighlights.Empty)
@@ -54,9 +54,9 @@ internal sealed class FileDocument : Document
     private LineHighlights BuildLineHighlights()
     {
         var lineIndex = _indexOfFirstFile;
-        var foreground = GetForegroundColor();
+        var changeClassification = _viewStage ? PatchClassification.AddedChange : PatchClassification.DeletedChange;
 
-        var styles = new List<StyledSpan>();
+        var spans = new List<ClassifiedSpan>();
 
         foreach (var _ in _patch.Entries)
         {
@@ -66,21 +66,13 @@ internal sealed class FileDocument : Document
             var changeColumnSpan = new TextSpan(start + IndentationWidth, ChangeColumnWidth);
             var fileNameSpan = TextSpan.FromBounds(changeColumnSpan.End, line.Span.End);
 
-            // Change
-            styles.Add(new StyledSpan(changeColumnSpan, foreground, null));
-
-            // Path
-            styles.Add(new StyledSpan(fileNameSpan, Colors.PathText, null));
+            spans.Add(new ClassifiedSpan(changeColumnSpan, changeClassification));
+            spans.Add(new ClassifiedSpan(fileNameSpan, PatchClassification.PathText));
 
             lineIndex++;
         }
 
-        return LineHighlights.Create(SourceText, styles);
-    }
-
-    private TextColor GetForegroundColor()
-    {
-        return _viewStage ? Colors.AddedText : Colors.DeletedText;
+        return LineHighlights.Create(SourceText, spans);
     }
 
     public static FileDocument Create(Patch patch, bool viewStage)

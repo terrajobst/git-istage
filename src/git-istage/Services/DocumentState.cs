@@ -54,25 +54,23 @@ internal sealed class DocumentState
         GitIStagePatch workingCopyPatch,
         GitIStagePatch stagePatch)
     {
-        return Create(null, null, workingCopyPatch, stagePatch, null, null);
+        return Create(null, null, workingCopyPatch, stagePatch, null);
     }
 
     public static DocumentState CreateHighlighted(
         string workingDirectory,
         GitIStagePatch workingCopyPatch,
-        GitIStagePatch stagePatch,
-        SyntaxTheme? theme)
+        GitIStagePatch stagePatch)
     {
-        return Create(null, null, workingCopyPatch, stagePatch, theme, workingDirectory);
+        return Create(null, null, workingCopyPatch, stagePatch, workingDirectory);
     }
 
     public DocumentState IncrementalUpdate(
         string workingDirectory,
         GitIStagePatch workingCopyPatch,
-        GitIStagePatch stagePatch,
-        SyntaxTheme theme)
+        GitIStagePatch stagePatch)
     {
-        return Create(WorkingCopyDocument, StageDocument, workingCopyPatch, stagePatch, theme, workingDirectory);
+        return Create(WorkingCopyDocument, StageDocument, workingCopyPatch, stagePatch, workingDirectory);
     }
 
     public DocumentState DropHighlights()
@@ -87,10 +85,9 @@ internal sealed class DocumentState
         PatchDocument? oldStageDocument,
         GitIStagePatch workingCopyPatch,
         GitIStagePatch stagePatch,
-        SyntaxTheme? theme,
         string? workingDirectory)
     {
-        if (theme is null)
+        if (workingDirectory is null)
         {
             var workingCopyWithoutHighlights = new PatchDocument(workingCopyPatch, NoHighlights);
             var stageWithoutHighlights = new PatchDocument(stagePatch, NoHighlights);
@@ -131,7 +128,7 @@ internal sealed class DocumentState
             var stageLines = workingCopyLines.ApplyReversed(workingCopyEntry);
             var committedLines = stageLines.ApplyReversed(stageEntry);
 
-            var grammar = theme.GetGrammar(file);
+            var grammar = SyntaxTokenizer.Instance.GetGrammar(file);
             AddHighlightsForEntry(grammar, workingCopyHighlightsByEntry, workingCopyEntry, stageLines);
             AddHighlightsForEntry(grammar, stageHighlightsByEntry, stageEntry, committedLines);
         }
@@ -165,8 +162,8 @@ internal sealed class DocumentState
 
         foreach (var unchangedEntry in unchangedEntries)
         {
-            var oldHighlights = oldDocument.Highlights[unchangedEntry];
-            highlightsByEntry.Add(unchangedEntry, oldHighlights);
+            if (oldDocument.Highlights.TryGetValue(unchangedEntry, out var oldHighlights))
+                highlightsByEntry.Add(unchangedEntry, oldHighlights);
         }
     }
 }

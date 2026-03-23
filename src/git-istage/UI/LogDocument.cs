@@ -18,21 +18,18 @@ internal sealed class LogDocument : Document
     {
     }
 
-    public override void GetLineStyles(int index, List<StyledSpan> receiver)
+    public override void GetLineStyles(int index, List<ClassifiedSpan> receiver)
     {
         var line = SourceText.Lines[index];
         var lineText = SourceText.AsSpan(line.Span);
 
-        TextColor foreground;
+        var classification = lineText.StartsWith("! ")
+            ? LogClassification.Error
+            : lineText.StartsWith(": ") || lineText.StartsWith("---")
+                ? LogClassification.Info
+                : LogClassification.Normal;
 
-        if (lineText.StartsWith("! "))
-            foreground = Colors.LogErrorForeground;
-        else if (lineText.StartsWith(": ") || lineText.StartsWith("---"))
-            foreground = Colors.LogInfoForeground;
-        else
-            foreground = Colors.LogNormalForeground;
-
-        receiver.Add(new StyledSpan(new TextSpan(0, line.Span.Length), foreground, null));
+        receiver.Add(new ClassifiedSpan(new TextSpan(0, line.Span.Length), classification));
     }
 
     public LogDocument Prepend(IReadOnlyCollection<GitOperation> operations)

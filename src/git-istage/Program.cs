@@ -49,6 +49,7 @@ internal static class Program
     {
         serviceCollection.AddSingleton<GitEnvironment>();
         serviceCollection.AddSingleton<UserEnvironment>();
+        serviceCollection.AddSingleton<ThemeService>();
         serviceCollection.AddSingleton<Application>();
         serviceCollection.AddSingleton<KeyboardService>();
         serviceCollection.AddSingleton<GitService>();

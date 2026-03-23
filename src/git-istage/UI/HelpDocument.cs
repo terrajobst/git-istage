@@ -23,7 +23,7 @@ internal sealed class HelpDocument : Document
         _column2Width = column2Width;
     }
 
-    public override void GetLineStyles(int index, List<StyledSpan> receiver)
+    public override void GetLineStyles(int index, List<ClassifiedSpan> receiver)
     {
         _lineHighlights ??= BuildLineHighlights();
         if (_lineHighlights != LineHighlights.Empty)
@@ -32,7 +32,7 @@ internal sealed class HelpDocument : Document
 
     private LineHighlights BuildLineHighlights()
     {
-        var styles = new List<StyledSpan>();
+        var spans = new List<ClassifiedSpan>();
 
         foreach (var line in SourceText.Lines)
         {
@@ -42,14 +42,14 @@ internal sealed class HelpDocument : Document
             var separator2Span = new TextSpan(column2Span.End, 1);
             var column3Span = TextSpan.FromBounds(separator2Span.End, line.End);
 
-            styles.Add(new StyledSpan(column1Span, Colors.CommandKeyForeground, null));
-            styles.Add(new StyledSpan(separator1Span, Colors.SeparatorForeground, null));
-            styles.Add(new StyledSpan(column2Span, Colors.CommandNameForeground, null));
-            styles.Add(new StyledSpan(separator2Span, Colors.SeparatorForeground, null));
-            styles.Add(new StyledSpan(column3Span, Colors.CommandDescriptionForeground, null));
+            spans.Add(new ClassifiedSpan(column1Span, HelpClassification.CommandKey));
+            spans.Add(new ClassifiedSpan(separator1Span, HelpClassification.Separator));
+            spans.Add(new ClassifiedSpan(column2Span, HelpClassification.CommandName));
+            spans.Add(new ClassifiedSpan(separator2Span, HelpClassification.Separator));
+            spans.Add(new ClassifiedSpan(column3Span, HelpClassification.CommandDescription));
         }
 
-        return LineHighlights.Create(SourceText, styles);
+        return LineHighlights.Create(SourceText, spans);
     }
 
     public static HelpDocument Create(IReadOnlyCollection<ConsoleCommand> commands)
