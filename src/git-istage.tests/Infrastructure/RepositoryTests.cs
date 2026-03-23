@@ -30,6 +30,7 @@ public abstract class RepositoryTests : IDisposable
 
     public void Dispose()
     {
+        _documentService.Dispose();
         _gitService.Dispose();
         _tempDirectory.Dispose();
     }

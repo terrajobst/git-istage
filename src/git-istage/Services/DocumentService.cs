@@ -6,7 +6,7 @@ using GitIStagePatch = GitIStage.Patches.Patch;
 
 namespace GitIStage.Services;
 
-internal sealed class DocumentService
+internal sealed class DocumentService : IDisposable
 {
     private readonly GitService _gitService;
     private readonly SettingsService _settingsService;
@@ -20,6 +20,7 @@ internal sealed class DocumentService
     private DocumentState _documentState = DocumentState.Empty;
     private FileDocument _workingCopyFilesDocument;
     private FileDocument _stageFilesDocument;
+    private Task _highlightingTask = Task.CompletedTask;
 
     public DocumentService(GitService gitService, SettingsService settingsService, FileWatchingService? fileWatchingService)
     {
@@ -29,6 +30,11 @@ internal sealed class DocumentService
         _gitService.RepositoryChanged += GitServiceOnRepositoryChanged;
         fileWatchingService?.Changed += FileWatchingServiceOnChanged;
         RecomputePatch();
+    }
+
+    public void Dispose()
+    {
+        _highlightingTask.Wait();
     }
 
     public GitIStagePatch WorkingCopyPatch => _workingCopyPatch;
@@ -121,7 +127,7 @@ internal sealed class DocumentService
 
     [MemberNotNull(nameof(_workingCopyFilesDocument))]
     [MemberNotNull(nameof(_stageFilesDocument))]
-    public async void UpdateDocuments()
+    public void UpdateDocuments()
     {
         var workingCopyPatch = _workingCopyPatch;
         var stagePatch = _stagePatch;
@@ -144,14 +150,23 @@ internal sealed class DocumentService
                 return;
 
             // OK let's perform syntax highlighting in the background.
+            // We chain onto the previous task to ensure only one highlighting
+            // operation is in flight at a time.
             var workingDirectory = _gitService.Repository.Info.WorkingDirectory;
-            var stateWithHighlights = await Task.Run(() => DocumentState.CreateHighlighted(workingDirectory, workingCopyPatch, stagePatch));
+            var previousTask = _highlightingTask;
+            _highlightingTask = Task.Run(async () =>
+            {
+                await previousTask.ConfigureAwait(false);
 
-            // If the state is unchanged, replace it with the highlighted state.
-            if (_documentState == stateWithoutHighlights)
-                SetDocumentState(stateWithHighlights);
+                var stateWithHighlights = DocumentState.CreateHighlighted(workingDirectory, workingCopyPatch, stagePatch);
+
+                // If the state is unchanged, replace it with the highlighted state.
+                if (_documentState == stateWithoutHighlights)
+                    SetDocumentState(stateWithHighlights);
+            });
         }
     }
+
 
     [MemberNotNull(nameof(_workingCopyFilesDocument))]
     [MemberNotNull(nameof(_stageFilesDocument))]
