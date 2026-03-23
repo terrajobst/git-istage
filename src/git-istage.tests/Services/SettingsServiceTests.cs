@@ -1,9 +1,9 @@
 namespace GitIStage.Tests;
 
-public class KeyBindingServiceTests : KeyBindingServiceTestsBase
+public class SettingsServiceTests : SettingsServiceTestsBase
 {
     [Fact]
-    public void KeyBindingService_Reports_Invalid_Json()
+    public void SettingsService_Reports_Invalid_Json()
     {
         var settings = """
             [
@@ -11,7 +11,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var action = () => KeyBindingService.GetUserKeyBindings();
+        var action = () => SettingsService.GetUserKeyBindings();
 
         action.Should()
               .Throw<GitIStageStartupException>()
@@ -19,7 +19,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
     }
 
     [Fact(Skip = "We first need to be able to construct the command service")]
-    public void KeyBindingService_Reports_Invalid_Command()
+    public void SettingsService_Reports_Invalid_Command()
     {
         var settings = """
             {
@@ -31,7 +31,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var action = () => KeyBindingService.GetUserKeyBindings();
+        var action = () => SettingsService.GetUserKeyBindings();
 
         action.Should()
               .Throw<GitIStageStartupException>()
@@ -39,7 +39,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
     }
 
     [Fact]
-    public void KeyBindingService_Reports_Invalid_Binding()
+    public void SettingsService_Reports_Invalid_Binding()
     {
         var settings = """
             {
@@ -51,7 +51,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var action = () => KeyBindingService.GetUserKeyBindings();
+        var action = () => SettingsService.GetUserKeyBindings();
 
         action.Should()
               .Throw<GitIStageStartupException>()
@@ -59,14 +59,14 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
     }
 
     [Fact]
-    public void KeyBindingService_Ignores_NonExistingSettings()
+    public void SettingsService_Ignores_NonExistingSettings()
     {
-        var bindings = KeyBindingService.GetUserKeyBindings();
+        var bindings = SettingsService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
 
     [Fact]
-    public void KeyBindingService_Ignores_EmptyBinding()
+    public void SettingsService_Ignores_EmptyBinding()
     {
         var settings = """
             {
@@ -77,12 +77,12 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var bindings = KeyBindingService.GetUserKeyBindings();
+        var bindings = SettingsService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
 
     [Fact]
-    public void KeyBindingService_Ignores_NullBindings()
+    public void SettingsService_Ignores_NullBindings()
     {
         var settings = """
             {
@@ -94,12 +94,12 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var bindings = KeyBindingService.GetUserKeyBindings();
+        var bindings = SettingsService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
 
     [Fact]
-    public void KeyBindingService_Ignores_EmptyBindings()
+    public void SettingsService_Ignores_EmptyBindings()
     {
         var settings = """
             {
@@ -111,12 +111,12 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var bindings = KeyBindingService.GetUserKeyBindings();
+        var bindings = SettingsService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
 
     [Fact]
-    public void KeyBindingService_Ignores_NullBinding()
+    public void SettingsService_Ignores_NullBinding()
     {
         var settings = """
             {
@@ -128,12 +128,12 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        var bindings = KeyBindingService.GetUserKeyBindings();
+        var bindings = SettingsService.GetUserKeyBindings();
         bindings.Should().BeEmpty();
     }
 
     [Fact]
-    public void KeyBindingService_Reads_Key_Single()
+    public void SettingsService_Reads_Key_Single()
     {
         var settings = """
             {
@@ -147,14 +147,14 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        KeyBindingService.GetUserKeyBindings()
+        SettingsService.GetUserKeyBindings()
                          .Should().ContainKey("Exit")
                          .WhoseValue
                          .Should().ContainSingle().Which.Should().Be(expectedKey);
     }
 
     [Fact]
-    public void KeyBindingService_Reads_Key_Multiple()
+    public void SettingsService_Reads_Key_Multiple()
     {
         var settings = """
             {
@@ -172,7 +172,7 @@ public class KeyBindingServiceTests : KeyBindingServiceTestsBase
 
         WriteSettings(settings);
 
-        KeyBindingService.GetUserKeyBindings()
+        SettingsService.GetUserKeyBindings()
                          .Should().ContainKey("Exit")
                          .WhoseValue
                          .Should().BeEquivalentTo(expectedKeys);

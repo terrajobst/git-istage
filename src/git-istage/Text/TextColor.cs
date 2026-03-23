@@ -3,7 +3,7 @@ namespace GitIStage.Text;
 public readonly struct TextColor : IEquatable<TextColor>
 {
     public TextColor(byte r, byte g, byte b)
-        : this(r, b, b, 255)
+        : this(r, g, b, 255)
     {
         R = r;
         G = g;

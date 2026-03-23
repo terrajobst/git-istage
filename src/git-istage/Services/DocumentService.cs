@@ -9,20 +9,23 @@ namespace GitIStage.Services;
 internal sealed class DocumentService
 {
     private readonly GitService _gitService;
+    private readonly SettingsService _settingsService;
 
     private GitIStagePatch _workingCopyPatch;
     private GitIStagePatch _stagePatch;
     private bool _fullFileDiff;
     private int _contextLines = 3;
-    private bool _syntaxHighlighting = true;
+    private bool _syntaxHighlighting;
 
     private DocumentState _documentState = DocumentState.Empty;
     private FileDocument _workingCopyFilesDocument;
     private FileDocument _stageFilesDocument;
 
-    public DocumentService(GitService gitService, FileWatchingService? fileWatchingService)
+    public DocumentService(GitService gitService, SettingsService settingsService, FileWatchingService? fileWatchingService)
     {
         _gitService = gitService;
+        _settingsService = settingsService;
+        _syntaxHighlighting = _settingsService.GetSyntaxHighlighting();
         _gitService.RepositoryChanged += GitServiceOnRepositoryChanged;
         fileWatchingService?.Changed += FileWatchingServiceOnChanged;
         RecomputePatch();
@@ -74,6 +77,7 @@ internal sealed class DocumentService
             if (_syntaxHighlighting != value)
             {
                 _syntaxHighlighting = value;
+                _settingsService.SaveSyntaxHighlighting(value);
                 if (!_syntaxHighlighting)
                     SetDocumentState(_documentState.DropHighlights());
                 else

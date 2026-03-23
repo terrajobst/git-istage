@@ -58,7 +58,7 @@ internal static class Program
         serviceCollection.AddSingleton<DocumentService>();
         serviceCollection.AddSingleton<UIService>();
         serviceCollection.AddSingleton<CommandService>();
-        serviceCollection.AddSingleton<KeyBindingService>();
+        serviceCollection.AddSingleton<SettingsService>();
         serviceCollection.AddSingleton<FileWatchingService>();
     }
 }

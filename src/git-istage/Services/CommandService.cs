@@ -19,7 +19,7 @@ internal sealed class CommandService
     private readonly IReadOnlyList<ConsoleCommand> _commands;
 
     public CommandService(IServiceProvider serviceProvider,
-                          KeyBindingService keyBindingService,
+                          SettingsService keyBindingService,
                           GitService gitService,
                           DocumentService documentService,
                           PatchingService patchingService,
@@ -71,7 +71,7 @@ internal sealed class CommandService
         return commands.ToArray();
     }
 
-    private static ConsoleCommand[] BindUserKeys(IEnumerable<ConsoleCommand> commands, KeyBindingService keyBindingService)
+    private static ConsoleCommand[] BindUserKeys(IEnumerable<ConsoleCommand> commands, SettingsService keyBindingService)
     {
         var commandByName = commands.ToDictionary(c => c.Name);
         var userKeyBindings = keyBindingService.GetUserKeyBindings();

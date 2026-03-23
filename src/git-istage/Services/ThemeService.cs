@@ -11,19 +11,21 @@ internal sealed class ThemeService
 {
     private static readonly ThemeName[] AllThemes = Enum.GetValues<ThemeName>();
 
+    private readonly SettingsService _settingsService;
     private Registry _registry;
     private Theme _theme;
     private ThemeName _themeName;
     private Dictionary<Classification, TextStyle> _classificationStyles;
     private Dictionary<Classification, TextStyle> _syntaxStyleCache = new();
 
-    public ThemeService()
+    public ThemeService(SettingsService settingsService)
     {
-        _themeName = ThemeName.DarkPlus;
+        _settingsService = settingsService;
+        _themeName = _settingsService.GetTheme();
         _registry = new Registry(new RegistryOptions(_themeName));
         _theme = _registry.GetTheme();
-        _classificationStyles = CreateClassificationStyles();
         Colors = new Colors(this);
+        _classificationStyles = CreateClassificationStyles();
     }
 
     public Colors Colors { get; }
@@ -39,6 +41,7 @@ internal sealed class ThemeService
         _theme = _registry.GetTheme();
         _classificationStyles = CreateClassificationStyles();
         _syntaxStyleCache = new();
+        _settingsService.SaveTheme(themeName);
         ThemeChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -101,7 +104,7 @@ internal sealed class ThemeService
         AddForegroundStyle(styles, PatchClassification.PathToken, GetScopeColor("string"));
         AddForegroundStyle(styles, PatchClassification.HashToken, GetScopeColor("constant.numeric"));
         AddForegroundStyle(styles, PatchClassification.ModeToken, GetScopeColor("constant.numeric"));
-        AddForegroundStyle(styles, PatchClassification.TextToken, GetGuiColor("editor.foreground") ?? TextColor.White);
+        AddForegroundStyle(styles, PatchClassification.TextToken, Colors.DefaultForeground ?? TextColor.White);
         AddForegroundStyle(styles, PatchClassification.PercentageToken, GetScopeColor("constant.numeric"));
         AddForegroundStyle(styles, PatchClassification.RangeToken, GetScopeColor("keyword.control"));
         AddForegroundStyle(styles, PatchClassification.MinusMinusMinusToken, deletedText);
@@ -123,7 +126,7 @@ internal sealed class ThemeService
         // Log
         AddForegroundStyle(styles, LogClassification.Error, deletedText);
         AddForegroundStyle(styles, LogClassification.Info, GetScopeColor("comment"));
-        AddForegroundStyle(styles, LogClassification.Normal, GetGuiColor("editor.foreground") ?? TextColor.White);
+        AddForegroundStyle(styles, LogClassification.Normal, Colors.DefaultForeground ?? TextColor.White);
 
         return styles;
     }
@@ -133,20 +136,22 @@ internal sealed class ThemeService
         styles.Add(classification, new TextStyle { Foreground = foreground });
     }
 
-    private static void AddLineStyle(Dictionary<Classification, TextStyle> styles, Classification classification, TextColor foreground)
+    private void AddLineStyle(Dictionary<Classification, TextStyle> styles, Classification classification, TextColor foreground)
     {
+        var defaultBackground = Colors.DefaultBackground ?? TextColor.Black;
         styles.Add(classification, new TextStyle
         {
             Foreground = foreground,
-            Background = foreground.Lerp(TextColor.Black, 0.8f)
+            Background = foreground.Lerp(defaultBackground, 0.8f)
         });
     }
 
-    private static void AddBackgroundStyle(Dictionary<Classification, TextStyle> styles, Classification classification, TextColor foreground)
+    private void AddBackgroundStyle(Dictionary<Classification, TextStyle> styles, Classification classification, TextColor foreground)
     {
+        var defaultBackground = Colors.DefaultBackground ?? TextColor.Black;
         styles.Add(classification, new TextStyle
         {
-            Background = foreground.Lerp(TextColor.Black, 0.8f)
+            Background = foreground.Lerp(defaultBackground, 0.8f)
         });
     }
 
@@ -158,7 +163,7 @@ internal sealed class ThemeService
                 return TextColor.FromHex(_theme.GetColor(rule.foreground));
         }
 
-        return GetGuiColor("editor.foreground") ?? TextColor.White;
+        return Colors.DefaultForeground ?? TextColor.White;
     }
 
     private TextStyle ResolveSyntaxStyle(Classification classification)

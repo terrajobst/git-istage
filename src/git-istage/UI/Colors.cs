@@ -14,21 +14,28 @@ internal sealed class Colors
 
     // Header & Footer
 
-    public TextColor HeaderForeground => _theme.GetGuiColor("statusBarItem.remoteForeground") ?? TextColor.White;
+    public TextColor HeaderForeground => _theme.GetGuiColor("statusBarItem.remoteForeground") ?? DefaultForeground ?? TextColor.White;
 
     public TextColor? HeaderBackground => _theme.GetGuiColor("statusBarItem.remoteBackground");
+
+    // Default
+
+    public TextColor? DefaultForeground => _theme.GetGuiColor("editor.foreground");
+
+    public TextColor? DefaultBackground => _theme.GetGuiColor("editor.background");
 
     // Document
 
     public TextColor NonExistingTextForeground => _theme.GetGuiColor("input.placeholderForeground") ?? TextColor.DarkGray;
 
-    public TextColor? NonExistingTextBackground => null;
+    public TextColor? NonExistingTextBackground => DefaultBackground;
 
-    public TextColor Selection => _theme.GetGuiColor("editor.inactiveSelectionBackground") ?? TextColor.DarkBlue.Lerp(TextColor.Black, 0.5f).WithAlpha(.8f);
+    public TextColor Selection => _theme.GetGuiColor("editor.selectionBackground")
+                             ?? TextColor.Blue;
 
     // Search
 
-    public TextColor SearchInputForeground => _theme.GetGuiColor("editor.foreground") ?? TextColor.White;
+    public TextColor SearchInputForeground => DefaultForeground ?? TextColor.White;
 
-    public TextColor? SearchInputBackground => _theme.GetGuiColor("editor.background");
+    public TextColor? SearchInputBackground => DefaultBackground;
 }

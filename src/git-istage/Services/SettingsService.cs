@@ -2,14 +2,15 @@ using System.Text.Json;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using GitIStage.Commands;
+using TextMateSharp.Grammars;
 
 namespace GitIStage.Services;
 
-internal sealed class KeyBindingService
+internal sealed class SettingsService
 {
     private readonly UserEnvironment _userEnvironment;
 
-    public KeyBindingService(UserEnvironment userEnvironment)
+    public SettingsService(UserEnvironment userEnvironment)
     {
         _userEnvironment = userEnvironment;
     }
@@ -49,10 +50,84 @@ internal sealed class KeyBindingService
         return result;
     }
 
+    public ThemeName GetTheme()
+    {
+        var settings = LoadSettings();
+
+        if (settings is not null &&
+            settings.TryGetPropertyValue("theme", out var themeNode) &&
+            themeNode is not null &&
+            Enum.TryParse<ThemeName>(themeNode.GetValue<string>(), ignoreCase: true, out var themeName))
+        {
+            return themeName;
+        }
+
+        return ThemeName.DarkPlus;
+    }
+
+    public void SaveTheme(ThemeName themeName)
+    {
+        SaveSetting("theme", themeName.ToString());
+    }
+
+    public bool GetSyntaxHighlighting()
+    {
+        var settings = LoadSettings();
+
+        if (settings is not null &&
+            settings.TryGetPropertyValue("syntaxHighlighting", out var node) &&
+            node is not null)
+        {
+            return node.GetValue<bool>();
+        }
+
+        return true;
+    }
+
+    public void SaveSyntaxHighlighting(bool enabled)
+    {
+        SaveSetting("syntaxHighlighting", enabled);
+    }
+
+    private void SaveSetting(string key, JsonNode value)
+    {
+        var settings = LoadSettings() ?? new JsonObject();
+        settings[key] = value;
+
+        var settingsPath = GetSettingsPath();
+        var directory = Path.GetDirectoryName(settingsPath)!;
+        Directory.CreateDirectory(directory);
+
+        var options = new JsonSerializerOptions { WriteIndented = true };
+        File.WriteAllText(settingsPath, settings.ToJsonString(options));
+    }
+
     public string GetUserKeyBindingsPath()
     {
         var homeDirectory = _userEnvironment.SettingsDirectory;
         return Path.Join(homeDirectory, "key-bindings.json");
+    }
+
+    private string GetSettingsPath()
+    {
+        return Path.Join(_userEnvironment.SettingsDirectory, "settings.json");
+    }
+
+    private JsonObject? LoadSettings()
+    {
+        var path = GetSettingsPath();
+        if (!File.Exists(path))
+            return null;
+
+        try
+        {
+            var content = File.ReadAllText(path);
+            return JsonNode.Parse(content) as JsonObject;
+        }
+        catch (JsonException)
+        {
+            return null;
+        }
     }
 
     private IDictionary<string, CustomKeyBinding?>? LoadUserKeyBindings()

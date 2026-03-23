@@ -135,10 +135,15 @@ internal sealed class View
         Document.GetLineStyles(lineIndex, _lineStyles);
 
         // Extract line-level style encoded as a zero-length sentinel span at the start
-        TextStyle lineStyle = default;
+        var lineStyle = new TextStyle
+        {
+            Foreground = _themeService.Colors.DefaultForeground,
+            Background = _themeService.Colors.DefaultBackground
+        };
+
         if (_lineStyles.Count > 0 && _lineStyles[0].Span.Length == 0)
         {
-            lineStyle = _themeService.ResolveStyle(_lineStyles[0].Classification);
+            lineStyle = _themeService.ResolveStyle(_lineStyles[0].Classification).PlaceOnTopOf(lineStyle);
             _lineStyles.RemoveAt(0);
         }
 
@@ -149,7 +154,7 @@ internal sealed class View
             lineStyle = new TextStyle()
             {
                 Foreground = lineStyle.Foreground,
-                Background = lineStyle.Background?.Combine(_themeService.Colors.Selection) ?? _themeService.Colors.Selection
+                Background = lineStyle.Background?.Combine(_themeService.Colors.Selection.WithAlpha(0.5f)) ?? _themeService.Colors.Selection
             };
         }
 
@@ -199,11 +204,11 @@ internal sealed class View
         if (_themeService.IsKnownClassification(span.Classification))
             return style.PlaceOnTopOf(lineStyle);
 
-        // Syntax tokens get background from line but NOT foreground,
-        // so they don't inherit added/deleted line colors.
+        // Syntax tokens get their own foreground (or the theme default) and
+        // background from the line, so they don't inherit added/deleted line colors.
         return new TextStyle
         {
-            Foreground = style.Foreground,
+            Foreground = style.Foreground ?? _themeService.Colors.DefaultForeground,
             Background = style.Background ?? lineStyle.Background,
             Attributes = style.Attributes | lineStyle.Attributes
         };

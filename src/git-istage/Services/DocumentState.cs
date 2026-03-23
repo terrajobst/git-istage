@@ -122,8 +122,6 @@ internal sealed class DocumentState
 
             var fullPath = Path.Combine(workingDirectory!, file);
             var workingCopyLines = TextLines.FromFile(fullPath);
-            if (workingCopyLines.Count == 0)
-                continue;
 
             var stageLines = workingCopyLines.ApplyReversed(workingCopyEntry);
             var committedLines = stageLines.ApplyReversed(stageEntry);
