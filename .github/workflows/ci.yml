@@ -31,7 +31,7 @@ jobs:
     - name: Restore
       run: dotnet restore ${{ env.SLN }}
     - name: Test
-      run: dotnet test --no-restore --nologo -c Debug --verbosity minimal ${{ env.SLN }}
+      run: dotnet test --no-restore -c Debug --solution ${{ env.SLN }}
 
   publish:
     runs-on: ubuntu-latest
