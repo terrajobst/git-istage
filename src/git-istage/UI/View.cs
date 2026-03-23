@@ -19,16 +19,7 @@ internal sealed class View
         _themeService = themeService;
     }
 
-    public bool Visible
-    {
-        get;
-        set
-        {
-            field = value;
-            if (field)
-                Render();
-        }
-    }
+    public bool Visible { get; set; }
 
     public Document Document
     {
@@ -43,13 +34,13 @@ internal sealed class View
     public int SelectedLine
     {
         get => _selection.AtEnd ? _selection.EndLine : _selection.StartLine;
-        set => UpdateSelection(value);
+        set => SetSelection(new Selection(value, 0));
     }
 
     public Selection Selection
     {
         get => _selection;
-        set => UpdateSelection(value);
+        set => SetSelection(value);
     }
 
     public int Top { get; private set; }
@@ -63,7 +54,7 @@ internal sealed class View
     public int TopLine
     {
         get => _topLine;
-        set => UpdateTopLine(value);
+        set => SetTopLine(value);
     }
 
     public int TopLineMax => int.Max(0, _document.Height - 1);
@@ -71,7 +62,7 @@ internal sealed class View
     public int LeftChar
     {
         get => _leftChar;
-        set => UpdateLeftChar(value);
+        set => SetLeftChar(value);
     }
 
     public int LeftCharMax => int.Max(0, _document.Width - 1);
@@ -82,30 +73,12 @@ internal sealed class View
 
     public int Width => Right - Left;
 
-    public bool VisibleWhitespace
-    {
-        get;
-        set
-        {
-            if (field != value)
-            {
-                field = value;
-                Render();
-            }
-        }
-    }
+    public bool VisibleWhitespace { get; set; }
 
     public SearchResults? SearchResults
     {
         get => _searchResults;
-        set
-        {
-            if (_searchResults != value)
-            {
-                _searchResults = value;
-                Render();
-            }
-        }
+        set => _searchResults = value;
     }
 
     public void Resize(int top, int left, int bottom, int right)
@@ -128,28 +101,26 @@ internal sealed class View
         _selection = new Selection(newSelectionStart, newSelectionCount);
         _leftChar = int.Clamp(_leftChar, 0, LeftCharMax);
         _searchResults = null;
-
-        Render();
     }
 
-    public void Render()
+    public void Render(RenderBuffer buffer)
     {
         for (var i = TopLine; i <= BottomLine; i++)
-            RenderLine(i);
+            RenderLine(buffer, i);
     }
 
     // TODO: We need to properly support tabs. Right now the spans will count them as a single
     //       character which might mess up formatting.
     // TODO: We need to support rendering whitespace (tabs, spaces, line breaks,
     //       non-visible characters)
-    private void RenderLine(int lineIndex)
+    private void RenderLine(RenderBuffer buffer, int lineIndex)
     {
         if (!IsVisible(lineIndex))
             return;
 
         if (lineIndex >= Document.Height)
         {
-            RenderNonExistingLine(lineIndex);
+            RenderNonExistingLine(buffer, lineIndex);
             return;
         }
 
@@ -171,7 +142,7 @@ internal sealed class View
             _lineStyles.RemoveAt(0);
         }
 
-        Vt100.SetCursorPosition(Left, visualLine);
+        buffer.SetCursorPosition(Left, visualLine);
 
         if (isSelected)
         {
@@ -182,8 +153,8 @@ internal sealed class View
             };
         }
 
-        Vt100.SetForegroundColor(lineStyle.Foreground);
-        Vt100.SetBackgroundColor(lineStyle.Background);
+        buffer.SetForegroundColor(lineStyle.Foreground);
+        buffer.SetBackgroundColor(lineStyle.Background);
 
         var p = clippedLineSpan.Start;
         foreach (var classifiedSpan in _lineStyles)
@@ -195,30 +166,30 @@ internal sealed class View
             if (clippedSpan.Span.Start > p)
             {
                 var missingSpan = TextSpan.FromBounds(p, clippedSpan.Span.Start);
-                Console.Write(line.Slice(missingSpan));
+                buffer.Write(line.Slice(missingSpan));
             }
 
             var style = ResolveStyle(clippedSpan, lineStyle);
 
-            Vt100.SetForegroundColor(style.Foreground);
-            Vt100.SetBackgroundColor(style.Background);
-            Console.Write(line.Slice(clippedSpan.Span));
+            buffer.SetForegroundColor(style.Foreground);
+            buffer.SetBackgroundColor(style.Background);
+            buffer.Write(line.Slice(clippedSpan.Span));
 
             p = clippedSpan.Span.End;
         }
 
         if (p < clippedLineSpan.End)
         {
-            Vt100.SetForegroundColor(lineStyle.Foreground);
-            Vt100.SetBackgroundColor(lineStyle.Background);
+            buffer.SetForegroundColor(lineStyle.Foreground);
+            buffer.SetBackgroundColor(lineStyle.Background);
 
             var remainderSpan = TextSpan.FromBounds(p, clippedLineSpan.End);
-            Console.Write(line.Slice(remainderSpan));
+            buffer.Write(line.Slice(remainderSpan));
         }
 
-        Vt100.EraseRestOfCurrentLine();
+        buffer.EraseRestOfCurrentLine();
 
-        RenderSearchResults(lineIndex);
+        RenderSearchResults(buffer, lineIndex);
     }
 
     private TextStyle ResolveStyle(ClassifiedSpan span, TextStyle lineStyle)
@@ -238,20 +209,20 @@ internal sealed class View
         };
     }
 
-    private void RenderNonExistingLine(int lineIndex)
+    private void RenderNonExistingLine(RenderBuffer buffer, int lineIndex)
     {
         Debug.Assert(IsVisible(lineIndex));
 
         var visualLine = GetVisualLine(lineIndex);
 
-        Vt100.SetCursorPosition(0, visualLine);
-        Vt100.SetForegroundColor(_themeService.Colors.NonExistingTextForeground);
-        Vt100.SetBackgroundColor(_themeService.Colors.NonExistingTextBackground);
-        Console.Write("~");
-        Vt100.EraseRestOfCurrentLine();
+        buffer.SetCursorPosition(0, visualLine);
+        buffer.SetForegroundColor(_themeService.Colors.NonExistingTextForeground);
+        buffer.SetBackgroundColor(_themeService.Colors.NonExistingTextBackground);
+        buffer.Write('~');
+        buffer.EraseRestOfCurrentLine();
     }
 
-    private void RenderSearchResults(int lineIndex)
+    private void RenderSearchResults(RenderBuffer buffer, int lineIndex)
     {
         Debug.Assert(IsVisible(lineIndex));
 
@@ -267,10 +238,10 @@ internal sealed class View
                     var clippedSpan = ClipSpan(hit.Span);
                     if (clippedSpan.Length > 0)
                     {
-                        Vt100.SetCursorPosition(clippedSpan.Start - LeftChar, visualLine);
-                        Vt100.NegativeColors();
-                        Console.Write(line.Slice(clippedSpan));
-                        Vt100.PositiveColors();
+                        buffer.SetCursorPosition(clippedSpan.Start - LeftChar, visualLine);
+                        buffer.NegativeColors();
+                        buffer.Write(line.Slice(clippedSpan));
+                        buffer.PositiveColors();
                     }
                 }
             }
@@ -302,13 +273,7 @@ internal sealed class View
         return new ClassifiedSpan(clippedSpan, classifiedSpan.Classification);
     }
 
-    private void UpdateSelection(int lineIndex)
-    {
-        var selection = new Selection(lineIndex, 0);
-        UpdateSelection(selection);
-    }
-
-    private void UpdateSelection(Selection value)
+    private void SetSelection(Selection value)
     {
         if (_selection == value || Document.Height == 0)
             return;
@@ -316,44 +281,13 @@ internal sealed class View
         ThrowIfGreaterThanOrEqual(value.StartLine, Document.Height);
         ThrowIfGreaterThanOrEqual(value.EndLine, Document.Height);
 
-        var previousSelection = _selection;
         _selection = value;
 
-        // Render old lines that aren't part of the new selection
-
-        for (var i = previousSelection.StartLine; i <= previousSelection.EndLine; i++)
-        {
-            if (!value.Contains(i))
-                RenderLine(i);
-        }
-
-        // Render new lines that aren't part of the old selection
-
-        for (var i = value.StartLine; i <= value.EndLine; i++)
-        {
-            if (!previousSelection.Contains(i))
-                RenderLine(i);
-        }
-
-        // Scroll if necessary
-
-        if (value.StartLine < TopLine &&
-            value.StartLine < previousSelection.StartLine)
-        {
-            // Start is offscreen, and we extended the start, so let's make sure the new start is visible.
-            TopLine = value.StartLine;
-        }
-        else if (value.EndLine >= TopLine + Height &&
-                 previousSelection.EndLine < value.EndLine)
-        {
-            // End is offscreen, and we extended the end, so let's make sure the new end is visible.
-            TopLine = value.EndLine - Height + 1;
-        }
-
+        BringIntoView(SelectedLine);
         SelectionChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UpdateTopLine(int lineIndex)
+    private void SetTopLine(int lineIndex)
     {
         if (_topLine == lineIndex || Document.Height == 0)
             return;
@@ -361,49 +295,12 @@ internal sealed class View
         ThrowIfLessThan(lineIndex, 0);
         ThrowIfGreaterThanOrEqual(lineIndex, TopLineMax);
 
-        var delta = lineIndex - _topLine;
         _topLine = lineIndex;
-
-        if (int.Abs(delta) >= Height)
-        {
-            Render();
-        }
-        else
-        {
-            if (delta < 0)
-            {
-                // We need to scroll up by -delta lines.
-
-                Vt100.SetBackgroundColor();
-                Vt100.ScrollDown(int.Abs(delta));
-
-                for (var i = 0; i < -delta; i++)
-                {
-                    var line = _topLine + i;
-                    RenderLine(line);
-                }
-            }
-            else
-            {
-                // We need to scroll down by delta lines.
-
-                var visualLineCount = Height - delta;
-
-                Vt100.SetBackgroundColor();
-                Vt100.ScrollUp(delta);
-
-                for (var i = 0; i < delta; i++)
-                {
-                    var line = _topLine + visualLineCount + i;
-                    RenderLine(line);
-                }
-            }
-        }
 
         TopLineChanged?.Invoke(this, EventArgs.Empty);
     }
 
-    private void UpdateLeftChar(int charIndex)
+    private void SetLeftChar(int charIndex)
     {
         if (_leftChar == charIndex || Document.Height == 0)
             return;
@@ -412,7 +309,6 @@ internal sealed class View
         ThrowIfGreaterThanOrEqual(charIndex, LeftCharMax);
 
         _leftChar = charIndex;
-        Render();
         LeftCharChanged?.Invoke(this, EventArgs.Empty);
     }
 
@@ -424,19 +320,10 @@ internal sealed class View
         ThrowIfLessThan(lineIndex, 0);
         ThrowIfGreaterThanOrEqual(lineIndex, Document.Height);
 
-        var offScreen = lineIndex < _topLine ||
-                        lineIndex > _topLine + Height - 1;
-        if (!offScreen)
-            return;
-
-        var topLine = SelectedLine - Height / 2;
-        if (topLine < 0)
-            topLine = 0;
-
-        if (topLine > Document.Height - Height)
-            topLine = Document.Height - Height;
-
-        UpdateTopLine(topLine);
+        if (lineIndex < _topLine)
+            SetTopLine(lineIndex);
+        else if (lineIndex > _topLine + Height - 1)
+            SetTopLine(int.Min(lineIndex - Height + 1, TopLineMax));
     }
 
     public event EventHandler? SelectionChanged;

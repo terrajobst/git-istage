@@ -56,6 +56,7 @@ internal sealed class Application
         });
 
         _uiService.Show();
+        _uiService.RenderAll();
         try
         {
             var done = false;
@@ -67,6 +68,7 @@ internal sealed class Application
                     var key = ReadKey();
                     var command = _commandService.GetCommand(key);
                     command?.Execute();
+                    _uiService.RenderAll();
                 }
                 catch (ApplicationQuitException)
                 {
@@ -125,6 +127,9 @@ internal sealed class Application
                         break;
                 }
             }
+
+            if (lastInfo is null)
+                _uiService.RenderAll();
         }
 
         return lastInfo.Value;

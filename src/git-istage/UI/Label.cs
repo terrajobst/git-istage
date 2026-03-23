@@ -15,46 +15,20 @@ internal sealed class Label
 
     public int Width { get; private set; }
 
-    public TextColor? Foreground
-    {
-        get;
-        set
-        {
-            field = value;
-            Render();
-        }
-    }
+    public TextColor? Foreground { get; set; }
 
-    public TextColor? Background
-    {
-        get;
-        set
-        {
-            field = value;
-            Render();
-        }
-    }
+    public TextColor? Background { get; set; }
 
-    public string Text
-    {
-        get;
-        set
-        {
-            field = value;
-            Render();
-        }
-    }
+    public string Text { get; set; }
 
     public void Resize(int top, int left, int right)
     {
         Top = top;
         Left = left;
         Width = right - left;
-
-        Render();
     }
 
-    private void Render()
+    public void Render(RenderBuffer buffer)
     {
         if (Width == 0)
             return;
@@ -62,10 +36,10 @@ internal sealed class Label
         var textLength = Math.Min(Text.Length, Width);
         var text = Text.AsSpan(0, textLength);
 
-        Vt100.SetCursorPosition(Left, Top);
-        Vt100.SetForegroundColor(Foreground);
-        Vt100.SetBackgroundColor(Background);
-        Console.Write(text);
-        Vt100.EraseRestOfCurrentLine();
+        buffer.SetCursorPosition(Left, Top);
+        buffer.SetForegroundColor(Foreground);
+        buffer.SetBackgroundColor(Background);
+        buffer.Write(text);
+        buffer.EraseRestOfCurrentLine();
     }
 }

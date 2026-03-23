@@ -133,17 +133,16 @@ internal sealed class UIService
         if (OperatingSystem.IsWindows())
             Win32Console.Initialize();
 
-        Vt100.HideCursor();
-        Vt100.SwitchToAlternateBuffer();
+        Console.HideCursor();
+        Console.SwitchToAlternateBuffer();
 
         Resize();
     }
 
     public void Hide()
     {
-        Vt100.ResetScrollMargins();
-        Vt100.SwitchToMainBuffer();
-        Vt100.ShowCursor();
+        Console.SwitchToMainBuffer();
+        Console.ShowCursor();
 
         if (OperatingSystem.IsWindows())
             Win32Console.Restore();
@@ -164,8 +163,6 @@ internal sealed class UIService
         _stageFilesView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
         _logView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
         _helpView.Resize(viewTop, viewLeft, viewHeight, viewWidth);
-
-        Vt100.SetScrollMargins(2, Console.WindowHeight - 1);
 
         UpdateHeaderAndFooter();
     }
@@ -229,7 +226,6 @@ internal sealed class UIService
         _footer.Foreground = _themeService.Colors.HeaderForeground;
         _footer.Background = _themeService.Colors.HeaderBackground;
         UpdateHeaderAndFooter();
-        _activeView.Render();
     }
 
     private void DocumentServiceOnChanged(object? sender, EventArgs e)
@@ -304,20 +300,32 @@ internal sealed class UIService
         _footer.Text = $"{leftPart}{new string(' ', padding)}{rightPart}";
     }
 
+    public void RenderAll()
+    {
+        var buffer = RenderBuffer.Begin();
+        _header.Render(buffer);
+        _footer.Render(buffer);
+        if (_activeView.Visible)
+            _activeView.Render(buffer);
+        buffer.Flush();
+    }
+
     public void Search()
     {
         var sb = new StringBuilder();
 
         while (true)
         {
-            Vt100.HideCursor();
-            Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
-            Vt100.SetForegroundColor(_themeService.Colors.SearchInputForeground);
-            Vt100.SetBackgroundColor(_themeService.Colors.SearchInputBackground);
-            Console.Write("/");
-            Console.Write(sb);
-            Vt100.EraseRestOfCurrentLine();
-            Vt100.ShowCursor();
+            Console.HideCursor();
+            var buffer = RenderBuffer.Begin();
+            buffer.SetCursorPosition(0, Console.WindowHeight - 1);
+            buffer.SetForegroundColor(_themeService.Colors.SearchInputForeground);
+            buffer.SetBackgroundColor(_themeService.Colors.SearchInputBackground);
+            buffer.Write('/');
+            buffer.Write(sb.ToString());
+            buffer.EraseRestOfCurrentLine();
+            buffer.Flush();
+            Console.ShowCursor();
 
             var k = _keyboardService.ReadKey();
 
@@ -343,28 +351,35 @@ internal sealed class UIService
             }
         }
 
-        Vt100.HideCursor();
+        Console.HideCursor();
         UpdateFooter();
 
         if (sb.Length == 0)
+        {
+            RenderAll();
             return;
+        }
 
         var searchResults = new SearchResults(_activeView.Document, sb.ToString());
         if (searchResults.Hits.Count == 0)
         {
-            Vt100.HideCursor();
-            Vt100.SetCursorPosition(0, Console.WindowHeight - 1);
-            Vt100.SetForegroundColor(_themeService.Colors.SearchInputForeground);
-            Vt100.SetBackgroundColor(_themeService.Colors.SearchInputBackground);
-            Console.Write("<< NO RESULTS FOUND >>");
-            Vt100.EraseRestOfCurrentLine();
+            Console.HideCursor();
+            var noResultsBuffer = RenderBuffer.Begin();
+            noResultsBuffer.SetCursorPosition(0, Console.WindowHeight - 1);
+            noResultsBuffer.SetForegroundColor(_themeService.Colors.SearchInputForeground);
+            noResultsBuffer.SetBackgroundColor(_themeService.Colors.SearchInputBackground);
+            noResultsBuffer.Write("<< NO RESULTS FOUND >>");
+            noResultsBuffer.EraseRestOfCurrentLine();
+            noResultsBuffer.Flush();
             _keyboardService.ReadKey();
             UpdateFooter();
+            RenderAll();
             return;
         }
 
         _activeView.SearchResults = searchResults;
         _activeView.SelectedLine = searchResults.Hits.First().LineIndex;
+        RenderAll();
     }
 
     public bool HasInputLine => _inputLineDigits.Length > 0;
