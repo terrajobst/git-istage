@@ -77,7 +77,10 @@ public sealed class TextLines : IEnumerable<ReadOnlyMemory<char>>
 
     private void CopyLinesTo(List<ReadOnlyMemory<char>> target, int startLine, int endLine)
     {
-        if (startLine < 0 || endLine < 0)
+        startLine = int.Clamp(startLine, 0, _lines.Length);
+        endLine = int.Clamp(endLine, 0, _lines.Length);
+
+        if (startLine >= endLine)
             return;
 
         var span = _lines.AsSpan(startLine, endLine - startLine);
