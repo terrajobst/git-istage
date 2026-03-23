@@ -7,11 +7,6 @@ This document tracks open issues I'd like to address.
 We have way to put any file at the top of view but we don't have a way to only
 render a single entry.
 
-## Theming
-
-It would be nice to support theming. We could that by using the colors from
-TextMate.
-
 ## LibGit2Sharp
 
 Ideally, we'd eliminate the need for LibGit2Sharp:

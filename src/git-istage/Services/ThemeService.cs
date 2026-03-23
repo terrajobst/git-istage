@@ -9,14 +9,18 @@ namespace GitIStage.Services;
 
 internal sealed class ThemeService
 {
+    private static readonly ThemeName[] AllThemes = Enum.GetValues<ThemeName>();
+
     private Registry _registry;
     private Theme _theme;
+    private ThemeName _themeName;
     private Dictionary<Classification, TextStyle> _classificationStyles;
     private Dictionary<Classification, TextStyle> _syntaxStyleCache = new();
 
     public ThemeService()
     {
-        _registry = new Registry(new RegistryOptions(ThemeName.DarkPlus));
+        _themeName = ThemeName.DarkPlus;
+        _registry = new Registry(new RegistryOptions(_themeName));
         _theme = _registry.GetTheme();
         _classificationStyles = CreateClassificationStyles();
         Colors = new Colors(this);
@@ -24,15 +28,30 @@ internal sealed class ThemeService
 
     public Colors Colors { get; }
 
+    public ThemeName ThemeName => _themeName;
+
     public Theme Theme => _theme;
 
     public void SetTheme(ThemeName themeName)
     {
+        _themeName = themeName;
         _registry = new Registry(new RegistryOptions(themeName));
         _theme = _registry.GetTheme();
         _classificationStyles = CreateClassificationStyles();
         _syntaxStyleCache = new();
         ThemeChanged?.Invoke(this, EventArgs.Empty);
+    }
+
+    public void SetNextTheme()
+    {
+        var index = (Array.IndexOf(AllThemes, _themeName) + 1) % AllThemes.Length;
+        SetTheme(AllThemes[index]);
+    }
+
+    public void SetPreviousTheme()
+    {
+        var index = (Array.IndexOf(AllThemes, _themeName) - 1 + AllThemes.Length) % AllThemes.Length;
+        SetTheme(AllThemes[index]);
     }
 
     public bool IsKnownClassification(Classification classification)

@@ -46,6 +46,7 @@ internal sealed class UIService
         _logService = logService;
         _logService.Changed += LogServiceOnChanged;
         _themeService = themeService;
+        _themeService.ThemeChanged += ThemeServiceOnChanged;
 
         _header = new Label();
         _header.Foreground = _themeService.Colors.HeaderForeground;
@@ -221,6 +222,16 @@ internal sealed class UIService
         UpdateHeader();
     }
 
+    private void ThemeServiceOnChanged(object? sender, EventArgs e)
+    {
+        _header.Foreground = _themeService.Colors.HeaderForeground;
+        _header.Background = _themeService.Colors.HeaderBackground;
+        _footer.Foreground = _themeService.Colors.HeaderForeground;
+        _footer.Background = _themeService.Colors.HeaderBackground;
+        UpdateHeaderAndFooter();
+        _activeView.Render();
+    }
+
     private void DocumentServiceOnChanged(object? sender, EventArgs e)
     {
         UpdatePatchDocuments();
@@ -286,8 +297,11 @@ internal sealed class UIService
         var (workingAdded, workingModified, workingDeleted) = _documentService.WorkingCopyPatch.GetFileStatistics();
 
         var lineNumberText = _inputLineDigits.Length > 0 ? $"L{_inputLineDigits}" : "";
+        var leftPart = $" [{_gitService.Repository.Head.FriendlyName} +{stageAdded} ~{stageModified} -{stageDeleted} | +{workingAdded} ~{workingModified} -{workingDeleted}]    {lineNumberText}";
+        var rightPart = $"{_themeService.ThemeName} ";
+        var padding = Math.Max(0, _footer.Width - leftPart.Length - rightPart.Length);
 
-        _footer.Text = $" [{_gitService.Repository.Head.FriendlyName} +{stageAdded} ~{stageModified} -{stageDeleted} | +{workingAdded} ~{workingModified} -{workingDeleted}]    {lineNumberText} ";
+        _footer.Text = $"{leftPart}{new string(' ', padding)}{rightPart}";
     }
 
     public void Search()

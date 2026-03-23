@@ -15,6 +15,7 @@ internal sealed class CommandService
     private readonly DocumentService _documentService;
     private readonly PatchingService _patchingService;
     private readonly UIService _uiService;
+    private readonly ThemeService _themeService;
     private readonly IReadOnlyList<ConsoleCommand> _commands;
 
     public CommandService(IServiceProvider serviceProvider,
@@ -22,13 +23,15 @@ internal sealed class CommandService
                           GitService gitService,
                           DocumentService documentService,
                           PatchingService patchingService,
-                          UIService uiService)
+                          UIService uiService,
+                          ThemeService themeService)
     {
         _serviceProvider = serviceProvider;
         _gitService = gitService;
         _documentService = documentService;
         _patchingService = patchingService;
         _uiService = uiService;
+        _themeService = themeService;
 
         var commands = CreateCommands();
         _commands = BindUserKeys(commands, keyBindingService);
@@ -597,6 +600,18 @@ internal sealed class CommandService
     private void ShowLog()
     {
         _uiService.LogShowing = !_uiService.LogShowing;
+    }
+
+    [CommandHandler("Set next theme.", "Alt+RightArrow")]
+    private void SetNextTheme()
+    {
+        _themeService.SetNextTheme();
+    }
+
+    [CommandHandler("Set previous theme.", "Alt+LeftArrow")]
+    private void SetPreviousTheme()
+    {
+        _themeService.SetPreviousTheme();
     }
 
     [CommandHandler("Reloads the diff", "F5")]

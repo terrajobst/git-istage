@@ -132,7 +132,7 @@ internal sealed class View
         Render();
     }
 
-    private void Render()
+    public void Render()
     {
         for (var i = TopLine; i <= BottomLine; i++)
             RenderLine(i);
