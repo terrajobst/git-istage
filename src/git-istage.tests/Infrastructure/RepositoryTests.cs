@@ -22,7 +22,9 @@ public abstract class RepositoryTests : IDisposable
         var gitEnvironment = new GitEnvironment(repositoryPath: _tempDirectory);
         var logService = new OperationLogService();
         _gitService = new GitService(gitEnvironment, logService);
-        _documentService = new DocumentService(_gitService, fileWatchingService: null);
+        var userEnvironment = new UserEnvironment(settingsDirectory: Path.Combine(_tempDirectory, ".git-istage"));
+        var settingsService = new SettingsService(userEnvironment);
+        _documentService = new DocumentService(_gitService, settingsService, fileWatchingService: null);
         _patchingService = new PatchingService(_gitService, fileWatchingService: null);
     }
 
